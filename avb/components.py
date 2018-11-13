@@ -76,6 +76,32 @@ class Component(core.AVBObject):
         else:
             return "unknown%d" % self.media_kind_id
 
+@utils.register_class
+class Sequence(Component):
+    class_id = "SEQU"
+
+    def read(self, f):
+        super(Sequence, self).read(f)
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x03
+
+        count = read_u32le(f)
+        self.component_refs = []
+        for i in range(count):
+            ref = read_object_ref(self.root, f)
+            # print ref
+            self.component_refs.append(ref)
+
+        tag = read_byte(f)
+        assert tag == 0x03
+
+    def components(self):
+        for ref in self.component_refs:
+            yield ref.value
+
 class Clip(Component):
     def read(self, f):
         super(Clip, self).read(f)
@@ -147,7 +173,7 @@ class Track(object):
     @property
     def segment(self):
         for item in self.refs:
-            obj = item.resolve()
+            obj = item.value
             if isinstance(obj, Component):
                 return obj
 

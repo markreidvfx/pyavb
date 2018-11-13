@@ -33,6 +33,12 @@ class AVBObjectRef(object):
         return self.root.read_object(self.index)
 
     @property
+    def class_id(self):
+        if self.valid:
+            chunk = self.root.chunks[self.index]
+            return chunk.class_id
+
+    @property
     def valid(self):
         if self.index >= len(self.root.chunks):
             return False

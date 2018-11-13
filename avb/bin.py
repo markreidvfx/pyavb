@@ -160,3 +160,8 @@ class Bin(core.AVBObject):
     def components(self):
         for item in self.items:
             yield item.ref
+
+    def toplevel(self):
+        for item in self.components:
+            if  item.mob_type in ('CompositionMob', ) and item.usage_code == 0:
+                yield item
