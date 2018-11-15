@@ -31,7 +31,7 @@ from . utils import (
 
 @utils.register_class
 class FileLocator(core.AVBObject):
-    class_id = 'FILE'
+    class_id = b'FILE'
 
     def read(self, f):
         super(FileLocator, self).read(f)
@@ -72,7 +72,7 @@ class FileLocator(core.AVBObject):
 
 @utils.register_class
 class MediaDescriptor(core.AVBObject):
-    class_id = 'MDES'
+    class_id = b'MDES'
 
     def read(self, f):
         super(MediaDescriptor, self).read(f)
@@ -117,10 +117,10 @@ class MediaDescriptor(core.AVBObject):
 
 @utils.register_class
 class TapeDescriptor(MediaDescriptor):
-    class_id = 'MDTP'
+    class_id = b'MDTP'
 
 class MediaFileDescriptor(MediaDescriptor):
-    class_id = 'MDFL'
+    class_id = b'MDFL'
 
     def read(self, f):
         super(MediaFileDescriptor, self).read(f)
@@ -139,7 +139,7 @@ class MediaFileDescriptor(MediaDescriptor):
 
 @utils.register_class
 class PCMADescriptor(MediaFileDescriptor):
-    class_id = 'PCMA'
+    class_id = b'PCMA'
 
     def read(self, f):
         super(PCMADescriptor, self).read(f)
@@ -173,7 +173,7 @@ class PCMADescriptor(MediaFileDescriptor):
 
 @utils.register_class
 class DIDDescriptor(MediaFileDescriptor):
-    class_id = 'DIDD'
+    class_id = b'DIDD'
 
     def read(self, f):
         super(DIDDescriptor, self).read(f)
@@ -369,7 +369,7 @@ class DIDDescriptor(MediaFileDescriptor):
 
 @utils.register_class
 class CDCIDescriptor(DIDDescriptor):
-    class_id = 'CDCI'
+    class_id = b'CDCI'
 
     def read(self, f):
         super(CDCIDescriptor, self).read(f)
@@ -430,7 +430,7 @@ def decode_pixel_layout(pixel_layout, pixel_struct):
 
 @utils.register_class
 class RGBADescriptor(DIDDescriptor):
-    class_id = 'RGBA'
+    class_id = b'RGBA'
 
     def read(self, f):
         super(RGBADescriptor, self).read(f)

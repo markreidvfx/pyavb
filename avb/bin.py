@@ -38,7 +38,7 @@ class Setting(core.AVBObject):
 
 @utils.register_class
 class BinViewSetting(Setting):
-    class_id = 'BVst'
+    class_id = b'BVst'
 
     def read(self, f):
         super(BinViewSetting, self).read(f)
@@ -85,7 +85,7 @@ class BinItem(object):
 
 @utils.register_class
 class Bin(core.AVBObject):
-    class_id = 'ABIN'
+    class_id = b'ABIN'
 
     def read(self, f):
         super(Bin, self).read(f)

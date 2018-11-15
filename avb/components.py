@@ -80,7 +80,7 @@ class Component(core.AVBObject):
 
 @utils.register_class
 class Sequence(Component):
-    class_id = "SEQU"
+    class_id = b"SEQU"
 
     def read(self, f):
         super(Sequence, self).read(f)
@@ -106,7 +106,7 @@ class Sequence(Component):
 
 @utils.register_class
 class RepSet(Component):
-    class_id = 'RSET'
+    class_id = b'RSET'
     def read(self, f):
         super(RepSet, self).read(f)
         tag = read_byte(f)
@@ -129,7 +129,7 @@ class Clip(Component):
 
 @utils.register_class
 class SourceClip(Clip):
-    class_id = 'SCLP'
+    class_id = b'SCLP'
     def read(self, f):
         super(SourceClip, self).read(f)
         tag = read_byte(f)
@@ -140,32 +140,37 @@ class SourceClip(Clip):
 
         mob_id_hi = read_s32le(f)
         mob_id_lo = read_s32le(f)
+
         self.track_id = read_s16le(f)
         self.start_time = read_s32le(f)
         self.mob_id = mobid.read_mob_id(f)
+
+        # null mobid
+        if mob_id_hi == 0 and mob_id_lo == 0:
+            self.mob_id = mobid.MobID()
 
         tag = read_byte(f)
         assert tag == 0x03
 
 @utils.register_class
 class Timecode(Clip):
-    class_id = 'TCCP'
+    class_id = b'TCCP'
 
 @utils.register_class
 class Edgecode(Clip):
-    class_id = 'ECCP'
+    class_id = b'ECCP'
 
 @utils.register_class
 class TrackRef(Clip):
-    class_id = 'TRKR'
+    class_id = b'TRKR'
 
 @utils.register_class
 class ParamClip(Clip):
-    class_id = 'PRCL'
+    class_id = b'PRCL'
 
 @utils.register_class
 class Filler(Clip):
-    class_id = 'FILL'
+    class_id = b'FILL'
 
     def read(self, f):
         super(Filler, self).read(f)
@@ -265,34 +270,34 @@ class TrackGroup(Component):
 
 @utils.register_class
 class CaptureMask(TrackGroup):
-    class_id = 'MASK'
+    class_id = b'MASK'
 
 @utils.register_class
 class TrackEffect(TrackGroup):
-    class_id = 'TKFX'
+    class_id = b'TKFX'
 
 @utils.register_class
 class MotionEffect(TrackGroup):
-    class_id = 'SPED'
+    class_id = b'SPED'
 
 # should inherent TrackGroup??
 @utils.register_class
 class TransistionEffect(Component):
-    class_id = 'TNFX'
+    class_id = b'TNFX'
 
 # should inherent TrackGroup??
 @utils.register_class
 class PanVolumeEffect(Component):
-    class_id = 'PVOL'
+    class_id = b'PVOL'
 
 # should inherent TrackGroup??
 @utils.register_class
 class Selector(Component):
-    class_id = 'SLCT'
+    class_id = b'SLCT'
 
 @utils.register_class
 class Composition(TrackGroup):
-    class_id = 'CMPO'
+    class_id = b'CMPO'
 
     def read(self, f):
         super(Composition, self).read(f)

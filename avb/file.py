@@ -8,6 +8,7 @@ from __future__ import (
 import struct
 import io
 import os
+import binascii
 
 from . attributes import read_attributes
 from . import utils
@@ -35,7 +36,7 @@ class AVBChunk(object):
         header = reverse_str(self.class_id)
         size =struct.pack("<I", self.size)
         data =  header + size + self.read()
-        return data.encode('hex')
+        return binascii.hexlify(data)
 
 def read_chunk(root, f):
     class_id = read_fourcc(f)
@@ -66,8 +67,8 @@ class AVBFile(object):
 
         pos = f.tell()
 
-        assert read_fourcc(f) == 'OBJD'
-        assert read_string(f) == 'AObjDoc'
+        assert read_fourcc(f) == b'OBJD'
+        assert read_string(f) == u'AObjDoc'
         assert read_byte(f) == 0x04
 
         self.last_save = read_string(f)
@@ -90,7 +91,7 @@ class AVBFile(object):
         # Reserved data
         f.read(16)
 
-        self.chunks = [AVBChunk(self, 'OBJD', pos, f.tell() - pos)]
+        self.chunks = [AVBChunk(self, b'OBJD', pos, f.tell() - pos)]
 
         for i in range(num_objects):
             class_id = read_fourcc(f)
@@ -111,7 +112,7 @@ class AVBFile(object):
         chunk = self.chunks[index]
         data = chunk.read()
 
-        if chunk.class_id == "ATTR":
+        if chunk.class_id == b"ATTR":
             return read_attributes(self, io.BytesIO(data))
 
         obj_class = utils.AVBClaseID_dict.get(chunk.class_id, None)

@@ -53,11 +53,13 @@ class AVBObjectRef(object):
         return '<%s at 0x%x>' % (s, id(self))
 
 def reverse_str(s):
-    result = b""
-    for c in reversed(s):
-        result += c
 
-    return result
+    size = len(s)
+    result = bytearray(size)
+    for i in range(size):
+        result[size - 1 - i] = s[i]
+
+    return bytes(result)
 
 def read_s32le(f):
     return struct.unpack("<i", f.read(4))[0]
