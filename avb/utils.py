@@ -11,6 +11,7 @@ import os
 
 from uuid import UUID
 from datetime import datetime
+from binascii import hexlify, unhexlify
 
 MAGIC=b'Domain'
 
@@ -102,25 +103,25 @@ def read_datetime(f):
     return datetime.utcfromtimestamp(read_u32le(f))
 
 def read_raw_uuid(f):
-    Data1 = reverse_str(f.read(4)).encode('hex')
-    Data2 = reverse_str(f.read(2)).encode('hex')
-    Data3 = reverse_str(f.read(2)).encode('hex')
-    Data4 = f.read(8).encode('hex')
+    Data1 =  hexlify(reverse_str(f.read(4)))
+    Data2 =  hexlify(reverse_str(f.read(2)))
+    Data3 =  hexlify(reverse_str(f.read(2)))
+    Data4 =  hexlify(f.read(8))
     data =  Data1 + Data2 + Data3 + Data4
-    return UUID(data)
+    return UUID(bytes=unhexlify(data))
 
 def read_uuid(f):
     tag = read_byte(f)
     assert tag == 72
-    Data1 = reverse_str(f.read(4)).encode('hex')
+    Data1 = hexlify(reverse_str(f.read(4)))
 
     tag = read_byte(f)
     assert tag == 70
-    Data2 = reverse_str(f.read(2)).encode('hex')
+    Data2 = hexlify(reverse_str(f.read(2)))
 
     tag = read_byte(f)
     assert tag == 70
-    Data3 = reverse_str(f.read(2)).encode('hex')
+    Data3 = hexlify(reverse_str(f.read(2)))
 
     tag = read_byte(f)
     assert tag == 65
@@ -131,7 +132,7 @@ def read_uuid(f):
         Data4 += b"%02X" % read_byte(f)
 
     data =  Data1 + Data2 + Data3 + Data4
-    return UUID(data)
+    return UUID(bytes=unhexlify(data))
 
 def int_from_bytes(data, byte_order='big'):
     num = 0

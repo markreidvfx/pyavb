@@ -16,7 +16,7 @@ class AVBObject(object):
     def __repr__(self):
         s = "%s.%s"  % (self.__class__.__module__,
                                 self.__class__.__name__)
-        s = self.class_id + " " + s
+        s = str(self.class_id) + " " + s
 
         if hasattr(self, 'name') and self.name:
             s += " " + self.name
