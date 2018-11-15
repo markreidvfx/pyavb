@@ -158,7 +158,7 @@ def bytes_from_int(num, length, byte_order='big'):
 def read_object_ref(root, f):
     index = read_u32le(f)
     ref =  AVBObjectRef(root, index)
-    if ref.valid:
+    if not root.check_refs or ref.valid:
         return ref
     raise ValueError("bad index: %d" % index)
 

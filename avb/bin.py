@@ -154,7 +154,7 @@ class Bin(core.AVBObject):
         self.ql_image_scale = read_s16le(f)
 
         self.attributes = read_object_ref(self.root, f)
-        print(self.attributes)
+        # print(self.attributes)
 
     @property
     def components(self):

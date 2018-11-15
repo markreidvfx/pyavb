@@ -5,6 +5,7 @@ from __future__ import (
     division,
     )
 
+import struct
 import io
 import os
 
@@ -14,7 +15,8 @@ from .utils import (
     read_string,
     read_u32le,
     read_fourcc,
-    read_byte
+    read_byte,
+    reverse_str,
 )
 
 
@@ -29,6 +31,19 @@ class AVBChunk(object):
         self.root.f.seek(self.pos)
         return self.root.f.read(self.size)
 
+    def hex(self):
+        header = reverse_str(self.class_id)
+        size =struct.pack("<I", self.size)
+        data =  header + size + self.read()
+        return data.encode('hex')
+
+def read_chunk(root, f):
+    class_id = read_fourcc(f)
+    size = read_u32le(f)
+    pos = f.tell()
+
+    return AVBChunk(root, class_id, pos, size)
+
 class AVBFile(object):
     def __init__(self, path, mode='r'):
         if mode in ('r', 'rb'):
@@ -37,6 +52,7 @@ class AVBFile(object):
             raise ValueError("invalid mode: %s" % mode)
 
         self.mode = mode
+        self.check_refs = True
         self.f = io.open(path, self.mode)
 
         f = self.f
@@ -106,11 +122,12 @@ class AVBFile(object):
                 return object_instance
             except:
                 print(chunk.class_id)
-                print(data.encode('hex'))
-                print([data])
+                print(chunk.hex())
                 raise
 
         else:
+            print(chunk.class_id)
+            print(chunk.hex())
             raise NotImplementedError(chunk.class_id)
 
 

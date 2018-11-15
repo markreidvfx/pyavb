@@ -41,17 +41,20 @@ class FileLocator(core.AVBObject):
 
         assert tag == 0x02
         assert version == 2
+        self.paths = []
+        path = read_string(f)
 
-        self.path = read_string(f)
 
-        if self.path:
+        if path:
+            self.paths.append(path)
             tag = read_byte(f)
             version = read_byte(f)
             assert tag == 0x01
             assert version == 1
             tag = read_byte(f)
             assert tag == 76
-            self.posix_path1 = read_string(f)
+            path = read_string(f)
+            self.paths.append(path)
 
             tag = read_byte(f)
             version = read_byte(f)
@@ -60,10 +63,8 @@ class FileLocator(core.AVBObject):
             assert version == 2
             tag = read_byte(f)
             assert tag == 76
-            self.posix_path2 = read_string(f)
-        else:
-            self.posix_path1 = None
-            self.posix_path2 = None
+            path = read_string(f)
+            self.paths.append(path)
 
         # end tag
         tag = read_byte(f)
@@ -114,6 +115,9 @@ class MediaDescriptor(core.AVBObject):
         else:
             f.seek(f.tell()-1)
 
+@utils.register_class
+class TapeDescriptor(MediaDescriptor):
+    class_id = 'MDTP'
 
 class MediaFileDescriptor(MediaDescriptor):
     class_id = 'MDFL'
@@ -139,7 +143,7 @@ class PCMADescriptor(MediaFileDescriptor):
 
     def read(self, f):
         super(PCMADescriptor, self).read(f)
-        print(peek_data(f).encode('hex'))
+        # print(peek_data(f).encode('hex'))
 
         tag = read_byte(f)
         version = read_byte(f)
@@ -249,97 +253,105 @@ class DIDDescriptor(MediaFileDescriptor):
         if tag == 15:
             read_u16le(f)
             return
-        assert tag == 8
 
-        # valid
-        self.check_version_tag(f, 71)
-        x = read_s32le(f)
-        self.check_version_tag(f, 71)
-        y = read_s32le(f)
-        self.valid_x = [x, y]
 
-        self.check_version_tag(f, 71)
-        x = read_s32le(f)
-        self.check_version_tag(f, 71)
-        y = read_s32le(f)
-        self.valid_y = [x, y]
+        if tag == 8:
+            # valid
+            self.check_version_tag(f, 71)
+            x = read_s32le(f)
+            self.check_version_tag(f, 71)
+            y = read_s32le(f)
+            self.valid_x = [x, y]
 
-        self.check_version_tag(f, 71)
-        x = read_s32le(f)
-        self.check_version_tag(f, 71)
-        y = read_s32le(f)
-        self.valid_width = [x, y]
+            self.check_version_tag(f, 71)
+            x = read_s32le(f)
+            self.check_version_tag(f, 71)
+            y = read_s32le(f)
+            self.valid_y = [x, y]
 
-        self.check_version_tag(f, 71)
-        x = read_s32le(f)
-        self.check_version_tag(f, 71)
-        y = read_s32le(f)
-        self.valid_height = [x, y]
+            self.check_version_tag(f, 71)
+            x = read_s32le(f)
+            self.check_version_tag(f, 71)
+            y = read_s32le(f)
+            self.valid_width = [x, y]
 
-        # print(self.valid_x, self.valid_y)
-        # print(self.valid_width, self.valid_height)
+            self.check_version_tag(f, 71)
+            x = read_s32le(f)
+            self.check_version_tag(f, 71)
+            y = read_s32le(f)
+            self.valid_height = [x, y]
 
-        # essence
-        self.check_version_tag(f, 71)
-        x = read_s32le(f)
-        self.check_version_tag(f, 71)
-        y = read_s32le(f)
-        self.essence_x = [x, y]
+            # essence
+            self.check_version_tag(f, 71)
+            x = read_s32le(f)
+            self.check_version_tag(f, 71)
+            y = read_s32le(f)
+            self.essence_x = [x, y]
 
-        self.check_version_tag(f, 71)
-        x = read_s32le(f)
-        self.check_version_tag(f, 71)
-        y = read_s32le(f)
-        self.essence_y = [x, y]
+            self.check_version_tag(f, 71)
+            x = read_s32le(f)
+            self.check_version_tag(f, 71)
+            y = read_s32le(f)
+            self.essence_y = [x, y]
 
-        self.check_version_tag(f, 71)
-        x = read_s32le(f)
-        self.check_version_tag(f, 71)
-        y = read_s32le(f)
-        self.essence_width = [x, y]
+            self.check_version_tag(f, 71)
+            x = read_s32le(f)
+            self.check_version_tag(f, 71)
+            y = read_s32le(f)
+            self.essence_width = [x, y]
 
-        self.check_version_tag(f, 71)
-        x = read_s32le(f)
-        self.check_version_tag(f, 71)
-        y = read_s32le(f)
-        self.essence_height = [x, y]
+            self.check_version_tag(f, 71)
+            x = read_s32le(f)
+            self.check_version_tag(f, 71)
+            y = read_s32le(f)
+            self.essence_height = [x, y]
 
-        # source
-        self.check_version_tag(f, 71)
-        x = read_s32le(f)
-        self.check_version_tag(f, 71)
-        y = read_s32le(f)
-        self.source_x = [x, y]
+            # source
+            self.check_version_tag(f, 71)
+            x = read_s32le(f)
+            self.check_version_tag(f, 71)
+            y = read_s32le(f)
+            self.source_x = [x, y]
 
-        self.check_version_tag(f, 71)
-        x = read_s32le(f)
-        self.check_version_tag(f, 71)
-        y = read_s32le(f)
-        self.source_y = [x, y]
+            self.check_version_tag(f, 71)
+            x = read_s32le(f)
+            self.check_version_tag(f, 71)
+            y = read_s32le(f)
+            self.source_y = [x, y]
 
-        self.check_version_tag(f, 71)
-        x = read_s32le(f)
-        self.check_version_tag(f, 71)
-        y = read_s32le(f)
-        self.source_width = [x, y]
+            self.check_version_tag(f, 71)
+            x = read_s32le(f)
+            self.check_version_tag(f, 71)
+            y = read_s32le(f)
+            self.source_width = [x, y]
 
-        self.check_version_tag(f, 71)
-        x = read_s32le(f)
-        self.check_version_tag(f, 71)
-        y = read_s32le(f)
-        self.souce_height = [x, y]
-        # self.check_ext_header(f, 0x0B, 80)
+            self.check_version_tag(f, 71)
+            x = read_s32le(f)
+            self.check_version_tag(f, 71)
+            y = read_s32le(f)
+            self.souce_height = [x, y]
+            # self.check_ext_header(f, 0x0B, 80)
 
-        tag = read_byte(f)
-        assert tag == 0x01
-        version = read_byte(f)
+            tag = read_byte(f)
+            assert tag == 0x01
+            version = read_byte(f)
+        else:
+            assert tag == 11
+            version = tag
 
+        # uuids ???
+        # print("??", peek_data(f).encode('hex'))
         if version == 11:
             f.read(38)
         elif version == 15:
             something = read_u16le(f)
+        elif version == 9:
+            f.read(104)
+        elif version == 10:
+            # print(peek_data(f).encode('hex'))
+            f.read(57)
         else:
-            raise ValueError()
+            raise ValueError("unkown version 0x%02X %d" % (version,version))
 
 
     def check_version_tag(self, f, version):
@@ -451,20 +463,27 @@ class RGBADescriptor(DIDDescriptor):
 
         # print(self)
         # print('!!', peek_data(f).encode('hex'))
+        # print('!!', peek_data(f).encode('hex'))
+        # print(self.pixel_layout)
 
-        tag = read_byte(f)
-
-        if tag == 0x03:
-            return
-        elif tag == 0x01:
-            tag = read_byte(f)
-            assert tag == 0x03
-            version = read_byte(f)
-            assert version == 72
-            something = read_u32le(f)
-            version = read_byte(f)
-            assert version == 72
-            something = read_u32le(f)
-
-        tag = read_byte(f)
-        assert tag == 0x03
+        #TODO: look into remaining data
+        return
+        #
+        # tag = read_byte(f)
+        #
+        # if tag == 0x03:
+        #     return
+        #
+        # elif tag == 0x01:
+        #     tag = read_byte(f)
+        #     print(tag)
+        #     assert tag == 0x03
+        #     version = read_byte(f)
+        #     assert version == 72
+        #     something = read_u32le(f)
+        #     version = read_byte(f)
+        #     assert version == 72
+        #     something = read_u32le(f)
+        #
+        # tag = read_byte(f)
+        # assert tag == 0x03
