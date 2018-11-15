@@ -39,8 +39,8 @@ class Component(core.AVBObject):
         self.name = read_string(f)
         self.effect_id = read_string(f)
 
-        self.attributes = read_object_ref(self.root, f).value
-        self.session_ref = read_object_ref(self.root, f).value
+        self.attribute_ref = read_object_ref(self.root, f)
+        self.session_ref = read_object_ref(self.root, f)
 
         self.precomputed = read_u32le(f)
 
@@ -54,6 +54,8 @@ class Component(core.AVBObject):
         assert tag == 72
 
         self.param_list = read_object_ref(self.root, f)
+
+        self.length = 0
 
     @property
     def media_kind(self):
@@ -102,6 +104,19 @@ class Sequence(Component):
         for ref in self.component_refs:
             yield ref.value
 
+@utils.register_class
+class RepSet(Component):
+    class_id = 'RSET'
+    def read(self, f):
+        super(RepSet, self).read(f)
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x08
+
+        #TODO: rest
+
 class Clip(Component):
     def read(self, f):
         super(Clip, self).read(f)
@@ -139,7 +154,6 @@ class Timecode(Clip):
 @utils.register_class
 class Edgecode(Clip):
     class_id = 'ECCP'
-
 
 @utils.register_class
 class TrackRef(Clip):

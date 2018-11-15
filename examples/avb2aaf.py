@@ -1,3 +1,10 @@
+from __future__ import (
+    unicode_literals,
+    absolute_import,
+    print_function,
+    division,
+    )
+
 import avb
 import aaf2
 import sys
@@ -41,7 +48,6 @@ def convert_descriptor(d, aaf_file):
         descriptor['VideoLineMap'].value = d.line_map
         descriptor['SampleRate'].value = 0
 
-
     else:
         raise ValueError("unhandle descriptor")
 
@@ -50,6 +56,44 @@ def convert_descriptor(d, aaf_file):
 
     return descriptor
 
+def convert_component(aaf_file, segment):
+
+    if type(segment) is avb.components.SourceClip:
+        component = aaf_file.create.SourceClip()
+        component['SourceID'].value = segment.mob_id
+        component['StartTime'].value = segment.start_time
+        component['SourceMobSlotID'].value = segment.track_id
+
+    if type(segment) is avb.components.Sequence:
+        seq = aaf_file.create.Sequence()
+        for item in segment.components():
+            seq.components.append(convert_component(aaf_file, item))
+
+        component = seq
+
+    else:
+        component = aaf_file.create.Filler()
+
+    component.media_kind = segment.media_kind
+    component.length =  segment.length
+
+    return component
+
+def convert_slots(aaf_file, comp, mob):
+
+    slot_id = 1
+    for track in comp.tracks:
+        print(" ",track.segment)
+        if not track.segment.media_kind in ('picture', 'sound'):
+            continue
+        # print(track.segment.media_kind)
+
+        slot = aaf_file.create.TimelineMobSlot()
+        slot.slot_id = slot_id
+        slot_id += 1
+        mob.slots.append(slot)
+
+        slot.segment = convert_component(aaf_file, track.segment)
 
 def avb2aaf(avb_file, aaf_file):
 
@@ -67,13 +111,17 @@ def avb2aaf(avb_file, aaf_file):
         aaf_mob.mob_id = comp.mob_id
 
         aaf_file.content.mobs.append(aaf_mob)
-
+        print(aaf_mob)
+        convert_slots(aaf_file, comp, aaf_mob)
+        # aaf_file.save()
 
 def avb2aaf_main(path):
 
     with avb.open(path) as avb_file:
         with aaf2.open(path + ".aaf", 'w') as aaf_file:
             avb2aaf(avb_file, aaf_file)
+
+            # aaf_file.content.dump()
 
 
 

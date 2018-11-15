@@ -49,6 +49,9 @@ class TestChuckDB(unittest.TestCase):
         for chunk_path in iter_chunks("RGBA"):
             decode_chunk(chunk_path)
 
+    def test_rset_chunks(self):
+        for chunk_path in iter_chunks("RSET"):
+            decode_chunk(chunk_path)
 
 if __name__ == "__main__":
     unittest.main()
