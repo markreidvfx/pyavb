@@ -248,12 +248,12 @@ class DIDDescriptor(MediaFileDescriptor):
         if tag != 0x01:
             raise ValueError()
 
+        # print("??", peek_data(f).encode('hex'))
 
         tag = read_byte(f)
         if tag == 15:
             read_u16le(f)
             return
-
 
         if tag == 8:
             # valid
@@ -336,7 +336,7 @@ class DIDDescriptor(MediaFileDescriptor):
             assert tag == 0x01
             version = read_byte(f)
         else:
-            assert tag == 11
+            assert tag in (10, 11)
             version = tag
 
         # uuids ???

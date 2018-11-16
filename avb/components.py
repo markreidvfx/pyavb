@@ -74,7 +74,7 @@ class Component(core.AVBObject):
         elif self.media_kind_id == 6:
             return 'effectdata'
         elif self.media_kind_id == 7:
-            return 'descriptive meatadata'
+            return 'DescriptiveMetadata'
         else:
             return "unknown%d" % self.media_kind_id
 
@@ -155,6 +155,25 @@ class SourceClip(Clip):
 @utils.register_class
 class Timecode(Clip):
     class_id = b'TCCP'
+
+    def read(self, f):
+        super(Timecode, self).read(f)
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x01
+
+        # drop ??
+        self.flags = read_u32le(f)
+        self.fps = read_u16le(f)
+
+        f.read(6)
+
+        self.start = read_u32le(f)
+        tag = read_byte(f)
+
+        assert tag == 0x03
 
 @utils.register_class
 class Edgecode(Clip):

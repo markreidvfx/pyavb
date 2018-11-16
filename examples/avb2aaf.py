@@ -64,14 +64,23 @@ def convert_component(aaf_file, segment):
         component['StartTime'].value = segment.start_time
         component['SourceMobSlotID'].value = segment.track_id
 
-    if type(segment) is avb.components.Sequence:
+    elif type(segment) is avb.components.Sequence:
         seq = aaf_file.create.Sequence()
         for item in segment.components():
             seq.components.append(convert_component(aaf_file, item))
 
         component = seq
 
+    elif type(segment) is avb.components.Filler:
+        component = aaf_file.create.Filler()
+
+    elif type(segment) is avb.components.Timecode:
+        component = aaf_file.create.Timecode()
+        component['Start'].value = segment.start
+        component['FPS'].value = segment.fps
+
     else:
+        # raise Exception(str(segment))
         component = aaf_file.create.Filler()
 
     component.media_kind = segment.media_kind
@@ -79,16 +88,27 @@ def convert_component(aaf_file, segment):
 
     return component
 
+def nice_edit_rate(rate):
+    if rate == 24:
+        return "24/1"
+    elif rate ==  23.976:
+        return "24000/1001"
+    elif rate == 30:
+        return "30/1"
+
+    return "%d/%d" % (int(rate * 1000), 1000)
+
 def convert_slots(aaf_file, comp, mob):
 
     slot_id = 1
     for track in comp.tracks:
         print(" ",track.segment)
-        if not track.segment.media_kind in ('picture', 'sound'):
-            continue
+        # if not track.segment.media_kind in ('picture', 'sound'):
+        #     continue
         # print(track.segment.media_kind)
 
         slot = aaf_file.create.TimelineMobSlot()
+        slot.edit_rate = nice_edit_rate(track.segment.edit_rate)
         slot.slot_id = slot_id
         slot_id += 1
         mob.slots.append(slot)
@@ -109,6 +129,14 @@ def avb2aaf(avb_file, aaf_file):
 
         aaf_mob.name = comp.name
         aaf_mob.mob_id = comp.mob_id
+
+        # attr_dict = comp.attribute_ref.value or {}
+        # print(attr_dict)
+        # user_attr_ref = attr_dict.get("_USER", None)
+        # if user_attr_ref:
+        #     print("  ", user_attr_ref.value)
+
+        # aaf_mob.usage = comp.usage_code
 
         aaf_file.content.mobs.append(aaf_mob)
         print(aaf_mob)
