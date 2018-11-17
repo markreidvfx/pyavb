@@ -79,6 +79,19 @@ def convert_component(aaf_file, segment):
         component['Start'].value = segment.start
         component['FPS'].value = segment.fps
 
+    elif type(segment) is avb.components.Selector:
+        component = aaf_file.create.Selector()
+        selected = segment.selected
+        selected_clip = None
+        for i, item in enumerate(segment.components()):
+            clip =  convert_component(aaf_file, item)
+            if i == selected:
+                selected_clip =clip
+            else:
+                component['Alternates'].append(clip)
+        assert selected_clip
+        component['Selected'].value = selected_clip
+
     else:
         # raise Exception(str(segment))
         component = aaf_file.create.Filler()
@@ -128,6 +141,10 @@ def avb2aaf(avb_file, aaf_file):
             aaf_mob = aaf_file.create.CompositionMob()
 
         aaf_mob.name = comp.name
+        # if not aaf_mob.name:
+        #     print(comp.mob_id)
+            # raise Exception()
+
         aaf_mob.mob_id = comp.mob_id
 
         # attr_dict = comp.attribute_ref.value or {}

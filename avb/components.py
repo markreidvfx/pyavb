@@ -309,10 +309,29 @@ class TransistionEffect(Component):
 class PanVolumeEffect(Component):
     class_id = b'PVOL'
 
-# should inherent TrackGroup??
 @utils.register_class
-class Selector(Component):
+class Selector(TrackGroup):
     class_id = b'SLCT'
+
+    def read(self, f):
+        super(Selector, self).read(f)
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x01
+
+        something = read_byte(f)
+        self.selected = read_u16le(f)
+
+        assert self.selected < len(self.tracks)
+
+        tag = read_byte(f)
+        assert tag == 0x03
+
+    def components(self):
+        for track in self.tracks:
+            yield track.segment
 
 @utils.register_class
 class Composition(TrackGroup):
