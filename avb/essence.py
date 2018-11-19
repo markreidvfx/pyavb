@@ -20,6 +20,7 @@ from . utils import (
     read_u32le,
     read_s32le,
     read_s64le,
+    read_u64le,
     read_string,
     read_raw_uuid,
     reverse_str,
@@ -143,7 +144,6 @@ class PCMADescriptor(MediaFileDescriptor):
 
     def read(self, f):
         super(PCMADescriptor, self).read(f)
-        # print(peek_data(f).encode('hex'))
 
         tag = read_byte(f)
         version = read_byte(f)
@@ -151,25 +151,33 @@ class PCMADescriptor(MediaFileDescriptor):
         assert tag == 0x02
         assert version == 0x01
 
-        something = read_u16le(f)
+        self.channels = read_u16le(f)
         self.quantization_bits = read_u16le(f)
-        self.sample_rate = read_u32le(f)
-        something = read_u16le(f)
-        something = read_byte(f)
-        self.audio_ref_level = read_s8(f)
-        something = read_byte(f)
+        self.sample_rate = read_exp10_encoded_float(f)
 
-        self.block_align = read_u32le(f)
+        self.locked = read_bool(f)
+        self.audio_ref_level = read_s16le(f)
+        self.electro_spatial_formulation = read_u32le(f)
         self.dial_norm = read_u16le(f)
 
-        something = read_u32le(f)
-        something = read_u32le(f)
+        self.coding_format = read_u32le(f)
+        self.block_align = read_u32le(f)
 
-        something = read_u16le(f)
-
+        self.sequence_offset = read_u16le(f)
         self.average_bps = read_u32le(f)
+        self.has_peak_envelope_data = read_bool(f)
 
-        # read_object_ref(self.root, f)
+        self.peak_envelope_version = read_s32le(f)
+        self.peak_envelope_format = read_s32le(f)
+        self.points_per_peak_value = read_s32le(f)
+        self.peak_envelope_block_size = read_s32le(f)
+        self.peak_channel_count = read_s32le(f)
+        self.peak_frame_count = read_s32le(f)
+        self.peak_of_peaks_offset = read_u64le(f)
+        self.peak_envelope_timestamp = read_s32le(f)
+
+        tag = read_byte(f)
+        assert tag == 0x03
 
 @utils.register_class
 class DIDDescriptor(MediaFileDescriptor):
@@ -434,7 +442,6 @@ class RGBADescriptor(DIDDescriptor):
 
     def read(self, f):
         super(RGBADescriptor, self).read(f)
-
         tag = read_byte(f)
         version = read_byte(f)
 
@@ -461,29 +468,33 @@ class RGBADescriptor(DIDDescriptor):
         palette_size = read_u32le(f)
         assert palette_size == 0
 
-        # print(self)
-        # print('!!', peek_data(f).encode('hex'))
-        # print('!!', peek_data(f).encode('hex'))
-        # print(self.pixel_layout)
+        self.check_ext_header(f, 0x01, 77)
 
-        #TODO: look into remaining data
-        return
-        #
-        # tag = read_byte(f)
-        #
-        # if tag == 0x03:
-        #     return
-        #
-        # elif tag == 0x01:
-        #     tag = read_byte(f)
-        #     print(tag)
-        #     assert tag == 0x03
-        #     version = read_byte(f)
-        #     assert version == 72
-        #     something = read_u32le(f)
-        #     version = read_byte(f)
-        #     assert version == 72
-        #     something = read_u32le(f)
-        #
-        # tag = read_byte(f)
-        # assert tag == 0x03
+        self.offset_to_frames64 = read_u64le(f)
+        print(self.offset_to_frames64)
+
+        self.check_ext_header(f, 0x02, 66)
+        self.has_comp_min_ref = read_bool(f)
+
+        version = read_byte(f)
+        assert version == 72
+        self.comp_min_ref = read_u32le(f)
+
+        version = read_byte(f)
+        assert version == 66
+
+        self.has_comp_max_ref = read_bool(f)
+        version = read_byte(f)
+        assert version == 72
+        self.comp_max_ref = read_u32le(f)
+
+        self.check_ext_header(f, 0x03, 72)
+        self.alpha_min_ref = read_u32le(f)
+
+        version = read_byte(f)
+        assert version == 72
+
+        self.alpha_max_ref = read_u32le(f)
+
+        tag = read_byte(f)
+        assert tag == 0x03

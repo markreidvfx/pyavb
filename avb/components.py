@@ -301,7 +301,7 @@ class MotionEffect(TrackGroup):
 
 # should inherent TrackGroup??
 @utils.register_class
-class TransistionEffect(Component):
+class TransistionEffect(TrackGroup):
     class_id = b'TNFX'
 
 # should inherent TrackGroup??

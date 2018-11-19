@@ -45,3 +45,17 @@ def read_attributes(root, f):
 
     # print("read", result)
     return result
+
+def read_paramlist(root, f):
+    assert read_byte(f) == 0x02
+    assert read_byte(f) == 0x01
+
+    count = read_int32le(f)
+    items = []
+    for i in range(count):
+        ref = read_object_ref(root, f)
+        items.append(ref.resolve())
+
+    assert read_byte(f) == 0x03
+
+    return items

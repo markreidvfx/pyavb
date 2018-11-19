@@ -9,6 +9,17 @@ import avb
 import aaf2
 import sys
 
+
+def nice_edit_rate(rate):
+    if rate == 24:
+        return "24/1"
+    elif rate ==  23.976:
+        return "24000/1001"
+    elif rate == 30:
+        return "30/1"
+
+    return "%d/%d" % (int(rate * 1000), 1000)
+
 def convert_descriptor(d, aaf_file):
     descriptor = None
     if type(d) is avb.essence.MediaDescriptor:
@@ -23,8 +34,8 @@ def convert_descriptor(d, aaf_file):
         descriptor = aaf_file.create.PCMDescriptor()
         descriptor['AverageBPS'].value = d.average_bps
         descriptor['BlockAlign'].value = d.block_align
-        descriptor["SampleRate"].value = "{}/{}".format(d.sample_rate, 1)
-        descriptor["AudioSamplingRate"].value = "{}/{}".format(d.sample_rate, 1)
+        descriptor["SampleRate"].value = nice_edit_rate(d.sample_rate)
+        descriptor["AudioSamplingRate"].value = nice_edit_rate(d.sample_rate)
         descriptor["QuantizationBits"].value = d.quantization_bits
 
         descriptor["Channels"].value = 1
@@ -56,10 +67,24 @@ def convert_descriptor(d, aaf_file):
 
     return descriptor
 
+def check_source_clip(clip):
+    if clip.mob_id.int:
+        mob = clip.root.content.mob_dict[clip.mob_id]
+        source_track = None
+        for track in mob.tracks:
+            if track.index == clip.track_id:
+                source_track = track
+                break
+        assert source_track
+    else:
+        assert clip.track_id == 0
+
+
 def convert_component(aaf_file, segment):
 
     if type(segment) is avb.components.SourceClip:
         component = aaf_file.create.SourceClip()
+        check_source_clip(segment)
         component['SourceID'].value = segment.mob_id
         component['StartTime'].value = segment.start_time
         component['SourceMobSlotID'].value = segment.track_id
@@ -94,22 +119,13 @@ def convert_component(aaf_file, segment):
 
     else:
         # raise Exception(str(segment))
+        # print("??", segment)
         component = aaf_file.create.Filler()
 
     component.media_kind = segment.media_kind
     component.length =  segment.length
 
     return component
-
-def nice_edit_rate(rate):
-    if rate == 24:
-        return "24/1"
-    elif rate ==  23.976:
-        return "24000/1001"
-    elif rate == 30:
-        return "30/1"
-
-    return "%d/%d" % (int(rate * 1000), 1000)
 
 def convert_slots(aaf_file, comp, mob):
 
@@ -122,11 +138,13 @@ def convert_slots(aaf_file, comp, mob):
 
         slot = aaf_file.create.TimelineMobSlot()
         slot.edit_rate = nice_edit_rate(track.segment.edit_rate)
+
+        slot_id = track.index
         slot.slot_id = slot_id
-        slot_id += 1
         mob.slots.append(slot)
 
         slot.segment = convert_component(aaf_file, track.segment)
+        slot_id += 1
 
 def avb2aaf(avb_file, aaf_file):
 
@@ -164,6 +182,8 @@ def avb2aaf_main(path):
 
     with avb.open(path) as avb_file:
         with aaf2.open(path + ".aaf", 'w') as aaf_file:
+
+            avb_file.content.build_mob_dict()
             avb2aaf(avb_file, aaf_file)
 
             # aaf_file.content.dump()

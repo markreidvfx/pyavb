@@ -103,7 +103,6 @@ class Bin(core.AVBObject):
         # print "%04X-%04X" %(uid_high, uid_low)
 
         if version == 0x0e:
-
             object_count = read_u16le(f)
         else:
             #large bin size > max u16
@@ -155,6 +154,11 @@ class Bin(core.AVBObject):
 
         self.attributes = read_object_ref(self.root, f)
         # print(self.attributes)
+
+    def build_mob_dict(self):
+        self.mob_dict = {}
+        for comp in self.components:
+            self.mob_dict[comp.mob_id] = comp
 
     @property
     def components(self):

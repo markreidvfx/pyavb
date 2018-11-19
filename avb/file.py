@@ -10,6 +10,8 @@ import io
 import os
 import binascii
 
+from weakref import WeakValueDictionary
+
 from . attributes import read_attributes
 from . import utils
 from .utils import (
@@ -93,6 +95,8 @@ class AVBFile(object):
 
         self.chunks = [AVBChunk(self, b'OBJD', pos, f.tell() - pos)]
 
+        self.object_cache = WeakValueDictionary()
+
         for i in range(num_objects):
             class_id = read_fourcc(f)
             size = read_u32le(f)
@@ -109,6 +113,9 @@ class AVBFile(object):
         if index == 0:
             return None
 
+        if index in self.object_cache:
+            return self.object_cache[index]
+
         chunk = self.chunks[index]
         data = chunk.read()
 
@@ -120,6 +127,7 @@ class AVBFile(object):
             object_instance = obj_class(self)
             try:
                 object_instance.read(io.BytesIO(data))
+                self.object_cache[index] = object_instance
                 return object_instance
             except:
                 print(chunk.class_id)
@@ -130,6 +138,11 @@ class AVBFile(object):
             print(chunk.class_id)
             print(chunk.hex())
             raise NotImplementedError(chunk.class_id)
+
+    def iter_class_ids(self, class_id_list):
+        for i, chunk in enumerate(self.chunks):
+            if chunk.class_id in class_id_list:
+                yield self.read_object(i)
 
 
     def close(self):
