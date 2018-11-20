@@ -468,27 +468,39 @@ class RGBADescriptor(DIDDescriptor):
         palette_size = read_u32le(f)
         assert palette_size == 0
 
-        self.check_ext_header(f, 0x01, 77)
+        tag = read_byte(f)
+        assert tag == 0x01
+        tag = read_byte(f)
 
-        self.offset_to_frames64 = read_u64le(f)
-        print(self.offset_to_frames64)
+        if tag == 0x01:
+            version = read_byte(f)
+            assert version == 77
 
-        self.check_ext_header(f, 0x02, 66)
-        self.has_comp_min_ref = read_bool(f)
+            self.offset_to_frames64 = read_u64le(f)
+            print(self.offset_to_frames64)
 
-        version = read_byte(f)
-        assert version == 72
-        self.comp_min_ref = read_u32le(f)
+            self.check_ext_header(f, 0x02, 66)
+            self.has_comp_min_ref = read_bool(f)
 
-        version = read_byte(f)
-        assert version == 66
+            version = read_byte(f)
+            assert version == 72
+            self.comp_min_ref = read_u32le(f)
 
-        self.has_comp_max_ref = read_bool(f)
-        version = read_byte(f)
-        assert version == 72
-        self.comp_max_ref = read_u32le(f)
+            version = read_byte(f)
+            assert version == 66
 
-        self.check_ext_header(f, 0x03, 72)
+            self.has_comp_max_ref = read_bool(f)
+            version = read_byte(f)
+            assert version == 72
+            self.comp_max_ref = read_u32le(f)
+
+            self.check_ext_header(f, 0x03, 72)
+        else:
+            assert tag == 0x03
+            version = read_byte(f)
+            assert version == 72
+
+
         self.alpha_min_ref = read_u32le(f)
 
         version = read_byte(f)
