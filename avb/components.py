@@ -10,6 +10,8 @@ from . import utils
 
 from . utils import (
     read_byte,
+    read_s8,
+    read_bool,
     read_s16le,
     read_u16le,
     read_u32le,
@@ -31,8 +33,9 @@ class Component(core.AVBObject):
         assert tag == 0x02
         assert version == 0x03
 
-        l_bob = read_u32le(f)
-        r_bob = read_u32le(f)
+        # bob == bytes of binary or bag of bits?
+        self.left_bob =  read_object_ref(self.root, f)
+        self.right_bob =  read_object_ref(self.root, f)
 
         self.media_kind_id = read_s16le(f)
         self.edit_rate = read_exp10_encoded_float(f)
@@ -42,7 +45,7 @@ class Component(core.AVBObject):
         self.attribute_ref = read_object_ref(self.root, f)
         self.session_ref = read_object_ref(self.root, f)
 
-        self.precomputed = read_u32le(f)
+        self.precomputed = read_object_ref(self.root, f)
 
         tag = read_byte(f)
         version = read_byte(f)
@@ -168,6 +171,7 @@ class Timecode(Clip):
         self.flags = read_u32le(f)
         self.fps = read_u16le(f)
 
+        # unused
         f.read(6)
 
         self.start = read_u32le(f)
@@ -178,6 +182,8 @@ class Timecode(Clip):
 @utils.register_class
 class Edgecode(Clip):
     class_id = b'ECCP'
+    def read(self, f):
+        super(Edgecode, self).read(f)
 
 @utils.register_class
 class TrackRef(Clip):
@@ -294,6 +300,42 @@ class CaptureMask(TrackGroup):
 @utils.register_class
 class TrackEffect(TrackGroup):
     class_id = b'TKFX'
+    def read(self, f):
+        super(TrackEffect, self).read(f)
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x06
+
+        self.left_length = read_s32le(f)
+        self.right_length = read_s32le(f)
+
+        self.info_version = read_s16le(f)
+        self.info_current = read_s32le(f)
+        self.info_smooth = read_s32le(f)
+        self.info_color_item = read_s16le(f)
+        self.info_quality = read_s16le(f)
+        self.info_is_reversed = read_s8(f)
+        self.info_aspect_on = read_bool(f)
+
+        self.keyframes = read_object_ref(self.root, f)
+        self.info_force_software = read_bool(f)
+        self.info_never_hardware = read_bool(f)
+
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x01
+        assert version == 0x02
+
+        version = read_byte(f)
+        assert version == 72
+        self.trackman = read_object_ref(self.root, f)
+
+        tag = read_byte(f)
+
+        assert tag == 0x03
 
 @utils.register_class
 class MotionEffect(TrackGroup):
@@ -303,6 +345,51 @@ class MotionEffect(TrackGroup):
 @utils.register_class
 class TransistionEffect(TrackGroup):
     class_id = b'TNFX'
+    def read(self, f):
+        super(TransistionEffect, self).read(f)
+
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x01
+
+        self.cutpoint = read_s32le(f)
+
+        # the rest is the same as TKFX
+        tag = read_byte(f)
+        version = read_byte(f)
+        assert tag == 0x02
+        assert version == 0x05
+
+        self.left_length = read_s32le(f)
+        self.right_length = read_s32le(f)
+
+        self.info_version = read_s16le(f)
+        self.info_current = read_s32le(f)
+        self.info_smooth = read_s32le(f)
+        self.info_color_item = read_s16le(f)
+        self.info_quality = read_s16le(f)
+        self.info_is_reversed = read_s8(f)
+        self.info_aspect_on = read_bool(f)
+
+        self.keyframes = read_object_ref(self.root, f)
+        self.info_force_software = read_bool(f)
+        self.info_never_hardware = read_bool(f)
+
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x01
+        assert version == 0x01
+
+        version = read_byte(f)
+        assert version == 72
+        self.trackman = read_object_ref(self.root, f)
+
+        tag = read_byte(f)
+
+        assert tag == 0x03
 
 # should inherent TrackGroup??
 @utils.register_class
