@@ -211,6 +211,7 @@ class Track(object):
     def __init__(self):
         self.flags = None
         self.index = None
+        self.control_code = None
         self.lock_number = None
         self.refs = []
 
@@ -247,9 +248,19 @@ class TrackGroup(Component):
 
         has_tracks = True
         for i in range(track_count):
+            # print("hh", peek_data(f).encode("hex"))
             track = Track()
-
+            pos = f.tell()
             track.flags = read_u16le(f)
+
+            # PVOL has a CTRL ref
+            if track.flags in (36, ):
+                ref = read_object_ref(self.root, f)
+                track.refs.append(ref)
+                track.control_code = read_s16le(f)
+                self.tracks.append(track)
+                continue
+
             track.index = i + 1
             if track.flags != 4:
                 track.index = read_s16le(f)
@@ -259,10 +270,12 @@ class TrackGroup(Component):
                 break
 
             # print "{0:016b}".format(track.flags)
-            # print "index: %04d" % track.index, "flags 0x%04X" % track.flags, track.flags
+            # print( str(self.class_id), "index: %04d" % track.index, "flags 0x%04X" % track.flags, track.flags)
             ref_count = 1
 
-            if track.flags in (13, 21, 517,):
+            if track.flags in (4, 5):
+                ref_count = 1
+            elif track.flags in (13, 21, 517,):
                 ref_count = 2
             elif track.flags in (29, 519, 525, 533,  ):
                 ref_count = 3
@@ -270,13 +283,12 @@ class TrackGroup(Component):
                 ref_count = 4
             elif track.flags in (543,):
                 ref_count = 5
+            else:
+                raise ValueError("unkown flag %d %s" % (track.flags, str(self.class_id)))
 
             for j in range(ref_count):
                 ref = read_object_ref(self.root, f)
                 track.refs.append(ref)
-
-            # for ref in track.refs:
-            #     print "  ", ref
 
             self.tracks.append(track)
 
@@ -333,9 +345,25 @@ class TrackEffect(TrackGroup):
         assert version == 72
         self.trackman = read_object_ref(self.root, f)
 
-        tag = read_byte(f)
 
-        assert tag == 0x03
+
+        if self.class_id is b'TKFX':
+            tag = read_byte(f)
+            assert tag == 0x03
+
+
+@utils.register_class
+class PanVolumeEffect(TrackEffect):
+    class_id = b'PVOL'
+    def read(self, f):
+        super(PanVolumeEffect, self).read(f)
+        print(peek_data(f).encode("hex"))
+
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x05
 
 @utils.register_class
 class MotionEffect(TrackGroup):
@@ -390,11 +418,6 @@ class TransistionEffect(TrackGroup):
         tag = read_byte(f)
 
         assert tag == 0x03
-
-# should inherent TrackGroup??
-@utils.register_class
-class PanVolumeEffect(Component):
-    class_id = b'PVOL'
 
 @utils.register_class
 class Selector(TrackGroup):
