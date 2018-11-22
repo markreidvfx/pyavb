@@ -339,32 +339,32 @@ class DIDDescriptor(MediaFileDescriptor):
                 x = read_s32le(f)
                 self.check_version_tag(f, 71)
                 y = read_s32le(f)
-                self.something = [x, y]
+                self.framing_x = [x, y]
 
                 self.check_version_tag(f, 71)
                 x = read_s32le(f)
                 self.check_version_tag(f, 71)
                 y = read_s32le(f)
-                self.something = [x, y]
+                self.framing_y = [x, y]
 
                 self.check_version_tag(f, 71)
                 x = read_s32le(f)
                 self.check_version_tag(f, 71)
                 y = read_s32le(f)
-                self.something = [x, y]
+                self.framing_width = [x, y]
 
                 self.check_version_tag(f, 71)
                 x = read_s32le(f)
                 self.check_version_tag(f, 71)
                 y = read_s32le(f)
-                self.something = [x, y]
+                self.framing_height = [x, y]
 
                 self.check_version_tag(f, 71)
-                something = read_s32le(f)
+                self.reformatting_option = read_s32le(f)
 
             elif tag == 10:
                 self.check_version_tag(f, 80)
-                print(read_raw_uuid(f))
+                self.transfer_characteristic = read_raw_uuid(f)
             elif tag == 11:
                 self.check_version_tag(f, 80)
                 self.color_primaries =  read_raw_uuid(f)
@@ -373,10 +373,10 @@ class DIDDescriptor(MediaFileDescriptor):
 
             elif tag == 15:
                 self.check_version_tag(f, 66)
-                self.FrameSampleSizeHasBeenCheckedWithMapper = read_bool(f)
+                self.frame_sample_size_has_been_checked_with_mapper = read_bool(f)
 
             else:
-                raise ValueError("unkown tag 0x%02X %d" % (tag,tag))
+                raise ValueError("unknown tag 0x%02X %d" % (tag,tag))
 
 
             pos = f.tell()
@@ -394,6 +394,9 @@ class DIDDescriptor(MediaFileDescriptor):
         tag = read_byte(f)
         assert tag == 0x01
         tag = read_byte(f)
+        if tag != tag_mark:
+            print(tag, '!=', tag_mark)
+            raise Exception()
         assert tag == tag_mark
         version = read_byte(f)
         assert version == version_mark
@@ -433,7 +436,7 @@ class CDCIDescriptor(DIDDescriptor):
         version = read_byte(f)
         assert version == 72
 
-        something1 = read_u32le(f)
+        self.alpha_sampled_width = read_u32le(f)
 
         tag = read_byte(f)
         assert tag == 0x01
@@ -442,7 +445,7 @@ class CDCIDescriptor(DIDDescriptor):
         version = read_byte(f)
         assert version == 72
 
-        something2 = read_u32le(f)
+        self.ignore_bw_ref_level_and_color_range = read_u32le(f)
 
         tag = read_byte(f)
         assert tag == 0x03
@@ -494,43 +497,56 @@ class RGBADescriptor(DIDDescriptor):
 
         tag = read_byte(f)
         assert tag == 0x01
-        tag = read_byte(f)
 
-        if tag == 0x01:
-            version = read_byte(f)
-            assert version == 77
+        while True:
+            # print("--", peek_data(f).encode('hex'))
+            tag = read_byte(f)
+            if tag == 0x01:
+                version = read_byte(f)
+                assert version == 77
 
-            self.offset_to_frames64 = read_u64le(f)
-            print(self.offset_to_frames64)
+                self.offset_to_frames64 = read_u64le(f)
 
-            self.check_ext_header(f, 0x02, 66)
-            self.has_comp_min_ref = read_bool(f)
+            elif tag == 0x02:
+                version = read_byte(f)
+                assert version == 66
 
-            version = read_byte(f)
-            assert version == 72
-            self.comp_min_ref = read_u32le(f)
+                self.has_comp_min_ref = read_bool(f)
 
-            version = read_byte(f)
-            assert version == 66
+                version = read_byte(f)
+                assert version == 72
 
-            self.has_comp_max_ref = read_bool(f)
-            version = read_byte(f)
-            assert version == 72
-            self.comp_max_ref = read_u32le(f)
+                self.comp_min_ref = read_u32le(f)
 
-            self.check_ext_header(f, 0x03, 72)
-        else:
-            assert tag == 0x03
-            version = read_byte(f)
-            assert version == 72
+                version = read_byte(f)
+                assert version == 66
 
+                self.has_comp_max_ref = read_bool(f)
 
-        self.alpha_min_ref = read_u32le(f)
+                version = read_byte(f)
+                assert version == 72
 
-        version = read_byte(f)
-        assert version == 72
+                self.comp_max_ref = read_u32le(f)
 
-        self.alpha_max_ref = read_u32le(f)
+            elif tag == 0x03:
+                version = read_byte(f)
+                assert version == 72
+
+                self.alpha_min_ref = read_u32le(f)
+
+                version = read_byte(f)
+                assert version == 72
+
+                self.alpha_max_ref = read_u32le(f)
+
+            else:
+                raise ValueError("unknown tag 0x%02X %d" % (tag,tag))
+
+            pos = f.tell()
+            tag = read_byte(f)
+            if tag != 0x01:
+                f.seek(pos)
+                break
 
         tag = read_byte(f)
         assert tag == 0x03

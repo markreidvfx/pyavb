@@ -34,6 +34,7 @@ def decode_chunk(path):
             object_instance = obj_class(m)
             object_instance.read(io.BytesIO(chunk.read()))
         except:
+            print(path)
             print(chunk.class_id)
             print(chunk.hex())
             raise
@@ -52,6 +53,19 @@ class TestChuckDB(unittest.TestCase):
     def test_rset_chunks(self):
         for chunk_path in iter_chunks("RSET"):
             decode_chunk(chunk_path)
+
+    def test_rept_chunks(self):
+        for chunk_path in iter_chunks("REPT"):
+            decode_chunk(chunk_path)
+
+    def test_pvol_chunks(self):
+        for chunk_path in iter_chunks("PVOL"):
+            decode_chunk(chunk_path)
+
+    def test_slct_chunks(self):
+        for chunk_path in iter_chunks("SLCT"):
+            decode_chunk(chunk_path)
+
 
 if __name__ == "__main__":
     unittest.main()

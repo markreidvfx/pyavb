@@ -212,6 +212,7 @@ class Track(object):
         self.flags = None
         self.index = None
         self.control_code = None
+        self.control_sub_code = None
         self.lock_number = None
         self.refs = []
 
@@ -233,37 +234,39 @@ class TrackGroup(Component):
         assert tag == 0x02
         assert version == 0x08
 
-        mode = read_byte(f)
+        self.mc_mode = read_byte(f)
         self.length = read_s32le(f)
-        num_scalars = read_s32le(f)
-        # print mode, self.length, num_scalars
-
-        # print peek_data(f).encode("hex")
+        self.num_scalars = read_s32le(f)
 
         track_count = read_s32le(f)
-        # print  "track count :", track_count, 'pos:', f.tell()
         self.tracks = []
 
-        # really annoying tracks can have differnt lenghts!!
-
+        # really annoying, tracks can have variable lengths!!
         has_tracks = True
         for i in range(track_count):
-            # print("hh", peek_data(f).encode("hex"))
+            # print(peek_data(f).encode("hex"))
             track = Track()
-            pos = f.tell()
             track.flags = read_u16le(f)
 
-            # PVOL has a CTRL ref
-            if track.flags in (36, ):
+            # PVOL has a different track structure
+            # contains ref to CTRL and might have 1 or 2 control vars
+            if track.flags in (36, 100,):
                 ref = read_object_ref(self.root, f)
                 track.refs.append(ref)
+                track.index = i + 1
                 track.control_code = read_s16le(f)
+                if track.flags in (100, ):
+                    track.control_sub_code = read_s16le(f)
                 self.tracks.append(track)
                 continue
 
             track.index = i + 1
-            if track.flags != 4:
+
+            # these flags don't have track label
+            # slct_01.chunk 
+            if track.flags not in (4, 12):
                 track.index = read_s16le(f)
+
 
             if track.flags == 0 and track.index == 0:
                 has_tracks = False
@@ -275,7 +278,7 @@ class TrackGroup(Component):
 
             if track.flags in (4, 5):
                 ref_count = 1
-            elif track.flags in (13, 21, 517,):
+            elif track.flags in (12, 13, 21, 517,):
                 ref_count = 2
             elif track.flags in (29, 519, 525, 533,  ):
                 ref_count = 3
@@ -284,7 +287,7 @@ class TrackGroup(Component):
             elif track.flags in (543,):
                 ref_count = 5
             else:
-                raise ValueError("unkown flag %d %s" % (track.flags, str(self.class_id)))
+                raise ValueError("%s: unknown track flag %d" % (str(self.class_id), track.flags))
 
             for j in range(ref_count):
                 ref = read_object_ref(self.root, f)
@@ -308,6 +311,11 @@ class TrackGroup(Component):
 @utils.register_class
 class CaptureMask(TrackGroup):
     class_id = b'MASK'
+
+# Inherits WARP Class?
+@utils.register_class
+class Repeat(TrackGroup):
+    class_id = b'REPT'
 
 @utils.register_class
 class TrackEffect(TrackGroup):
@@ -357,7 +365,7 @@ class PanVolumeEffect(TrackEffect):
     class_id = b'PVOL'
     def read(self, f):
         super(PanVolumeEffect, self).read(f)
-        print(peek_data(f).encode("hex"))
+        # print(peek_data(f).encode("hex"))
 
         tag = read_byte(f)
         version = read_byte(f)
@@ -369,7 +377,6 @@ class PanVolumeEffect(TrackEffect):
 class MotionEffect(TrackGroup):
     class_id = b'SPED'
 
-# should inherent TrackGroup??
 @utils.register_class
 class TransistionEffect(TrackGroup):
     class_id = b'TNFX'
