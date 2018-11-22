@@ -422,6 +422,21 @@ class TimeWarp(TrackGroup):
 @utils.register_class
 class CaptureMask(TimeWarp):
     class_id = b'MASK'
+    def read(self, f):
+        super(CaptureMask, self).read(f)
+        # print(peek_data(f).encode("hex"))
+
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x01
+
+        self.is_double = read_bool(f)
+        self.mask_bits = read_u32le(f)
+
+        tag = read_byte(f)
+        assert tag == 0x03
 
 @utils.register_class
 class MotionEffect(TimeWarp):
