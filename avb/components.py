@@ -172,10 +172,40 @@ class Edgecode(Clip):
     class_id = b'ECCP'
     def read(self, f):
         super(Edgecode, self).read(f)
+        # print("??", peek_data(f).encode("hex"))s
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x01
+
+        self.header = bytearray(f.read(8))
+        self.film_kind = read_byte(f)
+        self.code_format =  read_byte(f)
+        self.base_perf = read_u16le(f)
+        unused_a  = read_u32le(f)
+        self.start_ec = read_s32le(f)
+
+        tag = read_byte(f)
+        assert tag == 0x03
 
 @utils.register_class
 class TrackRef(Clip):
     class_id = b'TRKR'
+    def read(self, f):
+        super(TrackRef, self).read(f)
+        # print(peek_data(f).encode("hex"))
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x01
+
+        self.relative_scope = read_s16le(f)
+        self.relative_track = read_s16le(f)
+
+        tag = read_byte(f)
+        assert tag == 0x03
 
 @utils.register_class
 class ParamClip(Clip):
