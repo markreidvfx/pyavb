@@ -17,6 +17,7 @@ from . utils import (
     read_u32le,
     read_s32le,
     read_string,
+    read_doublele,
     read_exp10_encoded_float,
     read_object_ref,
     read_datetime,
@@ -340,7 +341,7 @@ class PanVolumeEffect(TrackEffect):
     class_id = b'PVOL'
     def read(self, f):
         super(PanVolumeEffect, self).read(f)
-        print(peek_data(f).encode("hex"))
+        # print(peek_data(f).encode("hex"))
 
         tag = read_byte(f)
         version = read_byte(f)
@@ -382,7 +383,7 @@ class RepSet(TrackGroup):
     def read(self, f):
         super(RepSet, self).read(f)
 
-        print(peek_data(f).encode("hex"))
+        # print(peek_data(f).encode("hex"))
         tag = read_byte(f)
         version = read_byte(f)
 
@@ -426,7 +427,52 @@ class CaptureMask(TimeWarp):
 class MotionEffect(TimeWarp):
     class_id = b'SPED'
     def read(self, f):
-        super(TimeWarp, self).read(f)
+        super(MotionEffect, self).read(f)
+        # print(peek_data(f).encode("hex"))
+
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x03
+
+        num = read_s32le(f)
+        den = read_s32le(f)
+        self.rate = [num, den]
+
+        tag = read_byte(f)
+        assert tag == 0x01
+
+        tag = read_byte(f)
+        assert tag == 0x01
+
+        version = read_byte(f)
+        assert version == 75
+        self.offset_adjust = read_doublele(f)
+
+        tag = read_byte(f)
+        assert tag == 0x01
+
+        tag = read_byte(f)
+        assert tag == 0x02
+
+        version = read_byte(f)
+        assert version == 72
+        self.source_param_list = read_object_ref(self.root, f)
+
+        tag = read_byte(f)
+        assert tag == 0x01
+
+        tag = read_byte(f)
+        assert tag == 0x03
+
+        version = read_byte(f)
+        assert version == 66
+
+        self.new_source_calculation = read_bool(f)
+
+        tag = read_byte(f)
+        assert tag == 0x03
 
 @utils.register_class
 class Repeat(TimeWarp):

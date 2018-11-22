@@ -86,6 +86,9 @@ def read_s64le(f):
 def read_u64le(f):
     return struct.unpack("<Q", f.read(8))[0]
 
+def read_doublele(f):
+    return struct.unpack("<d", f.read(8))[0]
+
 def read_bool(f):
     return read_byte(f) == b'\x00'
 
