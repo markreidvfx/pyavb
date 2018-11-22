@@ -263,7 +263,7 @@ class TrackGroup(Component):
             track.index = i + 1
 
             # these flags don't have track label
-            # slct_01.chunk 
+            # slct_01.chunk
             if track.flags not in (4, 12):
                 track.index = read_s16le(f)
 
@@ -309,15 +309,6 @@ class TrackGroup(Component):
                 self.tracks[i].lock_number = lock
 
 @utils.register_class
-class CaptureMask(TrackGroup):
-    class_id = b'MASK'
-
-# Inherits WARP Class?
-@utils.register_class
-class Repeat(TrackGroup):
-    class_id = b'REPT'
-
-@utils.register_class
 class TrackEffect(TrackGroup):
     class_id = b'TKFX'
     def read(self, f):
@@ -353,12 +344,9 @@ class TrackEffect(TrackGroup):
         assert version == 72
         self.trackman = read_object_ref(self.root, f)
 
-
-
         if self.class_id is b'TKFX':
             tag = read_byte(f)
             assert tag == 0x03
-
 
 @utils.register_class
 class PanVolumeEffect(TrackEffect):
@@ -373,9 +361,43 @@ class PanVolumeEffect(TrackEffect):
         assert tag == 0x02
         assert version == 0x05
 
+#abstract?
+class TimeWarp(TrackGroup):
+    class_id = b'WARP'
+
+    def read(self, f):
+        super(TimeWarp, self).read(f)
+
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x02
+        self.phase_offset = read_s32le(f)
+
 @utils.register_class
-class MotionEffect(TrackGroup):
+class CaptureMask(TimeWarp):
+    class_id = b'MASK'
+
+@utils.register_class
+class MotionEffect(TimeWarp):
     class_id = b'SPED'
+    def read(self, f):
+        super(TimeWarp, self).read(f)
+
+@utils.register_class
+class Repeat(TimeWarp):
+    class_id = b'REPT'
+    def read(self, f):
+        super(Repeat, self).read(f)
+        tag = read_byte(f)
+        version = read_byte(f)
+        assert tag == 0x02
+        assert version == 0x01
+
+        tag = read_byte(f)
+        assert tag == 0x03
+
 
 @utils.register_class
 class TransistionEffect(TrackGroup):
