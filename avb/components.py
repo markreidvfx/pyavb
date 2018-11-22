@@ -107,19 +107,6 @@ class Sequence(Component):
         for ref in self.component_refs:
             yield ref.value
 
-@utils.register_class
-class RepSet(Component):
-    class_id = b'RSET'
-    def read(self, f):
-        super(RepSet, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
-
-        assert tag == 0x02
-        assert version == 0x08
-
-        #TODO: rest
-
 class Clip(Component):
     def read(self, f):
         super(Clip, self).read(f)
@@ -353,13 +340,69 @@ class PanVolumeEffect(TrackEffect):
     class_id = b'PVOL'
     def read(self, f):
         super(PanVolumeEffect, self).read(f)
-        # print(peek_data(f).encode("hex"))
+        print(peek_data(f).encode("hex"))
 
         tag = read_byte(f)
         version = read_byte(f)
 
         assert tag == 0x02
         assert version == 0x05
+
+        self.level = read_s32le(f)
+        self.pan = read_s32le(f)
+
+        self.suppress_validation = read_bool(f)
+        self.level_set = read_bool(f)
+        self.pan_set = read_bool(f)
+
+        tag = read_byte(f)
+        assert tag == 0x01
+        tag = read_byte(f)
+        assert tag == 0x01
+
+        version = read_byte(f)
+        assert version == 71
+        self.does_support_seperate_clip_gain = read_s32le(f)
+
+        tag = read_byte(f)
+        assert tag == 0x01
+        tag = read_byte(f)
+        assert tag == 0x02
+
+        version = read_byte(f)
+        assert version == 71
+        self.is_trim_gain_effect = read_s32le(f)
+
+        tag = read_byte(f)
+        assert tag == 0x03
+
+@utils.register_class
+class RepSet(TrackGroup):
+    class_id = b'RSET'
+    def read(self, f):
+        super(RepSet, self).read(f)
+
+        print(peek_data(f).encode("hex"))
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x01
+
+        # extension
+        tag = read_byte(f)
+        assert tag == 0x01
+
+        tag = read_byte(f)
+        assert tag == 0x01
+
+        version = read_byte(f)
+        assert version == 71
+
+        self.rep_set_type = read_s32le(f)
+
+        tag = read_byte(f)
+        assert tag == 0x03
 
 #abstract?
 class TimeWarp(TrackGroup):
