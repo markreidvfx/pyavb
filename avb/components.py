@@ -451,7 +451,6 @@ class PanVolumeEffect(TrackEffect):
     class_id = b'PVOL'
     def read(self, f):
         super(PanVolumeEffect, self).read(f)
-        # print(peek_data(f).encode("hex"))
 
         tag = read_byte(f)
         version = read_byte(f)
@@ -478,6 +477,43 @@ class PanVolumeEffect(TrackEffect):
 
         tag = read_byte(f)
         assert tag == 0x03
+
+class EqualizerBand(object):
+    def __init__(self):
+        self.type = None
+        self.freq = None
+        self.gain = None
+        self.q = None
+        self.enable = None
+
+@utils.register_class
+class EqualizerMultiBand(TrackEffect):
+    class_id = b'EQMB'
+
+    def read(self, f):
+        super(EqualizerMultiBand, self).read(f)
+        print(peek_data(f).encode("hex"))
+
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x05)
+
+        num_bands = read_s32le(f)
+        assert num_bands >= 0
+
+        self.bands = []
+        for i in range(num_bands):
+            band = EqualizerBand()
+            band.type = read_s32le(f)
+            band.freq = read_s32le(f)
+            band.gain = read_s32le(f)
+            band.q = read_s32le(f)
+            band.enable = read_bool(f)
+            self.bands.append(band)
+
+        self.effect_enable = read_bool(f)
+        self.filter_name = read_string(f)
+
+        read_assert_tag(f, 0x03)
 
 @utils.register_class
 class RepSet(TrackGroup):
