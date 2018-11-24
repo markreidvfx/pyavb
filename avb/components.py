@@ -492,7 +492,7 @@ class EqualizerMultiBand(TrackEffect):
 
     def read(self, f):
         super(EqualizerMultiBand, self).read(f)
-        print(peek_data(f).encode("hex"))
+        # print(peek_data(f).encode("hex"))
 
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x05)

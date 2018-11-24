@@ -108,6 +108,8 @@ class MediaDescriptor(core.AVBObject):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
+        if self.class_id == b'MDES':
+            read_assert_tag(f, 0x03)
 
 @utils.register_class
 class TapeDescriptor(MediaDescriptor):
