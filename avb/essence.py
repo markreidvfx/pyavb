@@ -28,6 +28,7 @@ from . utils import (
     read_exp10_encoded_float,
     read_object_ref,
     read_datetime,
+    iter_ext,
     peek_data
 )
 
@@ -251,12 +252,7 @@ class DIDDescriptor(MediaFileDescriptor):
         self.check_ext_header(f, 0x05, 71)
         self.offset_to_rle_frame_index = read_s32le(f)
 
-        tag = read_byte(f)
-        assert tag == 0x01
-
-        while True:
-            # print("??", peek_data(f).encode('hex'))
-            tag =  read_byte(f)
+        for tag in iter_ext(f):
             if tag == 0x08:
                 # valid
                 self.check_version_tag(f, 71)
@@ -378,14 +374,6 @@ class DIDDescriptor(MediaFileDescriptor):
             else:
                 raise ValueError("unknown tag 0x%02X %d" % (tag,tag))
 
-
-            pos = f.tell()
-            tag = read_byte(f)
-            if tag != 0x01:
-                f.seek(pos)
-                break
-
-
     def check_version_tag(self, f, version):
         version_mark = read_byte(f)
         assert version_mark == version
@@ -425,27 +413,18 @@ class CDCIDescriptor(DIDDescriptor):
 
         self.offset_to_frames64 = read_s64le(f)
 
-        tag = read_byte(f)
-        if tag == 0x03:
-            return
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                version = read_byte(f)
+                assert version == 72
+                self.alpha_sampled_width = read_u32le(f)
 
-        assert tag == 0x01
-        tag = read_byte(f)
-        assert tag == 0x01
-
-        version = read_byte(f)
-        assert version == 72
-
-        self.alpha_sampled_width = read_u32le(f)
-
-        tag = read_byte(f)
-        assert tag == 0x01
-        tag = read_byte(f)
-        assert tag == 0x02
-        version = read_byte(f)
-        assert version == 72
-
-        self.ignore_bw_ref_level_and_color_range = read_u32le(f)
+            elif tag == 0x02:
+                version = read_byte(f)
+                assert version == 72
+                self.ignore_bw_ref_level_and_color_range = read_u32le(f)
+            else:
+                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         tag = read_byte(f)
         assert tag == 0x03
@@ -495,12 +474,7 @@ class RGBADescriptor(DIDDescriptor):
         palette_size = read_u32le(f)
         assert palette_size == 0
 
-        tag = read_byte(f)
-        assert tag == 0x01
-
-        while True:
-            # print("--", peek_data(f).encode('hex'))
-            tag = read_byte(f)
+        for tag in iter_ext(f):
             if tag == 0x01:
                 version = read_byte(f)
                 assert version == 77
@@ -541,12 +515,6 @@ class RGBADescriptor(DIDDescriptor):
 
             else:
                 raise ValueError("unknown tag 0x%02X %d" % (tag,tag))
-
-            pos = f.tell()
-            tag = read_byte(f)
-            if tag != 0x01:
-                f.seek(pos)
-                break
 
         tag = read_byte(f)
         assert tag == 0x03

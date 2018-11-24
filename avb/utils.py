@@ -194,6 +194,17 @@ def read_rgb_color(f):
 
     return [r,g,b]
 
+def iter_ext(f):
+    while True:
+        pos = f.tell()
+        tag = read_byte(f)
+        if tag != 0x01:
+            f.seek(pos)
+            break
+
+        tag = read_byte(f)
+        yield tag
+
 def peek_data(f, size=None):
     pos = f.tell()
     if size:
