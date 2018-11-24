@@ -57,7 +57,7 @@ class Component(core.AVBObject):
                 read_assert_tag(f, 72)
                 self.param_list = read_object_ref(self.root, f)
             else:
-                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
 
         self.length = 0
@@ -375,7 +375,7 @@ class TrackEffect(TrackGroup):
                 read_assert_tag(f, 72)
                 self.trackman = read_object_ref(self.root, f)
             else:
-                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         if self.class_id is b'TKFX':
             tag = read_byte(f)
@@ -409,7 +409,7 @@ class PanVolumeEffect(TrackEffect):
                 read_assert_tag(f, 71)
                 self.is_trim_gain_effect = read_s32le(f)
             else:
-                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         tag = read_byte(f)
         assert tag == 0x03
@@ -432,7 +432,7 @@ class RepSet(TrackGroup):
                 read_assert_tag(f, 71)
                 self.rep_set_type = read_s32le(f)
             else:
-                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         tag = read_byte(f)
         assert tag == 0x03
@@ -499,7 +499,7 @@ class MotionEffect(TimeWarp):
                 read_assert_tag(f, 66)
                 self.new_source_calculation = read_bool(f)
             else:
-                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         tag = read_byte(f)
         assert tag == 0x03
@@ -558,7 +558,7 @@ class TransistionEffect(TrackGroup):
                 read_assert_tag(f, 72)
                 self.trackman = read_object_ref(self.root, f)
             else:
-                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         tag = read_byte(f)
         assert tag == 0x03
@@ -616,7 +616,7 @@ class Composition(TrackGroup):
                 self.creation_time = read_datetime(f)
                 self.mob_id = mobid.read_mob_id(f)
             else:
-                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         read_assert_tag(f, 0x03)
 

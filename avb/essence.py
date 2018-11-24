@@ -48,7 +48,6 @@ class FileLocator(core.AVBObject):
         self.paths = []
         path = read_string(f)
 
-
         if path:
             self.paths.append(path)
             tag = read_byte(f)
@@ -107,7 +106,7 @@ class MediaDescriptor(core.AVBObject):
                 read_assert_tag(f, 72)
                 self.physical_media = read_object_ref(self.root, f)
             else:
-                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
 
 @utils.register_class
@@ -368,7 +367,7 @@ class DIDDescriptor(MediaFileDescriptor):
                 self.frame_sample_size_has_been_checked_with_mapper = read_bool(f)
 
             else:
-                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         if self.class_id == b'DIDD':
             read_assert_tag(f, 0x03)
@@ -405,7 +404,7 @@ class CDCIDescriptor(DIDDescriptor):
                 read_assert_tag(f, 72)
                 self.ignore_bw_ref_level_and_color_range = read_u32le(f)
             else:
-                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         tag = read_byte(f)
         assert tag == 0x03
@@ -481,7 +480,7 @@ class RGBADescriptor(DIDDescriptor):
                 self.alpha_max_ref = read_u32le(f)
 
             else:
-                raise ValueError("unknown tag 0x%02X %d" % (tag,tag))
+                raise ValueError("unknown ext tag 0x%02X %d" % (tag,tag))
 
         tag = read_byte(f)
         assert tag == 0x03
