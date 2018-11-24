@@ -21,6 +21,8 @@ from . utils import (
     read_exp10_encoded_float,
     read_object_ref,
     read_datetime,
+    iter_ext,
+    read_assert_tag,
     peek_data
 )
 
@@ -48,16 +50,15 @@ class Component(core.AVBObject):
 
         self.precomputed = read_object_ref(self.root, f)
 
-        tag = read_byte(f)
-        version = read_byte(f)
+        self.param_list = None
+        for tag in iter_ext(f):
 
-        assert tag == 0x01
-        assert version == 0x01
+            if tag == 0x01:
+                read_assert_tag(f, 72)
+                self.param_list = read_object_ref(self.root, f)
+            else:
+                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        tag = read_byte(f)
-        assert tag == 72
-
-        self.param_list = read_object_ref(self.root, f)
 
         self.length = 0
 
@@ -211,6 +212,23 @@ class TrackRef(Clip):
 class ParamClip(Clip):
     class_id = b'PRCL'
 
+    def read(self, f):
+        super(ParamClip, self).read(f)
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x01
+
+        self.interp_kind = read_s32le(f)
+        self.value_type = read_s16le(f)
+
+        point_count = read_s32le(f)
+
+        assert point_count >=0
+
+        # raise Exception()
+
 @utils.register_class
 class Filler(Clip):
     class_id = b'FILL'
@@ -352,15 +370,12 @@ class TrackEffect(TrackGroup):
         self.info_force_software = read_bool(f)
         self.info_never_hardware = read_bool(f)
 
-        tag = read_byte(f)
-        version = read_byte(f)
-
-        assert tag == 0x01
-        assert version == 0x02
-
-        version = read_byte(f)
-        assert version == 72
-        self.trackman = read_object_ref(self.root, f)
+        for tag in iter_ext(f):
+            if tag == 0x02:
+                read_assert_tag(f, 72)
+                self.trackman = read_object_ref(self.root, f)
+            else:
+                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         if self.class_id is b'TKFX':
             tag = read_byte(f)
@@ -386,23 +401,15 @@ class PanVolumeEffect(TrackEffect):
         self.level_set = read_bool(f)
         self.pan_set = read_bool(f)
 
-        tag = read_byte(f)
-        assert tag == 0x01
-        tag = read_byte(f)
-        assert tag == 0x01
-
-        version = read_byte(f)
-        assert version == 71
-        self.does_support_seperate_clip_gain = read_s32le(f)
-
-        tag = read_byte(f)
-        assert tag == 0x01
-        tag = read_byte(f)
-        assert tag == 0x02
-
-        version = read_byte(f)
-        assert version == 71
-        self.is_trim_gain_effect = read_s32le(f)
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                read_assert_tag(f, 71)
+                self.does_support_seperate_clip_gain = read_s32le(f)
+            elif tag == 0x02:
+                read_assert_tag(f, 71)
+                self.is_trim_gain_effect = read_s32le(f)
+            else:
+                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         tag = read_byte(f)
         assert tag == 0x03
@@ -420,17 +427,12 @@ class RepSet(TrackGroup):
         assert tag == 0x02
         assert version == 0x01
 
-        # extension
-        tag = read_byte(f)
-        assert tag == 0x01
-
-        tag = read_byte(f)
-        assert tag == 0x01
-
-        version = read_byte(f)
-        assert version == 71
-
-        self.rep_set_type = read_s32le(f)
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                read_assert_tag(f, 71)
+                self.rep_set_type = read_s32le(f)
+            else:
+                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         tag = read_byte(f)
         assert tag == 0x03
@@ -485,36 +487,19 @@ class MotionEffect(TimeWarp):
         den = read_s32le(f)
         self.rate = [num, den]
 
-        tag = read_byte(f)
-        assert tag == 0x01
+        for tag in iter_ext(f):
 
-        tag = read_byte(f)
-        assert tag == 0x01
-
-        version = read_byte(f)
-        assert version == 75
-        self.offset_adjust = read_doublele(f)
-
-        tag = read_byte(f)
-        assert tag == 0x01
-
-        tag = read_byte(f)
-        assert tag == 0x02
-
-        version = read_byte(f)
-        assert version == 72
-        self.source_param_list = read_object_ref(self.root, f)
-
-        tag = read_byte(f)
-        assert tag == 0x01
-
-        tag = read_byte(f)
-        assert tag == 0x03
-
-        version = read_byte(f)
-        assert version == 66
-
-        self.new_source_calculation = read_bool(f)
+            if tag == 0x01:
+                read_assert_tag(f, 75)
+                self.offset_adjust = read_doublele(f)
+            elif tag == 0x02:
+                read_assert_tag(f, 72)
+                self.source_param_list = read_object_ref(self.root, f)
+            elif tag == 0x03:
+                read_assert_tag(f, 66)
+                self.new_source_calculation = read_bool(f)
+            else:
+                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         tag = read_byte(f)
         assert tag == 0x03
@@ -568,18 +553,14 @@ class TransistionEffect(TrackGroup):
         self.info_force_software = read_bool(f)
         self.info_never_hardware = read_bool(f)
 
-        tag = read_byte(f)
-        version = read_byte(f)
-
-        assert tag == 0x01
-        assert version == 0x01
-
-        version = read_byte(f)
-        assert version == 72
-        self.trackman = read_object_ref(self.root, f)
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                read_assert_tag(f, 72)
+                self.trackman = read_object_ref(self.root, f)
+            else:
+                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         tag = read_byte(f)
-
         assert tag == 0x03
 
 @utils.register_class
@@ -619,24 +600,25 @@ class Composition(TrackGroup):
 
         mob_id_hi = read_s32le(f)
         mob_id_lo = read_s32le(f)
-        last_modified = read_s32le(f)
+        self.last_modified = read_s32le(f)
 
         self.mob_type_id = read_byte(f)
         self.usage_code =  read_s32le(f)
         self.descriptor = read_object_ref(self.root, f)
 
-        tag = read_byte(f)
-        version = read_byte(f)
-        assert tag == 0x01
-        assert version == 0x01
+        self.creation_time = None
+        self.mob_id = None
 
-        tag = read_byte(f)
-        assert tag == 71
+        for tag in iter_ext(f):
 
-        creation_time = read_datetime(f)
-        self.mob_id = mobid.read_mob_id(f)
+            if tag == 0x01:
+                read_assert_tag(f, 71)
+                self.creation_time = read_datetime(f)
+                self.mob_id = mobid.read_mob_id(f)
+            else:
+                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        assert read_byte(f) == 0x03
+        read_assert_tag(f, 0x03)
 
     @property
     def mob_type(self):
