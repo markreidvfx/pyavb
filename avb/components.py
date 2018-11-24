@@ -208,12 +208,31 @@ class TrackRef(Clip):
         tag = read_byte(f)
         assert tag == 0x03
 
+CP_TYPE_INT = 1
+CP_TYPE_DOUBLE = 2
+
+class ControlPoint(object):
+    def __init__(self):
+        self.offset = None
+        self.timescale = None
+        self.value = None
+        self.pp = []
+
+# not sure hwat PP's stands for
+class PerPoint(object):
+    def __init__(self):
+        self.code = None
+        self.type = None
+        self.value = None
+
+
 @utils.register_class
 class ParamClip(Clip):
     class_id = b'PRCL'
 
     def read(self, f):
         super(ParamClip, self).read(f)
+
         tag = read_byte(f)
         version = read_byte(f)
 
@@ -223,11 +242,57 @@ class ParamClip(Clip):
         self.interp_kind = read_s32le(f)
         self.value_type = read_s16le(f)
 
+        assert self.value_type in (CP_TYPE_INT, CP_TYPE_DOUBLE)
+
         point_count = read_s32le(f)
+        assert point_count >= 0
 
-        assert point_count >=0
+        self.control_points = []
+        for i in range(point_count):
+            cp = ControlPoint()
 
-        # raise Exception()
+            num = read_s32le(f)
+            den = read_s32le(f)
+            cp.offset = [num, den]
+            cp.timescale = read_s32le(f)
+
+            if self.value_type == CP_TYPE_INT:
+                cp.value = read_s32le(f)
+            elif self.value_type == CP_TYPE_DOUBLE:
+                cp.value = read_doublele(f)
+            else:
+                raise ValueError("unknown value type: %d" % cp.type)
+
+            pp_count = read_s16le(f)
+            assert pp_count >= 0
+
+            for j in range(pp_count):
+                pp = PerPoint()
+                pp.code = read_s16le(f)
+                pp.type = read_s16le(f)
+
+                if pp.type == CP_TYPE_DOUBLE:
+                    pp.value = read_doublele(f)
+                elif pp.type == CP_TYPE_INT:
+                    pp.value  = read_s32le(f)
+                else:
+                    raise ValueError("unknown PP type: %d" % pp.type)
+
+                cp.pp.append(pp)
+
+            self.control_points.append(cp)
+
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                read_assert_tag(f, 71)
+                self.extrap_kind = read_s32le(f)
+            elif tag == 0x02:
+                read_assert_tag(f, 71)
+                self.fields = read_s32le(f)
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
+
+        read_assert_tag(f, 0x03)
 
 @utils.register_class
 class Filler(Clip):

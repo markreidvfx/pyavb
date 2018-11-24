@@ -66,6 +66,9 @@ class TestChuckDB(unittest.TestCase):
         for chunk_path in iter_chunks("SLCT"):
             decode_chunk(chunk_path)
 
+    def test_prcl_chunks(self):
+        for chunk_path in iter_chunks("PRCL"):
+            decode_chunk(chunk_path)
 
 if __name__ == "__main__":
     unittest.main()
