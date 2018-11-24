@@ -29,6 +29,7 @@ from . utils import (
     read_object_ref,
     read_datetime,
     iter_ext,
+    read_assert_tag,
     peek_data
 )
 
@@ -85,38 +86,29 @@ class MediaDescriptor(core.AVBObject):
         assert tag == 0x02
         assert version == 0x03
 
-        mob_kind = read_byte(f)
+        self.mob_kind = read_byte(f)
         self.locator = read_object_ref(self.root, f)
         self.intermediate = read_bool(f)
-        self.physical_media = read_object_ref(self.root, f)
+        self.locator = read_object_ref(self.root, f)
 
-        # print()
+        # print('sss', self.locator)
         # print(peek_data(f).encode('hex'))
-        # print()
 
-        tag = read_byte(f)
         self.uuid = None
+        self.locator = None
+        for tag in iter_ext(f):
 
-        if tag == 0x01:
-
-            version = read_byte(f)
-
-            if version == 3:
-                tag = read_byte(f)
-                assert tag == 72
-                # TODO: look into this, pixel_layout attribute?
-                self.pixel_layout = read_object_ref(self.root, f)
-            else:
-                assert version == 0x01
-                tag = read_byte(f)
-                assert tag == 65
-
+            if tag == 0x01:
+                read_assert_tag(f, 65)
                 uuid_len = read_s32le(f)
                 assert uuid_len == 16
-
                 self.uuid = read_raw_uuid(f)
-        else:
-            f.seek(f.tell()-1)
+            elif tag == 0x03:
+                read_assert_tag(f, 72)
+                self.physical_media = read_object_ref(self.root, f)
+            else:
+                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
+
 
 @utils.register_class
 class TapeDescriptor(MediaDescriptor):
@@ -233,162 +225,153 @@ class DIDDescriptor(MediaFileDescriptor):
         self.resolution_id = read_s32le(f)
         self.image_alignment_factor =  read_s32le(f)
 
-        self.check_ext_header(f, 0x01, 69)
-        self.frame_index_byte_order = read_s16le(f)
-
-        self.check_ext_header(f, 0x02, 71)
-        self.frame_sample_size = read_s32le(f)
-
-        self.check_ext_header(f, 0x03, 71)
-        self.first_frame_offset = read_s32le(f)
-
-        self.check_ext_header(f, 0x04, 71)
-        self.client_fill_start = read_s32le(f)
-
-        version = read_byte(f)
-        assert version == 71
-        self.client_fill_end = read_s32le(f)
-
-        self.check_ext_header(f, 0x05, 71)
-        self.offset_to_rle_frame_index = read_s32le(f)
-
         for tag in iter_ext(f):
-            if tag == 0x08:
+            if tag == 0x01:
+                read_assert_tag(f, 69)
+                self.frame_index_byte_order = read_s16le(f)
+
+            elif tag == 0x02:
+                read_assert_tag(f, 71)
+                self.frame_sample_size = read_s32le(f)
+
+            elif tag == 0x03:
+                read_assert_tag(f, 71)
+                self.first_frame_offset = read_s32le(f)
+
+            elif tag == 0x04:
+                read_assert_tag(f, 71)
+                self.client_fill_start = read_s32le(f)
+
+                read_assert_tag(f, 71)
+                self.client_fill_end = read_s32le(f)
+
+            elif tag == 0x05:
+                read_assert_tag(f, 71)
+                self.offset_to_rle_frame_index = read_s32le(f)
+
+            elif tag == 0x08:
                 # valid
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.valid_x = [x, y]
 
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.valid_y = [x, y]
 
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.valid_width = [x, y]
 
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.valid_height = [x, y]
 
                 # essence
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.essence_x = [x, y]
 
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.essence_y = [x, y]
 
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.essence_width = [x, y]
 
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.essence_height = [x, y]
 
                 # source
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.source_x = [x, y]
 
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.source_y = [x, y]
 
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.source_width = [x, y]
 
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.souce_height = [x, y]
 
             elif tag == 9:
                 # print("\n??!", peek_data(f).encode('hex'), '\n')
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.framing_x = [x, y]
 
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.framing_y = [x, y]
 
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.framing_width = [x, y]
 
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 x = read_s32le(f)
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 y = read_s32le(f)
                 self.framing_height = [x, y]
 
-                self.check_version_tag(f, 71)
+                read_assert_tag(f, 71)
                 self.reformatting_option = read_s32le(f)
 
             elif tag == 10:
-                self.check_version_tag(f, 80)
+                read_assert_tag(f, 80)
                 self.transfer_characteristic = read_raw_uuid(f)
             elif tag == 11:
-                self.check_version_tag(f, 80)
+                read_assert_tag(f, 80)
                 self.color_primaries =  read_raw_uuid(f)
-                self.check_version_tag(f, 80)
+                read_assert_tag(f, 80)
                 self.coding_equations = read_raw_uuid(f)
 
             elif tag == 15:
-                self.check_version_tag(f, 66)
+                read_assert_tag(f, 66)
                 self.frame_sample_size_has_been_checked_with_mapper = read_bool(f)
 
             else:
-                raise ValueError("unknown tag 0x%02X %d" % (tag,tag))
+                raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-    def check_version_tag(self, f, version):
-        version_mark = read_byte(f)
-        assert version_mark == version
-
-    def check_ext_header(self, f, tag_mark, version_mark):
-        tag = read_byte(f)
-        assert tag == 0x01
-        tag = read_byte(f)
-        if tag != tag_mark:
-            print(tag, '!=', tag_mark)
-            raise Exception()
-        assert tag == tag_mark
-        version = read_byte(f)
-        assert version == version_mark
-
+        if self.class_id == b'DIDD':
+            read_assert_tag(f, 0x03)
 
 @utils.register_class
 class CDCIDescriptor(DIDDescriptor):
@@ -415,13 +398,11 @@ class CDCIDescriptor(DIDDescriptor):
 
         for tag in iter_ext(f):
             if tag == 0x01:
-                version = read_byte(f)
-                assert version == 72
+                read_assert_tag(f, 72)
                 self.alpha_sampled_width = read_u32le(f)
 
             elif tag == 0x02:
-                version = read_byte(f)
-                assert version == 72
+                read_assert_tag(f, 72)
                 self.ignore_bw_ref_level_and_color_range = read_u32le(f)
             else:
                 raise ValueError("%s: unknown tag 0x%02X %d" % (str(self.class_id), tag,tag))
@@ -476,41 +457,27 @@ class RGBADescriptor(DIDDescriptor):
 
         for tag in iter_ext(f):
             if tag == 0x01:
-                version = read_byte(f)
-                assert version == 77
-
+                read_assert_tag(f, 77)
                 self.offset_to_frames64 = read_u64le(f)
 
             elif tag == 0x02:
-                version = read_byte(f)
-                assert version == 66
-
+                read_assert_tag(f, 66)
                 self.has_comp_min_ref = read_bool(f)
 
-                version = read_byte(f)
-                assert version == 72
-
+                read_assert_tag(f, 72)
                 self.comp_min_ref = read_u32le(f)
 
-                version = read_byte(f)
-                assert version == 66
-
+                read_assert_tag(f, 66)
                 self.has_comp_max_ref = read_bool(f)
 
-                version = read_byte(f)
-                assert version == 72
-
+                read_assert_tag(f, 72)
                 self.comp_max_ref = read_u32le(f)
 
             elif tag == 0x03:
-                version = read_byte(f)
-                assert version == 72
-
+                read_assert_tag(f, 72)
                 self.alpha_min_ref = read_u32le(f)
 
-                version = read_byte(f)
-                assert version == 72
-
+                read_assert_tag(f, 72)
                 self.alpha_max_ref = read_u32le(f)
 
             else:

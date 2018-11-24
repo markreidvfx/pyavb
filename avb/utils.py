@@ -194,6 +194,11 @@ def read_rgb_color(f):
 
     return [r,g,b]
 
+def read_assert_tag(f, version):
+    version_mark = read_byte(f)
+    if version_mark != version:
+        raise ValueError("%d != %d" % (version_mark, version))
+
 def iter_ext(f):
     while True:
         pos = f.tell()
