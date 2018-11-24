@@ -575,7 +575,7 @@ class Selector(TrackGroup):
         assert tag == 0x02
         assert version == 0x01
 
-        something = read_byte(f)
+        self.is_ganged = read_bool(f)
         self.selected = read_u16le(f)
 
         assert self.selected < len(self.tracks)
