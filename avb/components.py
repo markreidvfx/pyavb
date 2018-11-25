@@ -478,6 +478,85 @@ class PanVolumeEffect(TrackEffect):
         tag = read_byte(f)
         assert tag == 0x03
 
+class ASPIPlugin(object):
+    def __init__(self):
+        self.name = None
+        self.manufacturer_id = None
+        self.product_id = None
+        self.plugin_id = None
+        self.chunks = []
+
+class ASPIPluginChunk(object):
+    def __init__(self):
+        self.version = None
+        self.manufacturer_id = None
+        self.product_id = None
+        self.chunk_id = None
+        self.name = None
+        self.data = None
+
+@utils.register_class
+class ASPIPluginClip(TrackEffect):
+    class_id = b'ASPI'
+    def read(self, f):
+        super(ASPIPluginClip, self).read(f)
+
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        self.plugins = []
+
+        number_of_plugins = read_s32le(f)
+
+        #TODO: find sample with multiple plugins
+        assert number_of_plugins == 1
+
+        plugin = ASPIPlugin()
+        plugin.name = read_string(f)
+        plugin.manufacturer_id = read_u32le(f)
+        plugin.product_id = read_u32le(f)
+        plugin.plugin_id = read_u32le(f)
+
+        num_of_chunks = read_s32le(f)
+
+        #TODO: find sample with multiple chunks
+        assert num_of_chunks == 1
+
+        chunk_size = read_s32le(f)
+        assert chunk_size >= 0
+
+        chunk = ASPIPluginChunk()
+        chunk.version = read_s32le(f)
+        chunk.manufacturer_id = read_u32le(f)
+        chunk.roduct_id = read_u32le(f)
+        chunk.plugin_id = read_u32le(f)
+
+        chunk.chunk_id = read_u32le(f)
+        chunk.name = read_string(f)
+
+        chunk.data = bytearray(f.read(chunk_size))
+
+        plugin.chunks.append(chunk)
+        self.plugins.append(plugin)
+
+        # print(peek_data(f).encode("hex"))
+        #
+        # mob_id = mobid.MobID()
+        # for tag in iter_ext(f):
+        #     if tag == 0x01:
+        #         read_assert_tag(f, 71)
+        #         mob_id.instanceHigh = read_s32le(f)
+        #         read_assert_tag(f, 71)
+        #         mob_id.instanceLow = read_s32le(f)
+        #     elif tag == 0x08:
+        #         read_assert_tag(f, 65)
+        #         mob_id.SMPTELabel = [read_byte(f) for i in range(12)]
+        #
+        #     else:
+        #         raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
+        #
+        # raise Exception()
+
 class EqualizerBand(object):
     def __init__(self):
         self.type = None
