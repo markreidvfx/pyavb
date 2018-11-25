@@ -8,6 +8,8 @@ from __future__ import (
 from . import core
 from . import utils
 
+from . core import AVBProperty
+
 from . utils import (
     read_byte,
     read_bool,
@@ -16,12 +18,21 @@ from . utils import (
     read_u32le,
     read_s32le,
     read_string,
+    read_assert_tag,
     read_object_ref,
-    peek_data
+    iter_ext,
+    peek_data,
 )
 
 class Setting(core.AVBObject):
-
+    class_id = b'ASET'
+    properties = [
+    AVBProperty('name',       'name',       'string'),
+    AVBProperty('kind',       'kind',       'string'),
+    AVBProperty('attr_count', 'attributes', 'int16'),
+    AVBProperty('attr_type',  'type',       'int16'),
+    AVBProperty('attributes', 'attrList',   'reference'),
+    ]
     def read(self, f):
         super(Setting, self).read(f)
         tag = read_byte(f)
@@ -32,13 +43,17 @@ class Setting(core.AVBObject):
         self.name = read_string(f)
         self.kind = read_string(f)
 
-        attributes = read_s16le(f)
-        attr_type = read_s16le(f)
+        self.attr_count = read_s16le(f)
+        self.attr_type = read_s16le(f)
         self.attributes = read_object_ref(self.root, f)
 
 @utils.register_class
 class BinViewSetting(Setting):
     class_id = b'BVst'
+    properties = Setting.properties + [
+    AVBProperty('columns',  'Columns',  'list'),
+    AVBProperty('format_descriptor', 'FormatDescriptor', 'string'),
+    ]
 
     def read(self, f):
         super(BinViewSetting, self).read(f)
@@ -58,19 +73,41 @@ class BinViewSetting(Setting):
             d['hidden'] = read_bool(f)
             # print d
             self.columns.append(d)
-            # print col_format, col_type, hidden
 
-        # tag = read_byte(f)
-        # assert tag == 0x03
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                read_assert_tag(f, 69)
+                # TODO: can there be multiple?
+                # not sure what this is
+                num_vcid_free_columns = read_s16le(f)
+                assert num_vcid_free_columns == 1
+                read_assert_tag(f, 69)
+                vcid_free_column_id = read_s16le(f)
 
-class BinItem(object):
-    def __init__(self, root):
-        self.root = root
-        self.object_ref = None
-        self.x = None
-        self.y = None
-        self.keyframe = None
-        self.user_placed = None
+                read_assert_tag(f, 71)
+                fd_size = read_s32le(f)
+
+                read_assert_tag(f, 76)
+                # wrong?
+                read_s32le(f)
+                self.format_descriptor = f.read(fd_size).decode('utf8')
+                # print(self.format_descriptor)
+
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
+
+        read_assert_tag(f, 0x03)
+
+
+class BinItem(core.AVBObject):
+
+    properties = [
+    AVBProperty('ref',         'Composition',  'reference'),
+    AVBProperty('x',           'Xpos',         'int16'),
+    AVBProperty('y',           'Ypos',         'int16'),
+    AVBProperty('keyframe',    'Keyframe',     'int32'),
+    AVBProperty('user_placed', 'userPlaced',   'bool'),
+    ]
 
     def read(self, f):
         self.object_ref = read_object_ref(self.root, f)
@@ -83,9 +120,36 @@ class BinItem(object):
     def ref(self):
         return self.object_ref.value
 
+class SiftItem(core.AVBObject):
+    properties = [
+    AVBProperty('method', 'SiftMethod', 'int16'),
+    AVBProperty('string', 'SiftString', 'string'),
+    AVBProperty('column', 'SiftColumn', 'string'),
+    ]
+
 @utils.register_class
 class Bin(core.AVBObject):
     class_id = b'ABIN'
+    properties = [
+    AVBProperty('view_setting',   'binviewsetting', 'reference'),
+    AVBProperty('uid_high',         'binuid.high',    'uint32'),
+    AVBProperty('uid_low',          'binuid.low',     'uint32'),
+    AVBProperty('items',            'Items',          'list'), # custom
+    AVBProperty('display_mask',     'DisplayMask',    'int32'),
+    AVBProperty('display_mode',     'DisplayMode',    'int32'),
+    AVBProperty('sifted',           'Sifted',         'bool'),
+    AVBProperty('sifted_settings',  'SiftedSettring', 'list'), #custom
+    AVBProperty('num_sort_columns', 'NumSortColumns', 'int16'),
+    AVBProperty('mac_font',         'MacFont',        'int16'),
+    AVBProperty('mac_font_size',    'MacFontSize',    'int16'),
+    AVBProperty('mac_image_scale',  'MacImageScale',  'int16'),
+    AVBProperty('home_rect',        'HomeRect',       'rect'),
+    AVBProperty('background_color', 'BackColor',      'color'),
+    AVBProperty('forground_color',  'ForeColor',      'color'),
+    AVBProperty('ql_image_scale',   'QLImageScale',   'int16'),
+    AVBProperty('was_iconic',       'WasIconic',      'bool'),
+    AVBProperty('attributes',       'BinAttr',        'reference'),
+    ]
 
     def read(self, f):
         super(Bin, self).read(f)
@@ -97,8 +161,8 @@ class Bin(core.AVBObject):
 
         self.view_setting_ref = read_object_ref(self.root, f)
 
-        uid_high = read_u32le(f)
-        uid_low  = read_u32le(f)
+        self.uid_high = read_u32le(f)
+        self.uid_low  = read_u32le(f)
 
         # print "%04X-%04X" %(uid_high, uid_low)
 
@@ -120,40 +184,31 @@ class Bin(core.AVBObject):
 
         # sifted stuff for searching settings bin
         # don't care too much about it at the moment
-        self.sifted = read_byte(f)
+        self.sifted = read_bool(f)
         self.sifted_settings= []
 
         for i in range(6):
-            sift_method = read_s16le(f)
-            sift_str = read_string(f)
-            sift_column = read_string(f)
-            d= [sift_method, sift_str,sift_column]
-            self.sifted_settings.append(d)
+            s = SiftItem(self.root)
+            s.method = read_s16le(f)
+            s.string = read_string(f)
+            s.column = read_string(f)
+            self.sifted_settings.append(s)
 
-        # a bit messy here
-        b = read_byte(f)
-        if b:
-            sift_str = read_string(f)
-            sift_column = read_string(f)
-            d = [sift_method, sift_str, sift_column]
-            self.sifted_settings.append(d)
-            self.sort_column_count = read_s16le(f)
-            assert b == 1
-            f.read(4)
-        else:
-            f.seek(f.tell()-1)
-            self.sort_column_count = read_s16le(f)
-            f.read(6)
-
+        self.num_sort_columns =  read_s16le(f)
+        self.mac_font = read_s16le(f)
+        self.mac_font_size = read_s16le(f)
+        self.mac_image_scale = read_s16le(f)
 
         self.home_rect = utils.read_rect(f)
+
         self.background_color = utils.read_rgb_color(f)
         self.forground_color = utils.read_rgb_color(f)
 
         self.ql_image_scale = read_s16le(f)
+        self.was_iconic = read_bool(f)
 
         self.attributes = read_object_ref(self.root, f)
-        # print(self.attributes)
+        read_assert_tag(f, 0x03)
 
     def build_mob_dict(self):
         self.mob_dict = {}

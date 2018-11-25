@@ -5,10 +5,42 @@ from __future__ import (
     division,
     )
 
+class AVBProperty(object):
+    def __init__(self, name, long_name, data_type, tag=None):
+        self.name = name
+        self.long_name = name
+        self.type = type
 
 class AVBObject(object):
+    properties = []
+
     def __init__(self, root):
         self.root = root
+        self.property_data = {}
+
+    def __setattr__(self, name, value):
+        for item in self.properties:
+            if name == item.name:
+                self.property_data[name] = value
+                return
+
+        super(AVBObject, self).__setattr__(name, value)
+
+    def get_property_def(self, name):
+        for item in self.properties:
+            if item.name == name:
+                return item
+
+    def __getattr__(self, name):
+        if name in self.property_data:
+            v =  self.property_data[name]
+            # p_def = self.get_property_def(name)
+            # if p_def.type == 'reference':
+            #     return v
+
+            return v
+
+        return super(AVBObject, self).__getattr__(name)
 
     def read(self, f):
         pass

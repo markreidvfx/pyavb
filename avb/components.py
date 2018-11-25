@@ -6,6 +6,7 @@ from __future__ import (
     )
 
 from . import core
+from .core import AVBProperty
 from . import utils
 
 from . utils import (
@@ -29,6 +30,20 @@ from . utils import (
 from . import mobid
 
 class Component(core.AVBObject):
+    class_id = b'COMP'
+    properties = [
+        AVBProperty('left_bob',      '__OMFI:CPNT:LeftBob',   'reference'),
+        AVBProperty('right_bob',     '__OMFI:CPNT:RightBob',  'reference'),
+        AVBProperty('media_kind_id', 'OMFI:CPNT:TrackKind',   'int16'),
+        AVBProperty('edit_rate',     'EdRate',                'fexp10'),
+        AVBProperty('name',          'OMFI:CPNT:Name',        'string'),
+        AVBProperty('effect_id',     'OMFI:CPNT:EffectID',    'string'),
+        AVBProperty('attributes',    'OMFI:CPNT:Attributes',  'reference'),
+        AVBProperty('session_attrs', 'OMFI:CPNT:SessionAttrs', 'reference'),
+        AVBProperty('precomputed',   'OMFI:CPNT:Precomputed', 'reference'),
+        AVBProperty('param_list',    'OMFI:CPNT:ParamList',   'reference'),
+    ]
+
     def read(self, f):
         tag = read_byte(f)
         version = read_byte(f)
@@ -58,7 +73,6 @@ class Component(core.AVBObject):
                 self.param_list = read_object_ref(self.root, f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
-
 
         self.length = 0
 
