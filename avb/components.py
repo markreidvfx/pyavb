@@ -32,16 +32,16 @@ from . import mobid
 class Component(core.AVBObject):
     class_id = b'COMP'
     properties = [
-        AVBProperty('left_bob',      '__OMFI:CPNT:LeftBob',   'reference'),
-        AVBProperty('right_bob',     '__OMFI:CPNT:RightBob',  'reference'),
-        AVBProperty('media_kind_id', 'OMFI:CPNT:TrackKind',   'int16'),
-        AVBProperty('edit_rate',     'EdRate',                'fexp10'),
-        AVBProperty('name',          'OMFI:CPNT:Name',        'string'),
-        AVBProperty('effect_id',     'OMFI:CPNT:EffectID',    'string'),
-        AVBProperty('attributes',    'OMFI:CPNT:Attributes',  'reference'),
+        AVBProperty('left_bob',      '__OMFI:CPNT:LeftBob',    'reference'),
+        AVBProperty('right_bob',     '__OMFI:CPNT:RightBob',   'reference'),
+        AVBProperty('media_kind_id', 'OMFI:CPNT:TrackKind',    'int16'),
+        AVBProperty('edit_rate',     'EdRate',                 'fexp10'),
+        AVBProperty('name',          'OMFI:CPNT:Name',         'string'),
+        AVBProperty('effect_id',     'OMFI:CPNT:EffectID',     'string'),
+        AVBProperty('attributes',    'OMFI:CPNT:Attributes',   'reference'),
         AVBProperty('session_attrs', 'OMFI:CPNT:SessionAttrs', 'reference'),
-        AVBProperty('precomputed',   'OMFI:CPNT:Precomputed', 'reference'),
-        AVBProperty('param_list',    'OMFI:CPNT:ParamList',   'reference'),
+        AVBProperty('precomputed',   'OMFI:CPNT:Precomputed',  'reference'),
+        AVBProperty('param_list',    'OMFI:CPNT:ParamList',    'reference'),
     ]
 
     def read(self, f):
@@ -100,6 +100,9 @@ class Component(core.AVBObject):
 @utils.register_class
 class Sequence(Component):
     class_id = b"SEQU"
+    properties = Component.properties + [
+        AVBProperty('components_refs', 'OMFI:SEQU:Sequence', 'ref_list'),
+    ]
 
     def read(self, f):
         super(Sequence, self).read(f)
@@ -124,6 +127,10 @@ class Sequence(Component):
             yield ref.value
 
 class Clip(Component):
+    class_id = b'CLIP'
+    properties = Component.properties + [
+        AVBProperty('length', 'OMFI:CLIP:Length', 'int32'),
+    ]
     def read(self, f):
         super(Clip, self).read(f)
         tag = read_byte(f)
@@ -136,6 +143,12 @@ class Clip(Component):
 @utils.register_class
 class SourceClip(Clip):
     class_id = b'SCLP'
+    properties = Clip.properties + [
+        AVBProperty('track_id',   'OMFI:SCLP:SourceTrack',     'int16'),
+        AVBProperty('start_time', 'OMFI:SCLP:SourcePosition',  'int32'),
+        AVBProperty('mob_id',     'MobID',                     'MobID'),
+    ]
+
     def read(self, f):
         super(SourceClip, self).read(f)
         tag = read_byte(f)
@@ -161,6 +174,11 @@ class SourceClip(Clip):
 @utils.register_class
 class Timecode(Clip):
     class_id = b'TCCP'
+    properties = Clip.properties + [
+        AVBProperty('flags', 'OMFI:TCCP:Flags',   'int32'),
+        AVBProperty('fps',   'OMFI:TCCP:FPS',     'int32'),
+        AVBProperty('start', 'OMFI:TCCP:StartTC', 'int32'),
+    ]
 
     def read(self, f):
         super(Timecode, self).read(f)
@@ -185,6 +203,13 @@ class Timecode(Clip):
 @utils.register_class
 class Edgecode(Clip):
     class_id = b'ECCP'
+    properties = Clip.properties + [
+        AVBProperty('header',      'OMFI:ECCP:Header',      'bytes'),
+        AVBProperty('film_kind',   'OMFI:ECCP:FilmKind',   'uint8'),
+        AVBProperty('code_format', 'OMFI:ECCP:CodeFormat', 'uint8'),
+        AVBProperty('base_perf',   'OMFI:ECCP:BasePerf',   'uint16'),
+        AVBProperty('start_ec',    'OMFI:ECCP:StartEC',    'int32'),
+    ]
     def read(self, f):
         super(Edgecode, self).read(f)
         # print("??", peek_data(f).encode("hex"))s
@@ -207,6 +232,10 @@ class Edgecode(Clip):
 @utils.register_class
 class TrackRef(Clip):
     class_id = b'TRKR'
+    properties = Clip.properties + [
+        AVBProperty('relative_scope', 'OMFI:TRKR:RelativeScope', 'int16'),
+        AVBProperty('relative_track', 'OMFI:TRKR:RelativeTrack', 'int16'),
+    ]
     def read(self, f):
         super(TrackRef, self).read(f)
         # print(peek_data(f).encode("hex"))
@@ -225,24 +254,32 @@ class TrackRef(Clip):
 CP_TYPE_INT = 1
 CP_TYPE_DOUBLE = 2
 
-class ControlPoint(object):
-    def __init__(self):
-        self.offset = None
-        self.timescale = None
-        self.value = None
-        self.pp = []
+class ControlPoint(core.AVBObject):
+    properties = [
+        AVBProperty('offset',    'OMFI:PRCL:Offset',     'rational'),
+        AVBProperty('timescale', 'OMFI:PRCL:TimeScale',  'int32'),
+        AVBProperty('value',     'OMFI:PRCL:Value',      'number'), # int or double
+        AVBProperty('pp',        'OMFI:PRCL:InterpKind', 'list'),
+    ]
 
 # not sure hwat PP's stands for
-class PerPoint(object):
-    def __init__(self):
-        self.code = None
-        self.type = None
-        self.value = None
-
+class PerPoint(core.AVBObject):
+    properties = [
+        AVBProperty('code',  'OMFI:PRCL:PPCode',  'int16'),
+        AVBProperty('type',  'OMFI:PRCL:PPType',  'int16'),
+        AVBProperty('value', 'OMFI:PRCL:PPValue', 'number'), # int or double
+    ]
 
 @utils.register_class
 class ParamClip(Clip):
     class_id = b'PRCL'
+    properties = Clip.properties + [
+        AVBProperty('interp_kind',    'OMFI:PRCL:InterpKind',    'int32'),
+        AVBProperty('value_type',     'OMFI:PRCL:ValueType',     'int16'),
+        AVBProperty('extrap_kind',    'OMFI:PCRL:ExtrapKind',    'int32'),
+        AVBProperty('control_points', 'OMFI:PRCL:ControlPoints', 'list'),
+        AVBProperty('fields',         'OMFI:PRCL:Fields',        'int32'),
+    ]
 
     def read(self, f):
         super(ParamClip, self).read(f)
@@ -263,7 +300,7 @@ class ParamClip(Clip):
 
         self.control_points = []
         for i in range(point_count):
-            cp = ControlPoint()
+            cp = ControlPoint(self.root)
 
             num = read_s32le(f)
             den = read_s32le(f)
@@ -281,7 +318,7 @@ class ParamClip(Clip):
             assert pp_count >= 0
 
             for j in range(pp_count):
-                pp = PerPoint()
+                pp = PerPoint(self.root)
                 pp.code = read_s16le(f)
                 pp.type = read_s16le(f)
 
@@ -322,13 +359,21 @@ class Filler(Clip):
         assert version == 0x01
         assert end_tag == 0x03
 
-class Track(object):
-    def __init__(self):
-        self.flags = None
-        self.index = None
-        self.control_code = None
-        self.control_sub_code = None
-        self.lock_number = None
+class Track(core.AVBObject):
+    properties = [
+        AVBProperty('flags',            'OMFI:TRAK:OptFlags',       'int16'),
+        AVBProperty('index',            'OMFI:TRAK:LabelNumber',    'int16'),
+        AVBProperty('session_attr',     'OMFI:TRAK:SessionAttrs',   'reference'),
+        AVBProperty('component',        'OMFI:TRAK:TrackComponent', 'reference'),
+        AVBProperty('filler_proxy',     'OMFI:TRAK:FillerProxy',    'reference'),
+        AVBProperty('bob_data',         '__OMFI:TRAK:Bob',          'reference'),
+        AVBProperty('control_code',     'OMFI:TRAK:ControlCode',    'int16'),
+        AVBProperty('control_sub_code', 'OMFI:TRAK:ControlSubCode', 'int16'),
+        AVBProperty('lock_number',      'OMFI:TRAK:LockNubmer',     'int16'),
+
+    ]
+    def __init__(self, root):
+        super(Track, self).__init__(root)
         self.refs = []
 
     @property
@@ -338,7 +383,15 @@ class Track(object):
             if isinstance(obj, Component):
                 return obj
 
+@utils.register_class
 class TrackGroup(Component):
+    class_id = b'TRKG'
+    properties = Component.properties + [
+        AVBProperty('mc_mode',     'OMFI:TRKG:MC:Mode',     'int8'),
+        AVBProperty('length',      'OMFI:TRKG:GroupLength',  'int32'),
+        AVBProperty('num_scalars', 'OMFI:TRKG:NumScalars',  'int32'),
+        AVBProperty('tracks',      'OMFI:TRKG:Tracks',      'list')
+    ]
 
     def read(self, f):
         super(TrackGroup, self).read(f)
@@ -360,7 +413,7 @@ class TrackGroup(Component):
         has_tracks = True
         for i in range(track_count):
             # print(peek_data(f).encode("hex"))
-            track = Track()
+            track = Track(self.root)
             track.flags = read_u16le(f)
 
             # PVOL has a different track structure
@@ -399,6 +452,8 @@ class TrackGroup(Component):
                 ref_count = 3
             elif track.flags in (541, 527):
                 ref_count = 4
+
+            # TODO: find sample?
             elif track.flags in (543,):
                 ref_count = 5
             else:

@@ -46,6 +46,10 @@ class TestChuckDB(unittest.TestCase):
         for chunk_path in iter_chunks("CDCI"):
             decode_chunk(chunk_path)
 
+    def test_cmpo_chunks(self):
+        for chunk_path in iter_chunks("CMPO"):
+            decode_chunk(chunk_path)
+
     def test_rgba_chunks(self):
         for chunk_path in iter_chunks("RGBA"):
             decode_chunk(chunk_path)
