@@ -353,30 +353,6 @@ class EqualizerMultiBand(TrackEffect):
 
         read_assert_tag(f, 0x03)
 
-@utils.register_class
-class RepSet(TrackGroup):
-    class_id = b'RSET'
-    def read(self, f):
-        super(RepSet, self).read(f)
-
-        # print(peek_data(f).encode("hex"))
-        tag = read_byte(f)
-        version = read_byte(f)
-
-        assert tag == 0x02
-        assert version == 0x01
-
-        for tag in iter_ext(f):
-            if tag == 0x01:
-                read_assert_tag(f, 71)
-                self.rep_set_type = read_s32le(f)
-            else:
-                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
-
-        tag = read_byte(f)
-        assert tag == 0x03
-
-#abstract?
 class TimeWarp(TrackGroup):
     class_id = b'WARP'
 
@@ -456,10 +432,47 @@ class Repeat(TimeWarp):
         tag = read_byte(f)
         assert tag == 0x03
 
+@utils.register_class
+class RepSet(TrackGroup):
+    class_id = b'RSET'
+    def read(self, f):
+        super(RepSet, self).read(f)
+
+        # print(peek_data(f).encode("hex"))
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x01
+
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                read_assert_tag(f, 71)
+                self.rep_set_type = read_s32le(f)
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
+
+        tag = read_byte(f)
+        assert tag == 0x03
 
 @utils.register_class
 class TransistionEffect(TrackGroup):
     class_id = b'TNFX'
+    properties = TrackGroup.properties + [
+        AVBProperty('cutpoint',            'OMFI:TRAN:CutPoint',                   'int32'),
+        AVBProperty('left_length',         'OMFI:TNFX:MC:LeftLength',              'int32'),
+        AVBProperty('right_length',        'OMFI:TNFX:MC:RightLength',             'int32'),
+        AVBProperty('info_version',        'OMFI:TNFX:MC:GlobalInfoVersion',       'int16'),
+        AVBProperty('info_current',        'OMFI:TNFX:MC:GlobalInfo.kfCurrent',    'int32'),
+        AVBProperty('info_smooth',         'OMFI:TNFX:MC:GlobalInfo.kfSmooth',     'int32'),
+        AVBProperty('info_color_item',     'OMFI:TNFX:MC:GlobalInfo.colorItem',    'int16'),
+        AVBProperty('info_quality',        'OMFI:TNFX:MC:GlobalInfo.quality',      'int16'),
+        AVBProperty('info_is_reversed',    'OMFI:TNFX:MC:GlobalInfo.isReversed',   'int8'),
+        AVBProperty('info_aspect_on',      'OMFI:TNTNFXFX:MC:GlobalInfo.aspectOn', 'bool'),
+        AVBProperty('info_force_software', 'OMFI:TNFX:MC:ForceSoftware',           'bool'),
+        AVBProperty('info_never_hardware', 'OMFI:TNFX:MC:NeverHardware',           'bool'),
+        AVBProperty('trackman',            'OMFI:TNFX:MC:TrackMan',           'reference'),
+    ]
     def read(self, f):
         super(TransistionEffect, self).read(f)
 
