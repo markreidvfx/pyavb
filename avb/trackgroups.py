@@ -518,6 +518,10 @@ class TransistionEffect(TrackGroup):
 @utils.register_class
 class Selector(TrackGroup):
     class_id = b'SLCT'
+    properties = TrackGroup.properties + [
+        AVBProperty('is_ganged', 'OMFI:SLCT:IsGanged',      'bool'),
+        AVBProperty('selected',  'OMFI:SLCT:SelectedTrack', 'int16'),
+    ]
 
     def read(self, f):
         super(Selector, self).read(f)
@@ -542,6 +546,15 @@ class Selector(TrackGroup):
 @utils.register_class
 class Composition(TrackGroup):
     class_id = b'CMPO'
+    properties = TrackGroup.properties + [
+        AVBProperty('last_modified', 'OMFI:MOBJ:LastModified',  'int32'),
+        AVBProperty('last_modified', 'OMFI:MOBJ:LastModified',  'int32'),
+        AVBProperty('mob_type_id',   '__OMFI:MOBJ:MobType',     'int8'),
+        AVBProperty('usage_code',    'OMFI:MOBJ:UsageCode',     'int8'),
+        AVBProperty('descriptor',    'OMFI:MOBJ:PhysicalMedia', 'reference'),
+        AVBProperty('creation_time', 'OMFI:MOBJ:_CreationTime', 'int32'),
+        AVBProperty('mob_id',        'MobID',                   'MobID'),
+    ]
 
     def read(self, f):
         super(Composition, self).read(f)
