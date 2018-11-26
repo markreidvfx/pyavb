@@ -157,6 +157,20 @@ class TrackGroup(Component):
 @utils.register_class
 class TrackEffect(TrackGroup):
     class_id = b'TKFX'
+    properties = TrackGroup.properties + [
+        AVBProperty('left_length',         'OMFI:TKFX:MC:LeftLength',            'int32'),
+        AVBProperty('right_length',        'OMFI:TKFX:MC:RightLength',           'int32'),
+        AVBProperty('info_version',        'OMFI:TNFX:MC:GlobalInfoVersion',     'int16'),
+        AVBProperty('info_current',        'OMFI:TNFX:MC:GlobalInfo.kfCurrent',  'int32'),
+        AVBProperty('info_smooth',         'OMFI:TNFX:MC:GlobalInfo.kfSmooth',   'int32'),
+        AVBProperty('info_color_item',     'OMFI:TNFX:MC:GlobalInfo.colorItem',  'int16'),
+        AVBProperty('info_quality',        'OMFI:TNFX:MC:GlobalInfo.quality',    'int16'),
+        AVBProperty('info_is_reversed',    'OMFI:TNFX:MC:GlobalInfo.isReversed', 'int8'),
+        AVBProperty('info_aspect_on',      'OMFI:TNFX:MC:GlobalInfo.aspectOn',   'bool'),
+        AVBProperty('info_force_software', 'OMFI:TNFX:MC:ForceSoftware',         'bool'),
+        AVBProperty('info_never_hardware', 'OMFI:TKFX:MC:NeverHardware',         'bool'),
+        AVBProperty('trackman',            'OMFI:TKFX:MC:TrackMan',         'reference'),
+    ]
     def read(self, f):
         super(TrackEffect, self).read(f)
         tag = read_byte(f)
