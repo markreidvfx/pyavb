@@ -104,7 +104,7 @@ def convert_component(aaf_file, segment):
         component['Start'].value = segment.start
         component['FPS'].value = segment.fps
 
-    elif type(segment) is avb.components.Selector:
+    elif type(segment) is avb.trackgroups.Selector:
         component = aaf_file.create.Selector()
         selected = segment.selected
         selected_clip = None
@@ -147,6 +147,9 @@ def convert_slots(aaf_file, comp, mob):
         slot_id += 1
 
 def avb2aaf(avb_file, aaf_file):
+
+    # print(avb_file.content.view_setting_ref.value)
+    # return
 
     for comp in avb_file.content.components:
         if comp.mob_type == 'MasterMob':
