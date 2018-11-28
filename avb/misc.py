@@ -7,6 +7,7 @@ from __future__ import (
 
 from . import core
 from . import utils
+from .core import AVBProperty
 
 from . utils import (
     read_byte,
@@ -26,6 +27,45 @@ from . utils import (
     peek_data
 )
 
+@utils.register_class
+class FileLocator(core.AVBObject):
+    class_id = b'FILE'
+
+    def read(self, f):
+        super(FileLocator, self).read(f)
+
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 2
+        self.paths = []
+        path = read_string(f)
+
+        if path:
+            self.paths.append(path)
+            tag = read_byte(f)
+            version = read_byte(f)
+            assert tag == 0x01
+            assert version == 1
+            tag = read_byte(f)
+            assert tag == 76
+            path = read_string(f)
+            self.paths.append(path)
+
+            tag = read_byte(f)
+            version = read_byte(f)
+
+            assert tag == 0x01
+            assert version == 2
+            tag = read_byte(f)
+            assert tag == 76
+            path = read_string(f)
+            self.paths.append(path)
+
+        # end tag
+        tag = read_byte(f)
+        assert tag == 0x03
 
 @utils.register_class
 class GraphicEffect(core.AVBObject):
