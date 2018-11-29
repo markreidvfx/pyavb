@@ -548,7 +548,6 @@ class Composition(TrackGroup):
     class_id = b'CMPO'
     properties = TrackGroup.properties + [
         AVBProperty('last_modified', 'OMFI:MOBJ:LastModified',  'int32'),
-        AVBProperty('last_modified', 'OMFI:MOBJ:LastModified',  'int32'),
         AVBProperty('mob_type_id',   '__OMFI:MOBJ:MobType',     'int8'),
         AVBProperty('usage_code',    'OMFI:MOBJ:UsageCode',     'int8'),
         AVBProperty('descriptor',    'OMFI:MOBJ:PhysicalMedia', 'reference'),
