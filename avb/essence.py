@@ -36,6 +36,14 @@ from . utils import (
 @utils.register_class
 class MediaDescriptor(core.AVBObject):
     class_id = b'MDES'
+    properties = [
+        AVBProperty('mob_kind',       'OMFI:MDES:MobKind',         'int8'),
+        AVBProperty('locator',        'OMFI:MDES:Locator',         'reference'),
+        AVBProperty('intermediate',   'OMFI:MDES:MC:Intermediate', 'bool'),
+        AVBProperty('physical_media', 'OMFI:MOBJ:PhysicalMedia',   'reference'),
+        AVBProperty('uuid',           'OMFI:AMDL:acfUID',          'UUID'),
+        AVBProperty('attributes',     'OMFI:AMDL:Attributes',      'reference'),
+    ]
 
     def read(self, f):
         super(MediaDescriptor, self).read(f)
@@ -46,15 +54,14 @@ class MediaDescriptor(core.AVBObject):
         assert version == 0x03
 
         self.mob_kind = read_byte(f)
+        self.locator = []
         self.locator = read_object_ref(self.root, f)
         self.intermediate = read_bool(f)
-        self.locator = read_object_ref(self.root, f)
+        self.physical_media = read_object_ref(self.root, f)
 
         # print('sss', self.locator)
         # print(peek_data(f).encode('hex'))
 
-        self.uuid = None
-        self.locator = None
         for tag in iter_ext(f):
 
             if tag == 0x01:
@@ -64,7 +71,7 @@ class MediaDescriptor(core.AVBObject):
                 self.uuid = read_raw_uuid(f)
             elif tag == 0x03:
                 read_assert_tag(f, 72)
-                self.physical_media = read_object_ref(self.root, f)
+                self.attributes = read_object_ref(self.root, f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
