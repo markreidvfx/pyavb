@@ -325,7 +325,7 @@ class ASPIPluginClip(TrackEffect):
         plugin.chunks.append(chunk)
         self.plugins.append(plugin)
 
-        print(peek_data(f).encode("hex"))
+        # print(peek_data(f).encode("hex"))
 
 
         for tag in iter_ext(f):
