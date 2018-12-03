@@ -186,6 +186,42 @@ class PCMADescriptor(MediaFileDescriptor):
 @utils.register_class
 class DIDDescriptor(MediaFileDescriptor):
     class_id = b'DIDD'
+    properties = MediaFileDescriptor.properties + [
+        AVBProperty('stored_height',              'OMFI:DIDD:StoredHeight',                            'int32'),
+        AVBProperty('stored_width',               'OMFI:DIDD:StoredWidth',                             'int32'),
+        AVBProperty('sampled_height',             'OMFI:DIDD:SampledHeight',                           'int32'),
+        AVBProperty('sampled_width',              'OMFI:DIDD:SampledWidth',                            'int32'),
+        AVBProperty('sampled_x_offset',           'OMFI:DIDD:SampledXOffset',                          'int32'),
+        AVBProperty('sampled_y_offset',           'OMFI:DIDD:SampledYOffset',                          'int32'),
+        AVBProperty('display_height',             'OMFI:DIDD:DisplayHeight',                           'int32'),
+        AVBProperty('display_width',              'OMFI:DIDD:DisplayWidth',                            'int32'),
+        AVBProperty('display_x_offset',           'OMFI:DIDD:DisplayXOffset',                          'int32'),
+        AVBProperty('display_y_offset',           'OMFI:DIDD:DisplayYOffset',                          'int32'),
+        AVBProperty('frame_layout',               'OMFI:DIDD:FrameLayout',                             'int16'),
+        AVBProperty('aspect_ratio',               'OMFI:DIDD:ImageAspectRatio',                        'rational'),
+        AVBProperty('line_map',                   'OMFI:DIDD:VideoLineMap',                            'list'),
+        AVBProperty('alpha_transparency',         'OMFI:DIDD:AlphaTransparency',                       'int32'),
+        AVBProperty('uniformness',                'OMFI:DIDD:Uniformness',                             'bool'),
+        AVBProperty('did_image_size',             'OMFI:DIDD:DIDImageSize',                            'int32'),
+        AVBProperty('compress_method',            'OMFI:DIDD:DIDCompressMethod',                       'bytes'),
+        AVBProperty('resolution_id',              'OMFI:DIDD:DIDResolutionID',                         'int32'),
+        AVBProperty('image_alignment_factor',     'OMFI:DIDD:ImageAlignmentFactor',                    'int32'),
+        AVBProperty('frame_index_byte_order',     'OMFI:DIDD:FrameIndexByteOrder',                     'int16'),
+        AVBProperty('frame_sample_size',          'OMFI:DIDD:FrameSampleSize',                         'int32'),
+        AVBProperty('first_frame_offset',         'OMFI:DIDD:FirstFrameOffset',                        'int32'),
+        AVBProperty('client_fill_start',          'OMFI:DIDD:ClientFillStart',                         'int32'),
+        AVBProperty('client_fill_end',            'OMFI:DIDD:ClientFillEnd',                           'int32'),
+        AVBProperty('offset_to_rle_frame_index',  'OMFI:DIDD:OffsetToRLEFrameIndexes',                 'int32'),
+        AVBProperty('valid_box',                  'OMFI:DIDD:Valid',                                   'bounds_box'),
+        AVBProperty('essence_box',                'OMFI:DIDD:Essence',                                 'bounds_box'),
+        AVBProperty('source_box',                 'OMFI:DIDD:Source',                                  'bounds_box'),
+        AVBProperty('framing_box',                'OMFI:DIDD:Framing',                                 'bounds_box'),
+        AVBProperty('reformatting_option',        'OMFI:DIDD:ReformattingOption',                      'int32'),
+        AVBProperty('transfer_characteristic',    'OMFI:DIDD:TransferCharacteristic',                  'UUID'),
+        AVBProperty('color_primaries',            'OMFI:DIDD:ColorPrimaries',                          'UUID'),
+        AVBProperty('coding_equations',           'OMFI:DIDD:CodingEquations',                         'UUID'),
+        AVBProperty('frame_checked_with_mapper',  'OMFI:DIDD:FrameSampleSizeHasBeenCheckedWithMapper', 'bool'),
+    ]
 
     def read(self, f):
         super(DIDDescriptor, self).read(f)
@@ -261,105 +297,109 @@ class DIDDescriptor(MediaFileDescriptor):
 
             elif tag == 0x08:
                 # valid
+                self.valid_box = []
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.valid_x = [x, y]
+                self.valid_box.append([x, y])
 
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.valid_y = [x, y]
+                self.valid_box.append([x, y])
 
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.valid_width = [x, y]
+                self.valid_box.append([x, y])
 
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.valid_height = [x, y]
+                self.valid_box.append([x, y])
 
                 # essence
+                self.essence_box = []
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.essence_x = [x, y]
+                self.essence_box.append([x, y])
 
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.essence_y = [x, y]
+                self.essence_box.append([x, y])
 
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.essence_width = [x, y]
+                self.essence_box.append([x, y])
 
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.essence_height = [x, y]
+                self.essence_box.append([x, y])
 
                 # source
+                self.source_box = []
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.source_x = [x, y]
+                self.source_box.append([x, y])
 
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.source_y = [x, y]
+                self.source_box.append([x, y])
 
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.source_width = [x, y]
+                self.source_box.append([x, y])
 
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.souce_height = [x, y]
+                self.source_box.append([x, y])
 
             elif tag == 9:
                 # print("\n??!", peek_data(f).encode('hex'), '\n')
+                self.framing_box = []
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.framing_x = [x, y]
+                self.framing_box.append([x, y])
 
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.framing_y = [x, y]
+                self.framing_box.append([x, y])
 
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.framing_width = [x, y]
+                self.framing_box.append([x, y])
 
                 read_assert_tag(f, 71)
                 x = read_s32le(f)
                 read_assert_tag(f, 71)
                 y = read_s32le(f)
-                self.framing_height = [x, y]
+                self.framing_box.append([x, y])
 
                 read_assert_tag(f, 71)
                 self.reformatting_option = read_s32le(f)
@@ -375,7 +415,7 @@ class DIDDescriptor(MediaFileDescriptor):
 
             elif tag == 15:
                 read_assert_tag(f, 66)
-                self.frame_sample_size_has_been_checked_with_mapper = read_bool(f)
+                self.frame_checked_with_mapper = read_bool(f)
 
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
