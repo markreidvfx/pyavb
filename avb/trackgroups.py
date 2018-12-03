@@ -19,6 +19,7 @@ from . utils import (
     read_u16le,
     read_u32le,
     read_s32le,
+    read_s64le,
     read_string,
     read_doublele,
     read_exp10_encoded_float,
@@ -246,26 +247,43 @@ class PanVolumeEffect(TrackEffect):
         tag = read_byte(f)
         assert tag == 0x03
 
-class ASPIPlugin(object):
-    def __init__(self):
-        self.name = None
-        self.manufacturer_id = None
-        self.product_id = None
-        self.plugin_id = None
+class ASPIPlugin(core.AVBObject):
+    properties = [
+        AVBProperty('name',             'OMFI:ASPI:plugInName',             'string'),
+        AVBProperty('manufacturer_id',  'OMFI:ASPI:plugInfManufacturerID',  'uint32'),
+        AVBProperty('product_id',       'OMFI:ASPI:plugInfProductID',       'uint32'),
+        AVBProperty('plugin_id',        'OMFI:ASPI:plugInfPlugInID',        'uint32'),
+        AVBProperty('chunks',           'OMFI:ASPI:plugInChunks',           'list'),
+    ]
+
+    def __init__(self, root):
+        super(ASPIPlugin, self).__init__(root)
         self.chunks = []
 
-class ASPIPluginChunk(object):
-    def __init__(self):
-        self.version = None
-        self.manufacturer_id = None
-        self.product_id = None
-        self.chunk_id = None
-        self.name = None
-        self.data = None
+class ASPIPluginChunk(core.AVBObject):
+    properties = [
+        AVBProperty('version',         'OMFI:ASPI:chunkfVersion',         'int32'),
+        AVBProperty('manufacturer_id', 'OMFI:ASPI:plugInfManufacturerID', 'uint32'),
+        AVBProperty('product_id',      'OMFI:ASPI:plugInfProductID',      'uint32'),
+        AVBProperty('plugin_id',       'OMFI:ASPI:plugInfPlugInID',       'uint32'),
+        AVBProperty('chunk_id',        'OMFI:ASPI:chunkfChunkID',         'uint32'),
+        AVBProperty('name',            'OMFI:ASPI:chunkfChunkName',       'string'),
+        AVBProperty('data',            'OMFI:ASPI:chunkfData',            'bytes'),
+    ]
 
 @utils.register_class
 class ASPIPluginClip(TrackEffect):
     class_id = b'ASPI'
+    properties = TrackEffect.properties + [
+        AVBProperty('plugins',          'OMFI:ASPI:plugIns',                         'list'),
+        AVBProperty('mob_id',           'MobID',                                     'MobID'),
+        AVBProperty('mark_in',          'OMFI:ASPI:markInForSourceMasterClip',       'uint64'),
+        AVBProperty('mark_out',         'OMFI:ASPI:markOutForSourceMasterClip',      'uint64'),
+        AVBProperty('tracks_to_affect', 'OMFI:ASPI:tracksToAffect',                  'uint32'),
+        AVBProperty('rendering_mode',   'OMFI:ASPI:renderingMode',                   'int32'),
+        AVBProperty('padding_secs',     'OMFI:ASPI:paddingSecs',                     'int32'),
+        AVBProperty('preset_path',      'OMFI:ASPI:presetPath',                      'bytes'),
+    ]
     def read(self, f):
         super(ASPIPluginClip, self).read(f)
 
@@ -279,7 +297,7 @@ class ASPIPluginClip(TrackEffect):
         #TODO: find sample with multiple plugins
         assert number_of_plugins == 1
 
-        plugin = ASPIPlugin()
+        plugin = ASPIPlugin(self.root)
         plugin.name = read_string(f)
         plugin.manufacturer_id = read_u32le(f)
         plugin.product_id = read_u32le(f)
@@ -293,7 +311,7 @@ class ASPIPluginClip(TrackEffect):
         chunk_size = read_s32le(f)
         assert chunk_size >= 0
 
-        chunk = ASPIPluginChunk()
+        chunk = ASPIPluginChunk(self.root)
         chunk.version = read_s32le(f)
         chunk.manufacturer_id = read_u32le(f)
         chunk.roduct_id = read_u32le(f)
@@ -307,23 +325,68 @@ class ASPIPluginClip(TrackEffect):
         plugin.chunks.append(chunk)
         self.plugins.append(plugin)
 
-        # print(peek_data(f).encode("hex"))
-        #
-        # mob_id = mobid.MobID()
-        # for tag in iter_ext(f):
-        #     if tag == 0x01:
-        #         read_assert_tag(f, 71)
-        #         mob_id.instanceHigh = read_s32le(f)
-        #         read_assert_tag(f, 71)
-        #         mob_id.instanceLow = read_s32le(f)
-        #     elif tag == 0x08:
-        #         read_assert_tag(f, 65)
-        #         mob_id.SMPTELabel = [read_byte(f) for i in range(12)]
-        #
-        #     else:
-        #         raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
-        #
-        # raise Exception()
+        print(peek_data(f).encode("hex"))
+
+
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                # not sure what is used for. skiping
+                read_assert_tag(f, 71)
+                mob_hi = read_s32le(f)
+                read_assert_tag(f, 71)
+                mob_lo = read_s32le(f)
+            elif tag == 0x02:
+                read_assert_tag(f, 77)
+                self.mark_in = read_s64le(f)
+            elif tag == 0x03:
+                read_assert_tag(f, 77)
+                self.mark_out = read_s64le(f)
+            elif tag == 0x04:
+                read_assert_tag(f, 72)
+                self.tracks_to_affect = read_s32le(f)
+            elif tag == 0x05:
+                read_assert_tag(f, 71)
+                self.rendering_mode = read_s32le(f)
+            elif tag == 0x06:
+                read_assert_tag(f, 71)
+                self.padding_secs = read_s32le(f)
+            elif tag == 0x08:
+                mob_id = mobid.MobID()
+                read_assert_tag(f, 65)
+                length = read_s32le(f)
+                assert length == 12
+                mob_id.SMPTELabel = [read_byte(f) for i in range(12)]
+                read_assert_tag(f, 68)
+                mob_id.length = read_byte(f)
+                read_assert_tag(f, 68)
+                mob_id.instanceHigh = read_byte(f)
+                read_assert_tag(f, 68)
+                mob_id.instanceMid = read_byte(f)
+                read_assert_tag(f, 68)
+                mob_id.instanceLow = read_byte(f)
+                read_assert_tag(f, 72)
+                mob_id.Data1 = read_u32le(f)
+                read_assert_tag(f, 70)
+                mob_id.Data2 = read_u16le(f)
+                read_assert_tag(f, 70)
+                mob_id.Data3 = read_u16le(f)
+                read_assert_tag(f, 65)
+                length = read_s32le(f)
+                assert length == 8
+                mob_id.Data4 = [read_byte(f) for i in range(8)]
+                self.mob_id = mob_id
+
+            elif tag == 0x09:
+                read_assert_tag(f, 72)
+                preset_path_length = read_u32le(f)
+                read_assert_tag(f, 65)
+                length = read_u32le(f)
+                assert preset_path_length == length
+                self.preset_path = bytearray(f.read(length))
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
+
+        read_assert_tag(f, 0x03)
 
 class EqualizerBand(core.AVBObject):
     properties = [
