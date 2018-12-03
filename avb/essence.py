@@ -81,6 +81,20 @@ class MediaDescriptor(core.AVBObject):
 @utils.register_class
 class TapeDescriptor(MediaDescriptor):
     class_id = b'MDTP'
+    properties = MediaDescriptor.properties + [
+        AVBProperty('cframe', 'OMFI:MDTP:CFrame', "int16")
+    ]
+
+    def read(self, f):
+        super(TapeDescriptor, self).read(f)
+        tag = read_byte(f)
+        version = read_byte(f)
+
+        assert tag == 0x02
+        assert version == 0x02
+
+        self.cframe = read_s16le(f)
+        read_assert_tag(f, 0x03)
 
 class MediaFileDescriptor(MediaDescriptor):
     class_id = b'MDFL'
