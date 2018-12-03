@@ -488,6 +488,17 @@ def decode_pixel_layout(pixel_layout, pixel_struct):
 @utils.register_class
 class RGBADescriptor(DIDDescriptor):
     class_id = b'RGBA'
+    properties = DIDDescriptor.properties + [
+        AVBProperty('pixel_layout',       'OMFI:RGBA:PixelLayout',          'list'),
+        AVBProperty('palette',            'OMFI:RGBA:Palette',              'list'),
+        AVBProperty('frame_index_offset', 'OMFI:RGBA:OffsetToFrameIndexes', 'uint64'),
+        AVBProperty('has_comp_min_ref',   'OMFI:RGBA:HasCompMinRef',        'bool'),
+        AVBProperty('comp_min_ref',       'OMFI:RGBA:ComponentMinRef',      'uint32'),
+        AVBProperty('has_comp_max_ref',   'OMFI:RGBA:HasCompMaxRef',        'bool'),
+        AVBProperty('comp_max_ref',       'OMFI:RGBA:ComponentMaxRef',      'uint32'),
+        AVBProperty('alpha_min_ref',      'OMFI:RGBA:AlphaMinRef',          'uint32'),
+        AVBProperty('alpha_max_ref',      'OMFI:RGBA:AlphaMaxRef',          'uint32'),
+    ]
 
     def read(self, f):
         super(RGBADescriptor, self).read(f)
@@ -520,7 +531,7 @@ class RGBADescriptor(DIDDescriptor):
         for tag in iter_ext(f):
             if tag == 0x01:
                 read_assert_tag(f, 77)
-                self.offset_to_frames64 = read_u64le(f)
+                self.frame_index_offset = read_u64le(f)
 
             elif tag == 0x02:
                 read_assert_tag(f, 66)
