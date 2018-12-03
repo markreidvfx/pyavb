@@ -123,6 +123,28 @@ class MediaFileDescriptor(MediaDescriptor):
 @utils.register_class
 class PCMADescriptor(MediaFileDescriptor):
     class_id = b'PCMA'
+    properties = MediaFileDescriptor.properties + [
+        AVBProperty('channels',                    'OMFI:MDAU:NumChannels',               'uint16'),
+        AVBProperty('quantization_bits',           'OMFI:MDAU:BitsPerSample',             'uint16'),
+        AVBProperty('sample_rate',                 'EdRate',                              'fexp10'),
+        AVBProperty('locked',                      'OMFI:PCMA:Locked',                    'bool'),
+        AVBProperty('audio_ref_level',             'OMFI:PCMA:AudioRefLevel',             'int16'),
+        AVBProperty('electro_spatial_formulation', 'OMFI:PCMA:ElectroSpatialFormulation', 'int32'),
+        AVBProperty('dial_norm',                   'OMFI:PCMA:DialNorm',                  'uint16'),
+        AVBProperty('coding_format',               'OMFI:PCMA:AudioCodingFormat',         'int32'),
+        AVBProperty('block_align',                 'OMFI:PCMA:BlockAlignment',            'int32'),
+        AVBProperty('sequence_offset',             'OMFI:PCMA:SequenceOffset',            'uint16'),
+        AVBProperty('average_bps',                 'OMFI:PCMA:AverageBytesPerSecond',     'int32'),
+        AVBProperty('has_peak_envelope_data',      'OMFI:PCMA:HasPeakEnvelopeData',       'bool'),
+        AVBProperty('peak_envelope_version',       'OMFI:PCMA:PeakEnvelopeVersion',       'int32'),
+        AVBProperty('peak_envelope_format',        'OMFI:PCMA:PeakEnvelopeFormat',        'int32'),
+        AVBProperty('points_per_peak_value',       'OMFI:PCMA:PointsPerPeakValue',        'int32'),
+        AVBProperty('peak_envelope_block_size',    'OMFI:PCMA:PeakEnvelopeBlockSize',     'int32'),
+        AVBProperty('peak_channel_count',          'OMFI:PCMA:PeakChannelCount',          'int32'),
+        AVBProperty('peak_frame_count',            'OMFI:PCMA:PeakFrameCount',            'int32'),
+        AVBProperty('peak_of_peaks_offset',        'OMFI:PCMA:PeakOfPeaksOffset',         'uint64'),
+        AVBProperty('peak_envelope_timestamp',     'OMFI:PCMA:PeakEnvelopeTimestamp',     'int32'),
+    ]
 
     def read(self, f):
         super(PCMADescriptor, self).read(f)
@@ -139,7 +161,7 @@ class PCMADescriptor(MediaFileDescriptor):
 
         self.locked = read_bool(f)
         self.audio_ref_level = read_s16le(f)
-        self.electro_spatial_formulation = read_u32le(f)
+        self.electro_spatial_formulation = read_s32le(f)
         self.dial_norm = read_u16le(f)
 
         self.coding_format = read_u32le(f)
