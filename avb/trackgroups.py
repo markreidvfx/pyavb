@@ -208,6 +208,15 @@ class TrackEffect(TrackGroup):
 @utils.register_class
 class PanVolumeEffect(TrackEffect):
     class_id = b'PVOL'
+    properties = TrackEffect.properties + [
+        AVBProperty('level',                  'OMFI:PVOL:MC:Level',               'int32'),
+        AVBProperty('pan',                    'OMFI:PVOL:MC:Pan',                 'int32'),
+        AVBProperty('suppress_validation',    'OMFI:PVOL:MC:SuppressValidation',  'bool'),
+        AVBProperty('level_set',              'OMFI:PVOL:MC:LevelSet',            'bool'),
+        AVBProperty('pan_set',                'OMFI:PVOL:MC:PanSet',              'bool'),
+        AVBProperty('supports_seperate_gain', 'OMFI:PVOL:MC:DoesSuprtSeprtClipG', 'int32'),
+        AVBProperty('is_trim_gain_effect',    'OMFI:PVOL:MC:IsTrimGainEffect',    'int32'),
+    ]
     def read(self, f):
         super(PanVolumeEffect, self).read(f)
 
@@ -227,7 +236,7 @@ class PanVolumeEffect(TrackEffect):
         for tag in iter_ext(f):
             if tag == 0x01:
                 read_assert_tag(f, 71)
-                self.does_support_seperate_clip_gain = read_s32le(f)
+                self.supports_seperate_gain = read_s32le(f)
             elif tag == 0x02:
                 read_assert_tag(f, 71)
                 self.is_trim_gain_effect = read_s32le(f)
