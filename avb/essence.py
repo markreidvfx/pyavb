@@ -426,6 +426,18 @@ class DIDDescriptor(MediaFileDescriptor):
 @utils.register_class
 class CDCIDescriptor(DIDDescriptor):
     class_id = b'CDCI'
+    properties = DIDDescriptor.properties + [
+        AVBProperty('horizontal_subsampling', 'OMFI:CDCI:HorizontalSubsampling',         'uint32'),
+        AVBProperty('vertical_subsampling',   'OMFI:CDCI:VerticalSubsampling',           'uint32'),
+        AVBProperty('component_width',        'OMFI:CDCI:ComponentWidth',                'int32'),
+        AVBProperty('color_sitting',          'OMFI:CDCI:ColorSiting',                   'int16'),
+        AVBProperty('black_ref_level',        'OMFI:CDCI:BlackReferenceLevel',           'uint32'),
+        AVBProperty('white_ref_level',        'OMFI:CDCI:WhiteReferenceLevel',           'uint32'),
+        AVBProperty('color_range',            'OMFI:CDCI:ColorRange',                    'uint32'),
+        AVBProperty('frame_index_offset',     'OMFI:JPED:OffsetToFrameIndexes',          'uint64'),
+        AVBProperty('alpha_sampled_width',    'OMFI:CDCI:AlphaSamledWidth',              'uint32'),
+        AVBProperty('ignore_bw',              'OMFI:CDCI:IgnoreBWRefLevelAndColorRange', 'uint32'),
+    ]
 
     def read(self, f):
         super(CDCIDescriptor, self).read(f)
@@ -437,14 +449,14 @@ class CDCIDescriptor(DIDDescriptor):
 
         self.horizontal_subsampling = read_u32le(f)
         self.vertical_subsampling = read_u32le(f)
-        self.component_width = read_u32le(f)
+        self.component_width = read_s32le(f)
 
         self.color_sitting = read_s16le(f)
         self.black_ref_level = read_u32le(f)
         self.white_ref_level = read_u32le(f)
         self.color_range = read_u32le(f)
 
-        self.offset_to_frames64 = read_s64le(f)
+        self.frame_index_offset = read_s64le(f)
 
         for tag in iter_ext(f):
             if tag == 0x01:
@@ -453,7 +465,7 @@ class CDCIDescriptor(DIDDescriptor):
 
             elif tag == 0x02:
                 read_assert_tag(f, 72)
-                self.ignore_bw_ref_level_and_color_range = read_u32le(f)
+                self.ignore_bw = read_u32le(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
