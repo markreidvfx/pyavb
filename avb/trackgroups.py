@@ -325,17 +325,23 @@ class ASPIPluginClip(TrackEffect):
         #
         # raise Exception()
 
-class EqualizerBand(object):
-    def __init__(self):
-        self.type = None
-        self.freq = None
-        self.gain = None
-        self.q = None
-        self.enable = None
+class EqualizerBand(core.AVBObject):
+    properties = [
+        AVBProperty('type',   'OMFI:EQBD:AV:BandType',   'int32'),
+        AVBProperty('freq',   'OMFI:EQBD:AV:BandFreq',   'int32'),
+        AVBProperty('gain',   'OMFI:EQBD:AV:BandGain',   'int32'),
+        AVBProperty('q',      'OMFI:EQBD:AV:BandQ',      'int32'),
+        AVBProperty('enable', 'OMFI:EQBD:AV:BandEnable', 'bool'),
+    ]
 
 @utils.register_class
 class EqualizerMultiBand(TrackEffect):
     class_id = b'EQMB'
+    properties = TrackEffect.properties + [
+        AVBProperty('bands',         'OMFI:EQBD:AV:Bands',        'list'),
+        AVBProperty('effect_enable', 'OMFI:EQMB:AV:EffectEnable', 'bool'),
+        AVBProperty('filter_name',   'OMFI:EQMB:AV:FilterName',   'string'),
+    ]
 
     def read(self, f):
         super(EqualizerMultiBand, self).read(f)
@@ -349,7 +355,7 @@ class EqualizerMultiBand(TrackEffect):
 
         self.bands = []
         for i in range(num_bands):
-            band = EqualizerBand()
+            band = EqualizerBand(self.root)
             band.type = read_s32le(f)
             band.freq = read_s32le(f)
             band.gain = read_s32le(f)
