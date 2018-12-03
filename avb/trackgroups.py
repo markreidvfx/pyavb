@@ -463,6 +463,9 @@ class Repeat(TimeWarp):
 @utils.register_class
 class RepSet(TrackGroup):
     class_id = b'RSET'
+    properties = TrackGroup.properties + [
+        AVBProperty('rep_set_type', 'OMFI:RSET:repSetType', 'int32'),
+    ]
     def read(self, f):
         super(RepSet, self).read(f)
 
