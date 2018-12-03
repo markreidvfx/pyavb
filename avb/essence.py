@@ -98,6 +98,12 @@ class TapeDescriptor(MediaDescriptor):
 
 class MediaFileDescriptor(MediaDescriptor):
     class_id = b'MDFL'
+    properties = MediaDescriptor.properties + [
+        AVBProperty('edit_rate', 'EdRate', "fexp10"),
+        AVBProperty('length', 'OMFI:MDFL:Length', 'int32'),
+        AVBProperty('is_omfi', 'OMFI:MDFL:IsOMFI', 'int16'),
+        AVBProperty('data_offset', 'OMFI:MDFL:dataOffset', 'int32'),
+    ]
 
     def read(self, f):
         super(MediaFileDescriptor, self).read(f)
@@ -110,9 +116,9 @@ class MediaFileDescriptor(MediaDescriptor):
         assert version == 0x03
 
         self.edit_rate = read_exp10_encoded_float(f)
-        self.length = read_u32le(f)
+        self.length = read_s32le(f)
         self.is_omfi = read_s16le(f)
-        self.data_offset = read_u32le(f)
+        self.data_offset = read_s32le(f)
 
 @utils.register_class
 class PCMADescriptor(MediaFileDescriptor):
