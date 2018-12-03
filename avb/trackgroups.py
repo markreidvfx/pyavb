@@ -370,6 +370,9 @@ class EqualizerMultiBand(TrackEffect):
 
 class TimeWarp(TrackGroup):
     class_id = b'WARP'
+    properties = TrackGroup.properties + [
+        AVBProperty('phase_offset', 'OMFI:WARP:PhaseOffset', 'int32'),
+    ]
 
     def read(self, f):
         super(TimeWarp, self).read(f)
@@ -384,6 +387,10 @@ class TimeWarp(TrackGroup):
 @utils.register_class
 class CaptureMask(TimeWarp):
     class_id = b'MASK'
+    properties = TimeWarp.properties + [
+        AVBProperty('is_double', 'OMFI:MASK:IsDouble', 'bool'),
+        AVBProperty('mask_bits', 'OMFI:MASK:MaskBits', 'int32'),
+    ]
     def read(self, f):
         super(CaptureMask, self).read(f)
         # print(peek_data(f).encode("hex"))
@@ -403,6 +410,12 @@ class CaptureMask(TimeWarp):
 @utils.register_class
 class MotionEffect(TimeWarp):
     class_id = b'SPED'
+    properties = TimeWarp.properties + [
+        AVBProperty('rate',                   'OMFI:SPED:Rate',                 'rational'),
+        AVBProperty('offset_adjust',          'OMIF:SPED:OffsetAdjust',         'double'),
+        AVBProperty('source_param_list',      'OMFI:SPED:SourceParamList',      'reference'),
+        AVBProperty('new_source_calculation', 'OMIF:SPED:NewSourceCalculation', 'bool'),
+    ]
     def read(self, f):
         super(MotionEffect, self).read(f)
         # print(peek_data(f).encode("hex"))
