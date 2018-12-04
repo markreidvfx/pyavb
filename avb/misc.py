@@ -22,6 +22,7 @@ from . utils import (
     read_exp10_encoded_float,
     read_object_ref,
     read_datetime,
+    read_raw_uuid,
     iter_ext,
     read_assert_tag,
     peek_data
@@ -74,7 +75,7 @@ class GraphicEffect(core.AVBObject):
         AVBProperty('pict_data', 'OMFI:MC:GRFX:PictData', 'bytes'),
     ]
     def read(self, f):
-
+        super(GraphicEffect, self).read(f)
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x01)
 
@@ -83,5 +84,48 @@ class GraphicEffect(core.AVBObject):
 
         self.pict_data = bytearray(f.read(pict_size))
         assert len(self.pict_data) == pict_size
+
+        read_assert_tag(f, 0x03)
+
+@utils.register_class
+class ParameterItems(core.AVBObject):
+    class_id = b'PRIT'
+    properties = [
+        AVBProperty('uuid',            'OMFI:PRIT:GUID',                   'UUID'),
+        AVBProperty('value_type',      'OMFI:PRIT:ValueType',              'int16'),
+        AVBProperty('value',           'OMFI:PRIT:Value',                  'int32'),
+        AVBProperty('name',            'OMFI:PRIT:Name',                   'string'),
+        AVBProperty('enable',          'OMFI:PRIT:Enabled',                'bool'),
+        AVBProperty('control_track',   'OMFI:PRIT:ControlTrack',           'reference'),
+        AVBProperty('contribs_to_sig', 'OMFI:PRIT:ContributesToSignature', 'bool'),
+    ]
+
+    def read(self, f):
+        super(ParameterItems, self).read(f)
+        # print(peek_data(f).encode('hex'))
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x02)
+
+        self.uuid = read_raw_uuid(f)
+        self.value_type = read_s16le(f)
+        if self.value_type == 1:
+            self.value = read_s32le(f)
+        elif self.value_type == 2:
+            self.value = read_doublele(f)
+        elif self.value_type == 4:
+            self.value = read_object_ref(self.root, f)
+        else:
+            raise ValueError("unknown value_type: %d" % self.value_type)
+
+        self.name = read_string(f)
+        self.enable = read_bool(f)
+        self.control_track = read_object_ref(self.root, f)
+
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                read_assert_tag(f, 66)
+                self.contribs_to_sig = read_bool(f)
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         read_assert_tag(f, 0x03)
