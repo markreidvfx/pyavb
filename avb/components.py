@@ -297,8 +297,9 @@ class ParamClip(Clip):
 
         self.interp_kind = read_s32le(f)
         self.value_type = read_s16le(f)
-
-        assert self.value_type in (CP_TYPE_INT, CP_TYPE_DOUBLE)
+        # print(self.value_type)
+        # not sure what 4 is BOB data?
+        assert self.value_type in (CP_TYPE_INT, CP_TYPE_DOUBLE, 4)
 
         point_count = read_s32le(f)
         assert point_count >= 0
