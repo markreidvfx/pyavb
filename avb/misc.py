@@ -158,12 +158,71 @@ class ParameterItems(core.AVBObject):
         read_assert_tag(f, 0x03)
 
 @utils.register_class
+class MSMLocator(core.AVBObject):
+    class_id = b'MSML'
+    properties = [
+        AVBProperty('last_known_volume', 'OMFI:MSML:LastKnownVolume', 'string'),
+        AVBProperty('domain_type',       'OMFI:MSML:DomainType',      'int32'),
+        AVBProperty('mob_id',            'MobID',                     'MobID'),
+    ]
+    def read(self, f):
+        super(MSMLocator, self).read(f)
+        # print(peek_data(f).encode('hex'))
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x02)
+
+        mob_id_hi = read_s32le(f)
+        mob_id_lo = read_s32le(f)
+
+        self.last_known_volume = read_string(f)
+
+        for tag in iter_ext(f):
+
+            if tag == 0x01:
+                read_assert_tag(f, 71)
+                self.domain_type = read_s32le(f)
+            elif tag == 0x02:
+                mob_id = mobid.MobID()
+                read_assert_tag(f, 65)
+                length = read_s32le(f)
+                assert length == 12
+                mob_id.SMPTELabel = [read_byte(f) for i in range(12)]
+                read_assert_tag(f, 68)
+                mob_id.length = read_byte(f)
+                read_assert_tag(f, 68)
+                mob_id.instanceHigh = read_byte(f)
+                read_assert_tag(f, 68)
+                mob_id.instanceMid = read_byte(f)
+                read_assert_tag(f, 68)
+                mob_id.instanceLow = read_byte(f)
+                read_assert_tag(f, 72)
+                mob_id.Data1 = read_u32le(f)
+                read_assert_tag(f, 70)
+                mob_id.Data2 = read_u16le(f)
+                read_assert_tag(f, 70)
+                mob_id.Data3 = read_u16le(f)
+                read_assert_tag(f, 65)
+                length = read_s32le(f)
+                assert length == 8
+                mob_id.Data4 = [read_byte(f) for i in range(8)]
+                self.mob_id = mob_id
+            elif tag == 0x03:
+                read_assert_tag(f, 76)
+                length = read_s16le(f)
+                assert length >= 0
+                last_known_volume_utf8 = f.read(length)
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
+
+        read_assert_tag(f, 0x03)
+
+@utils.register_class
 class BinRef(core.AVBObject):
     class_id = b'MCBR'
     properties = [
-            AVBProperty('uid_high', 'OMFI:MCBR:MC:binID.high', 'int32'),
-            AVBProperty('uid_low',  'OMFI:MCBR:MC:binID.low',  'int32'),
-            AVBProperty('name',     'OMFI:MCBR:MC:binName',    'string'),
+        AVBProperty('uid_high', 'OMFI:MCBR:MC:binID.high', 'int32'),
+        AVBProperty('uid_low',  'OMFI:MCBR:MC:binID.low',  'int32'),
+        AVBProperty('name',     'OMFI:MCBR:MC:binName',    'string'),
     ]
     def read(self, f):
         super(BinRef, self).read(f)

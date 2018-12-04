@@ -82,6 +82,10 @@ class TestChuckDB(unittest.TestCase):
         for chunk_path in iter_chunks('MCBR'):
             decode_chunk(chunk_path)
 
+    def test_msml_chunks(self):
+        for chunk_path in iter_chunks('MSML'):
+            decode_chunk(chunk_path)
+
     def test_muld_chunks(self):
         for chunk_path in iter_chunks("MULD"):
             decode_chunk(chunk_path)
