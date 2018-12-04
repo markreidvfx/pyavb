@@ -12,7 +12,7 @@ import binascii
 
 from weakref import WeakValueDictionary
 
-from . attributes import read_attributes
+# from . attributes import read_attributes
 from . import utils
 from .utils import (
     read_string,
@@ -119,8 +119,8 @@ class AVBFile(object):
         chunk = self.chunks[index]
         data = chunk.read()
 
-        if chunk.class_id == b"ATTR":
-            return read_attributes(self, io.BytesIO(data))
+        # if chunk.class_id == b"ATTR":
+        #     return read_attributes(self, io.BytesIO(data))
 
         obj_class = utils.AVBClaseID_dict.get(chunk.class_id, None)
         if obj_class:
