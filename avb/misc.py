@@ -89,7 +89,7 @@ class GraphicEffect(core.AVBObject):
         read_assert_tag(f, 0x03)
 
 @utils.register_class
-class AVUPData(core.AVBObject):
+class CFUserParam(core.AVBObject):
     class_id = b'AVUP'
     properties = [
         AVBProperty('byte_order', 'OMFI:AVUP:ByteOrder', 'uint16'),
@@ -98,7 +98,7 @@ class AVUPData(core.AVBObject):
     ]
 
     def read(self, f):
-        super(AVUPData, self).read(f)
+        super(CFUserParam, self).read(f)
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x01)
 
@@ -159,7 +159,7 @@ class ParameterItems(core.AVBObject):
 
 @utils.register_class
 class BinRef(core.AVBObject):
-    class_id =b'MCBR'
+    class_id = b'MCBR'
     properties = [
             AVBProperty('uid_high', 'OMFI:MCBR:MC:binID.high', 'int32'),
             AVBProperty('uid_low',  'OMFI:MCBR:MC:binID.low',  'int32'),
