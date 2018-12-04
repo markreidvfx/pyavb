@@ -255,20 +255,20 @@ class TrackRef(Clip):
 CP_TYPE_INT = 1
 CP_TYPE_DOUBLE = 2
 
-class ControlPoint(core.AVBObject):
+class ParamControlPoint(core.AVBObject):
     properties = [
         AVBProperty('offset',    'OMFI:PRCL:Offset',     'rational'),
         AVBProperty('timescale', 'OMFI:PRCL:TimeScale',  'int32'),
         AVBProperty('value',     'OMFI:PRCL:Value',      'number'), # int or double
-        AVBProperty('pp',        'OMFI:PRCL:InterpKind', 'list'),
+        AVBProperty('pp',        'OMFI:PRCL:PP',         'list'),
     ]
 
     def __init__(self, root):
-        super(ControlPoint, self).__init__(root)
+        super(ParamControlPoint, self).__init__(root)
         self.pp = []
 
 # not sure hwat PP's stands for
-class PerPoint(core.AVBObject):
+class ParamPerPoint(core.AVBObject):
     properties = [
         AVBProperty('code',  'OMFI:PRCL:PPCode',  'int16'),
         AVBProperty('type',  'OMFI:PRCL:PPType',  'int16'),
@@ -306,7 +306,7 @@ class ParamClip(Clip):
 
         self.control_points = []
         for i in range(point_count):
-            cp = ControlPoint(self.root)
+            cp = ParamControlPoint(self.root)
 
             num = read_s32le(f)
             den = read_s32le(f)
@@ -324,7 +324,7 @@ class ParamClip(Clip):
             assert pp_count >= 0
 
             for j in range(pp_count):
-                pp = PerPoint(self.root)
+                pp = ParamPerPoint(self.root)
                 pp.code = read_s16le(f)
                 pp.type = read_s16le(f)
 
@@ -350,6 +350,73 @@ class ParamClip(Clip):
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         read_assert_tag(f, 0x03)
+
+
+class ControlPoint(core.AVBObject):
+    properties = [
+        AVBProperty('offset',     'OMFI:CTRL:Offset',    'rational'),
+        AVBProperty('time_scale', 'OMFI:CTRL:TimeScale', 'int32'),
+        AVBProperty('value',      'OMFI:CTRL:Value',     'bool'),
+        AVBProperty('pp',         'OMFI:CTRL:PP',        'list'),
+
+    ]
+
+class PerPoint(core.AVBObject):
+    properties = [
+        AVBProperty('code',    'OMFI:CTRL:PPCode',  'int16'),
+        AVBProperty('value',   'OMFI:CTRL:PP',      'rational'),
+    ]
+
+
+@utils.register_class
+class ControlClip(Clip):
+    class_id = b'CTRL'
+    properties = Clip.properties + [
+        AVBProperty('interp_kind',    'OMFI:CTRL:InterpKin',    'int32'),
+        AVBProperty('control_points', 'OMFI:CTRL:ControlPoints', 'list'),
+    ]
+    def read(self, f):
+        super(ControlClip, self).read(f)
+
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x03)
+
+        self.interp_kind = read_s32le(f)
+        count = read_s32le(f)
+        self.control_points = []
+        # print(self.interp_kind, count)
+        #
+        # print(peek_data(f).encode("hex"))
+        for i in range(count):
+            cp = ControlPoint(self.root)
+            a = read_s32le(f)
+            b = read_s32le(f)
+            cp.offset = [a, b]
+            cp.time_scale = read_s32le(f)
+
+            # TODO: find sample with this False
+            has_value = read_bool(f)
+            assert has_value == True
+
+            a = read_s32le(f)
+            b = read_s32le(f)
+            cp.value = [a, b]
+            cp.pp = []
+
+            pp_count = read_s16le(f)
+            assert pp_count >= 0
+            for j in range(pp_count):
+                pp = PerPoint(self.root)
+                pp.code = read_s16le(f)
+                a = read_s32le(f)
+                b = read_s32le(f)
+                pp.value = [a,b]
+                cp.pp.append(pp)
+
+            self.control_points.append(cp)
+
+        read_assert_tag(f, 0x03)
+        # raise Exception()
 
 @utils.register_class
 class Filler(Clip):

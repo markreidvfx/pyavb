@@ -90,7 +90,7 @@ def read_doublele(f):
     return struct.unpack("<d", f.read(8))[0]
 
 def read_bool(f):
-    return read_byte(f) == b'\x00'
+    return read_byte(f) == 0x01
 
 def read_fourcc(f):
     return reverse_str(f.read(4))
