@@ -272,7 +272,7 @@ class ASPIPluginChunk(core.AVBObject):
     ]
 
 @utils.register_class
-class ASPIPluginClip(TrackEffect):
+class AudioSuitePluginEffect(TrackEffect):
     class_id = b'ASPI'
     properties = TrackEffect.properties + [
         AVBProperty('plugins',          'OMFI:ASPI:plugIns',                         'list'),
@@ -285,7 +285,7 @@ class ASPIPluginClip(TrackEffect):
         AVBProperty('preset_path',      'OMFI:ASPI:presetPath',                      'bytes'),
     ]
     def read(self, f):
-        super(ASPIPluginClip, self).read(f)
+        super(AudioSuitePluginEffect, self).read(f)
 
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x01)
