@@ -120,6 +120,27 @@ class MediaFileDescriptor(MediaDescriptor):
         self.is_omfi = read_s16le(f)
         self.data_offset = read_s32le(f)
 
+
+@utils.register_class
+class MultiDescriptor(MediaFileDescriptor):
+    class_id = b'MULD'
+    properties = MediaFileDescriptor.properties + [
+        AVBProperty('descriptors', 'OMFI:MULD:Descriptors', "ref_list"),
+    ]
+    def read(self, f):
+        super(MultiDescriptor, self).read(f)
+
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        count = read_s32le(f)
+        self.descriptors = []
+        for i in range(count):
+            ref = read_object_ref(self.root, f)
+            self.descriptors.append(ref)
+
+        read_assert_tag(f, 0x03)
+
 @utils.register_class
 class PCMADescriptor(MediaFileDescriptor):
     class_id = b'PCMA'
