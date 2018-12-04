@@ -189,14 +189,14 @@ class BinRef(core.AVBObject):
         read_assert_tag(f, 0x03)
 
 @utils.register_class
-class MCMobRef(core.AVBObject):
+class MobRef(core.AVBObject):
     class_id = b'MCMR'
     properties = [
             AVBProperty('position',      'OMFI:MCMR:MC:Position', 'int32'),
             AVBProperty('mob_id',        'MobID', 'MobID'),
     ]
     def read(self, f):
-        super(MCMobRef, self).read(f)
+        super(MobRef, self).read(f)
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x01)
 
@@ -211,9 +211,9 @@ class MCMobRef(core.AVBObject):
 
 # also called a TimeCrumb
 @utils.register_class
-class Marker(MCMobRef):
+class Marker(MobRef):
     class_id = b'TMBC'
-    properties = MCMobRef.properties + [
+    properties = MobRef.properties + [
         AVBProperty('comp_offset',   'OMFI:TMBC:MC:CompOffset',             'int32'),
         AVBProperty('attributes',    'OMFI:TMBC:MC:Attributes',             'reference'),
         AVBProperty('color',         'OMFI:TMBC:MC:CarbonAPI::RGBColor',    'list'),
