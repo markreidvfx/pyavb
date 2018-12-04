@@ -89,6 +89,32 @@ class GraphicEffect(core.AVBObject):
         read_assert_tag(f, 0x03)
 
 @utils.register_class
+class AVUPData(core.AVBObject):
+    class_id = b'AVUP'
+    properties = [
+        AVBProperty('byte_order', 'OMFI:AVUP:ByteOrder', 'uint16'),
+        AVBProperty('uuid',       'OMFI:AVUP:TypeID',    'UUID'),
+        AVBProperty('data',       'OMFI:AVUP:ValueData', 'bytes'),
+    ]
+
+    def read(self, f):
+        super(AVUPData, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        self.byte_order = read_s16le(f)
+        assert self.byte_order == 0x4949
+
+        self.uuid = read_raw_uuid(f)
+
+        value_size = read_s32le(f)
+        value_size = read_s32le(f)
+
+        self.data = bytearray(f.read(value_size))
+
+        read_assert_tag(f, 0x03)
+
+@utils.register_class
 class ParameterItems(core.AVBObject):
     class_id = b'PRIT'
     properties = [
