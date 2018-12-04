@@ -8,6 +8,7 @@ from __future__ import (
 from . import core
 from . import utils
 from .core import AVBProperty
+from . import mobid
 
 from . utils import (
     read_byte,
@@ -125,6 +126,66 @@ class ParameterItems(core.AVBObject):
             if tag == 0x01:
                 read_assert_tag(f, 66)
                 self.contribs_to_sig = read_bool(f)
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
+
+        read_assert_tag(f, 0x03)
+
+@utils.register_class
+class MCMobRef(core.AVBObject):
+    class_id = b'MCMR'
+    properties = [
+            AVBProperty('position',      'OMFI:MCMR:MC:Position', 'int32'),
+            AVBProperty('mob_id',        'MobID', 'MobID'),
+    ]
+    def read(self, f):
+        super(MCMobRef, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        mob_hi = read_s32le(f)
+        mob_lo = read_s32le(f)
+        self.position = read_s32le(f)
+
+        self.mob_id = mobid.read_mob_id(f)
+
+        if self.class_id == b'MCMR':
+            read_assert_tag(f, 0x03)
+
+# also called a TimeCrumb
+@utils.register_class
+class Marker(MCMobRef):
+    class_id = b'TMBC'
+    properties = MCMobRef.properties + [
+        AVBProperty('comp_offset',   'OMFI:TMBC:MC:CompOffset',             'int32'),
+        AVBProperty('attributes',    'OMFI:TMBC:MC:Attributes',             'reference'),
+        AVBProperty('color',         'OMFI:TMBC:MC:CarbonAPI::RGBColor',    'list'),
+        AVBProperty('handled_codes', 'OMFI:TMBC:MC:handledBadControlCodes', 'bool'),
+    ]
+
+    def read(self, f):
+        super(Marker, self).read(f)
+
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x03)
+
+        self.comp_offset = read_s32le(f)
+        self.attributes = read_object_ref(self.root, f)
+        # print(self.comp_offset, self.attributes)
+
+        version = read_s16le(f)
+        assert version == 1
+
+        self.color = []
+        self.color.append(read_s16le(f))
+        self.color.append(read_s16le(f))
+        self.color.append(read_s16le(f))
+
+        for tag in iter_ext(f):
+
+            if tag == 0x01:
+                read_assert_tag(f, 66)
+                self.handled_codes = read_bool(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
