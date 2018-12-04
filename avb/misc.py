@@ -18,6 +18,7 @@ from . utils import (
     read_u16le,
     read_u32le,
     read_s32le,
+    read_u64le,
     read_string,
     read_doublele,
     read_exp10_encoded_float,
@@ -213,6 +214,73 @@ class MSMLocator(core.AVBObject):
                 last_known_volume_utf8 = f.read(length)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
+
+        read_assert_tag(f, 0x03)
+
+@utils.register_class
+class Position(core.AVBObject):
+    class_id = b'APOS'
+    properties = [
+        AVBProperty('mob_id', "MobID", 'MobID'),
+    ]
+
+    def read(self, f):
+        super(Position, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        mob_id_hi = read_s32le(f)
+        mob_id_lo = read_s32le(f)
+
+        self.mob_id = mobid.read_mob_id(f)
+
+        if self.class_id ==  b'APOS':
+            read_assert_tag(f, 0x03)
+
+
+@utils.register_class
+class BOBPosition(Position):
+    class_id = b'ABOB'
+    properties = Position.properties + [
+        AVBProperty('sample_num',  "__OMFI:MSBO:sampleNum",   'int32'),
+        AVBProperty('length',      "__OMFI:MSBO:length",      'int32'),
+        AVBProperty('track_type',  "OMFI:trkt:Track.trkType", 'int32'),
+        AVBProperty('track_index', "OMFI:trkt:Track.trkLNum", 'int32'),
+    ]
+    def read(self, f):
+        super(BOBPosition, self).read(f)
+
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        self.sample_num = read_s32le(f)
+        self.length = read_s32le(f)
+        self.track_type = read_s16le(f)
+        self.track_index = read_s16le(f)
+
+        if self.class_id ==  b'ABOB':
+            read_assert_tag(f, 0x03)
+
+@utils.register_class
+class DIDPosition(BOBPosition):
+    class_id = b'DIDP'
+    properties = BOBPosition.properties + [
+        AVBProperty('strip',        "_Strip",       'int32'),
+        AVBProperty('offset',       "_Offset",      'uint64'),
+        AVBProperty('byte_length',  "_ByteLength",  'uint64'),
+        AVBProperty('spos_invalid', "_SPosInvalid", 'bool'),
+    ]
+
+    def read(self, f):
+        super(DIDPosition, self).read(f)
+
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        self.strip = read_s32le(f)
+        self.offset = read_u64le(f)
+        self.byte_length = read_u64le(f)
+        self.spos_invalid = read_bool(f)
 
         read_assert_tag(f, 0x03)
 
