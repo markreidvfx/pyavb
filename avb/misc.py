@@ -158,6 +158,37 @@ class ParameterItems(core.AVBObject):
         read_assert_tag(f, 0x03)
 
 @utils.register_class
+class BinRef(core.AVBObject):
+    class_id =b'MCBR'
+    properties = [
+            AVBProperty('uid_high', 'OMFI:MCBR:MC:binID.high', 'int32'),
+            AVBProperty('uid_low',  'OMFI:MCBR:MC:binID.low',  'int32'),
+            AVBProperty('name',     'OMFI:MCBR:MC:binName',    'string'),
+    ]
+    def read(self, f):
+        super(BinRef, self).read(f)
+
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        self.uid_high = read_s32le(f)
+        self.uid_low = read_s32le(f)
+        self.name = read_string(f)
+
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                read_assert_tag(f, 76)
+                length = read_s16le(f)
+                assert length >= 0
+                # always starts with '\x00\x00' ??
+                name_utf8 = f.read(length)
+
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
+
+        read_assert_tag(f, 0x03)
+
+@utils.register_class
 class MCMobRef(core.AVBObject):
     class_id = b'MCMR'
     properties = [
