@@ -533,6 +533,30 @@ class TrackerDataSlot(core.AVBObject):
         read_assert_tag(f, 0x03)
 
 @utils.register_class
+class TrackerParameterSlot(core.AVBObject):
+    class_id = b'TKPS'
+    properties = [
+        AVBProperty('settings', 'OMFI:TKPS:EffectSettings', 'bytes'),
+        AVBProperty('params',   'OMFI:TKPS:TrackedParam',   'ref_list'),
+    ]
+    def read(self, f):
+        super(TrackerParameterSlot, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+        size = read_s16le(f)
+        assert size >= 0
+        self.settings = bytearray(f.read(size))
+
+        count = read_s32le(f)
+        assert count >= 0
+        self.params = []
+        for i in range(count):
+            ref = read_object_ref(self.root, f)
+            self.params.append(ref)
+
+        read_assert_tag(f, 0x03)
+
+@utils.register_class
 class TrackerData(core.AVBObject):
     class_id = b'TKDA'
     properties = [
