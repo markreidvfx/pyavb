@@ -139,7 +139,7 @@ class Bin(core.AVBObject):
     AVBProperty('display_mode',     'DisplayMode',    'int32'),
     AVBProperty('sifted',           'Sifted',         'bool'),
     AVBProperty('sifted_settings',  'SiftedSettring', 'list'), #custom
-    AVBProperty('num_sort_columns', 'NumSortColumns', 'int16'),
+    AVBProperty('sort_columns',     'SortColumns',    'list'),
     AVBProperty('mac_font',         'MacFont',        'int16'),
     AVBProperty('mac_font_size',    'MacFontSize',    'int16'),
     AVBProperty('mac_image_scale',  'MacImageScale',  'int16'),
@@ -194,7 +194,14 @@ class Bin(core.AVBObject):
             s.column = read_string(f)
             self.sifted_settings.append(s)
 
-        self.num_sort_columns =  read_s16le(f)
+        sort_column_count =  read_s16le(f)
+        self.sort_columns = []
+        for i in range(sort_column_count):
+            direction = read_byte(f)
+            col = read_string(f)
+            self.sort_columns.append([direction, col])
+
+
         self.mac_font = read_s16le(f)
         self.mac_font_size = read_s16le(f)
         self.mac_image_scale = read_s16le(f)
