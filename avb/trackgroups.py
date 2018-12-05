@@ -6,7 +6,7 @@ from __future__ import (
     )
 
 from . import core
-from .core import AVBProperty
+from .core import AVBPropertyDef
 from .components import Component
 from . import utils
 from . import mobid
@@ -32,15 +32,15 @@ from . utils import (
 
 class Track(core.AVBObject):
     propertydefs = [
-        AVBProperty('flags',            'OMFI:TRAK:OptFlags',       'int16'),
-        AVBProperty('index',            'OMFI:TRAK:LabelNumber',    'int16'),
-        AVBProperty('session_attr',     'OMFI:TRAK:SessionAttrs',   'reference'),
-        AVBProperty('component',        'OMFI:TRAK:TrackComponent', 'reference'),
-        AVBProperty('filler_proxy',     'OMFI:TRAK:FillerProxy',    'reference'),
-        AVBProperty('bob_data',         '__OMFI:TRAK:Bob',          'reference'),
-        AVBProperty('control_code',     'OMFI:TRAK:ControlCode',    'int16'),
-        AVBProperty('control_sub_code', 'OMFI:TRAK:ControlSubCode', 'int16'),
-        AVBProperty('lock_number',      'OMFI:TRAK:LockNubmer',     'int16'),
+        AVBPropertyDef('flags',            'OMFI:TRAK:OptFlags',       'int16'),
+        AVBPropertyDef('index',            'OMFI:TRAK:LabelNumber',    'int16'),
+        AVBPropertyDef('session_attr',     'OMFI:TRAK:SessionAttrs',   'reference'),
+        AVBPropertyDef('component',        'OMFI:TRAK:TrackComponent', 'reference'),
+        AVBPropertyDef('filler_proxy',     'OMFI:TRAK:FillerProxy',    'reference'),
+        AVBPropertyDef('bob_data',         '__OMFI:TRAK:Bob',          'reference'),
+        AVBPropertyDef('control_code',     'OMFI:TRAK:ControlCode',    'int16'),
+        AVBPropertyDef('control_sub_code', 'OMFI:TRAK:ControlSubCode', 'int16'),
+        AVBPropertyDef('lock_number',      'OMFI:TRAK:LockNubmer',     'int16'),
 
     ]
     def __init__(self, root):
@@ -58,10 +58,10 @@ class Track(core.AVBObject):
 class TrackGroup(Component):
     class_id = b'TRKG'
     propertydefs = Component.propertydefs + [
-        AVBProperty('mc_mode',     'OMFI:TRKG:MC:Mode',     'int8'),
-        AVBProperty('length',      'OMFI:TRKG:GroupLength',  'int32'),
-        AVBProperty('num_scalars', 'OMFI:TRKG:NumScalars',  'int32'),
-        AVBProperty('tracks',      'OMFI:TRKG:Tracks',      'list')
+        AVBPropertyDef('mc_mode',     'OMFI:TRKG:MC:Mode',     'int8'),
+        AVBPropertyDef('length',      'OMFI:TRKG:GroupLength',  'int32'),
+        AVBPropertyDef('num_scalars', 'OMFI:TRKG:NumScalars',  'int32'),
+        AVBPropertyDef('tracks',      'OMFI:TRKG:Tracks',      'list')
     ]
 
     def read(self, f):
@@ -159,18 +159,18 @@ class TrackGroup(Component):
 class TrackEffect(TrackGroup):
     class_id = b'TKFX'
     propertydefs = TrackGroup.propertydefs + [
-        AVBProperty('left_length',         'OMFI:TKFX:MC:LeftLength',            'int32'),
-        AVBProperty('right_length',        'OMFI:TKFX:MC:RightLength',           'int32'),
-        AVBProperty('info_version',        'OMFI:TNFX:MC:GlobalInfoVersion',     'int16'),
-        AVBProperty('info_current',        'OMFI:TNFX:MC:GlobalInfo.kfCurrent',  'int32'),
-        AVBProperty('info_smooth',         'OMFI:TNFX:MC:GlobalInfo.kfSmooth',   'int32'),
-        AVBProperty('info_color_item',     'OMFI:TNFX:MC:GlobalInfo.colorItem',  'int16'),
-        AVBProperty('info_quality',        'OMFI:TNFX:MC:GlobalInfo.quality',    'int16'),
-        AVBProperty('info_is_reversed',    'OMFI:TNFX:MC:GlobalInfo.isReversed', 'int8'),
-        AVBProperty('info_aspect_on',      'OMFI:TNFX:MC:GlobalInfo.aspectOn',   'bool'),
-        AVBProperty('info_force_software', 'OMFI:TNFX:MC:ForceSoftware',         'bool'),
-        AVBProperty('info_never_hardware', 'OMFI:TKFX:MC:NeverHardware',         'bool'),
-        AVBProperty('trackman',            'OMFI:TKFX:MC:TrackMan',         'reference'),
+        AVBPropertyDef('left_length',         'OMFI:TKFX:MC:LeftLength',            'int32'),
+        AVBPropertyDef('right_length',        'OMFI:TKFX:MC:RightLength',           'int32'),
+        AVBPropertyDef('info_version',        'OMFI:TNFX:MC:GlobalInfoVersion',     'int16'),
+        AVBPropertyDef('info_current',        'OMFI:TNFX:MC:GlobalInfo.kfCurrent',  'int32'),
+        AVBPropertyDef('info_smooth',         'OMFI:TNFX:MC:GlobalInfo.kfSmooth',   'int32'),
+        AVBPropertyDef('info_color_item',     'OMFI:TNFX:MC:GlobalInfo.colorItem',  'int16'),
+        AVBPropertyDef('info_quality',        'OMFI:TNFX:MC:GlobalInfo.quality',    'int16'),
+        AVBPropertyDef('info_is_reversed',    'OMFI:TNFX:MC:GlobalInfo.isReversed', 'int8'),
+        AVBPropertyDef('info_aspect_on',      'OMFI:TNFX:MC:GlobalInfo.aspectOn',   'bool'),
+        AVBPropertyDef('info_force_software', 'OMFI:TNFX:MC:ForceSoftware',         'bool'),
+        AVBPropertyDef('info_never_hardware', 'OMFI:TKFX:MC:NeverHardware',         'bool'),
+        AVBPropertyDef('trackman',            'OMFI:TKFX:MC:TrackMan',         'reference'),
     ]
     def read(self, f):
         super(TrackEffect, self).read(f)
@@ -210,13 +210,13 @@ class TrackEffect(TrackGroup):
 class PanVolumeEffect(TrackEffect):
     class_id = b'PVOL'
     propertydefs = TrackEffect.propertydefs + [
-        AVBProperty('level',                  'OMFI:PVOL:MC:Level',               'int32'),
-        AVBProperty('pan',                    'OMFI:PVOL:MC:Pan',                 'int32'),
-        AVBProperty('suppress_validation',    'OMFI:PVOL:MC:SuppressValidation',  'bool'),
-        AVBProperty('level_set',              'OMFI:PVOL:MC:LevelSet',            'bool'),
-        AVBProperty('pan_set',                'OMFI:PVOL:MC:PanSet',              'bool'),
-        AVBProperty('supports_seperate_gain', 'OMFI:PVOL:MC:DoesSuprtSeprtClipG', 'int32'),
-        AVBProperty('is_trim_gain_effect',    'OMFI:PVOL:MC:IsTrimGainEffect',    'int32'),
+        AVBPropertyDef('level',                  'OMFI:PVOL:MC:Level',               'int32'),
+        AVBPropertyDef('pan',                    'OMFI:PVOL:MC:Pan',                 'int32'),
+        AVBPropertyDef('suppress_validation',    'OMFI:PVOL:MC:SuppressValidation',  'bool'),
+        AVBPropertyDef('level_set',              'OMFI:PVOL:MC:LevelSet',            'bool'),
+        AVBPropertyDef('pan_set',                'OMFI:PVOL:MC:PanSet',              'bool'),
+        AVBPropertyDef('supports_seperate_gain', 'OMFI:PVOL:MC:DoesSuprtSeprtClipG', 'int32'),
+        AVBPropertyDef('is_trim_gain_effect',    'OMFI:PVOL:MC:IsTrimGainEffect',    'int32'),
     ]
     def read(self, f):
         super(PanVolumeEffect, self).read(f)
@@ -249,11 +249,11 @@ class PanVolumeEffect(TrackEffect):
 
 class ASPIPlugin(core.AVBObject):
     propertydefs = [
-        AVBProperty('name',             'OMFI:ASPI:plugInName',             'string'),
-        AVBProperty('manufacturer_id',  'OMFI:ASPI:plugInfManufacturerID',  'uint32'),
-        AVBProperty('product_id',       'OMFI:ASPI:plugInfProductID',       'uint32'),
-        AVBProperty('plugin_id',        'OMFI:ASPI:plugInfPlugInID',        'uint32'),
-        AVBProperty('chunks',           'OMFI:ASPI:plugInChunks',           'list'),
+        AVBPropertyDef('name',             'OMFI:ASPI:plugInName',             'string'),
+        AVBPropertyDef('manufacturer_id',  'OMFI:ASPI:plugInfManufacturerID',  'uint32'),
+        AVBPropertyDef('product_id',       'OMFI:ASPI:plugInfProductID',       'uint32'),
+        AVBPropertyDef('plugin_id',        'OMFI:ASPI:plugInfPlugInID',        'uint32'),
+        AVBPropertyDef('chunks',           'OMFI:ASPI:plugInChunks',           'list'),
     ]
 
     def __init__(self, root):
@@ -262,27 +262,27 @@ class ASPIPlugin(core.AVBObject):
 
 class ASPIPluginChunk(core.AVBObject):
     propertydefs = [
-        AVBProperty('version',         'OMFI:ASPI:chunkfVersion',         'int32'),
-        AVBProperty('manufacturer_id', 'OMFI:ASPI:plugInfManufacturerID', 'uint32'),
-        AVBProperty('product_id',      'OMFI:ASPI:plugInfProductID',      'uint32'),
-        AVBProperty('plugin_id',       'OMFI:ASPI:plugInfPlugInID',       'uint32'),
-        AVBProperty('chunk_id',        'OMFI:ASPI:chunkfChunkID',         'uint32'),
-        AVBProperty('name',            'OMFI:ASPI:chunkfChunkName',       'string'),
-        AVBProperty('data',            'OMFI:ASPI:chunkfData',            'bytes'),
+        AVBPropertyDef('version',         'OMFI:ASPI:chunkfVersion',         'int32'),
+        AVBPropertyDef('manufacturer_id', 'OMFI:ASPI:plugInfManufacturerID', 'uint32'),
+        AVBPropertyDef('product_id',      'OMFI:ASPI:plugInfProductID',      'uint32'),
+        AVBPropertyDef('plugin_id',       'OMFI:ASPI:plugInfPlugInID',       'uint32'),
+        AVBPropertyDef('chunk_id',        'OMFI:ASPI:chunkfChunkID',         'uint32'),
+        AVBPropertyDef('name',            'OMFI:ASPI:chunkfChunkName',       'string'),
+        AVBPropertyDef('data',            'OMFI:ASPI:chunkfData',            'bytes'),
     ]
 
 @utils.register_class
 class AudioSuitePluginEffect(TrackEffect):
     class_id = b'ASPI'
     propertydefs = TrackEffect.propertydefs + [
-        AVBProperty('plugins',          'OMFI:ASPI:plugIns',                         'list'),
-        AVBProperty('mob_id',           'MobID',                                     'MobID'),
-        AVBProperty('mark_in',          'OMFI:ASPI:markInForSourceMasterClip',       'uint64'),
-        AVBProperty('mark_out',         'OMFI:ASPI:markOutForSourceMasterClip',      'uint64'),
-        AVBProperty('tracks_to_affect', 'OMFI:ASPI:tracksToAffect',                  'uint32'),
-        AVBProperty('rendering_mode',   'OMFI:ASPI:renderingMode',                   'int32'),
-        AVBProperty('padding_secs',     'OMFI:ASPI:paddingSecs',                     'int32'),
-        AVBProperty('preset_path',      'OMFI:ASPI:presetPath',                      'bytes'),
+        AVBPropertyDef('plugins',          'OMFI:ASPI:plugIns',                         'list'),
+        AVBPropertyDef('mob_id',           'MobID',                                     'MobID'),
+        AVBPropertyDef('mark_in',          'OMFI:ASPI:markInForSourceMasterClip',       'uint64'),
+        AVBPropertyDef('mark_out',         'OMFI:ASPI:markOutForSourceMasterClip',      'uint64'),
+        AVBPropertyDef('tracks_to_affect', 'OMFI:ASPI:tracksToAffect',                  'uint32'),
+        AVBPropertyDef('rendering_mode',   'OMFI:ASPI:renderingMode',                   'int32'),
+        AVBPropertyDef('padding_secs',     'OMFI:ASPI:paddingSecs',                     'int32'),
+        AVBPropertyDef('preset_path',      'OMFI:ASPI:presetPath',                      'bytes'),
     ]
     def read(self, f):
         super(AudioSuitePluginEffect, self).read(f)
@@ -390,20 +390,20 @@ class AudioSuitePluginEffect(TrackEffect):
 
 class EqualizerBand(core.AVBObject):
     propertydefs = [
-        AVBProperty('type',   'OMFI:EQBD:AV:BandType',   'int32'),
-        AVBProperty('freq',   'OMFI:EQBD:AV:BandFreq',   'int32'),
-        AVBProperty('gain',   'OMFI:EQBD:AV:BandGain',   'int32'),
-        AVBProperty('q',      'OMFI:EQBD:AV:BandQ',      'int32'),
-        AVBProperty('enable', 'OMFI:EQBD:AV:BandEnable', 'bool'),
+        AVBPropertyDef('type',   'OMFI:EQBD:AV:BandType',   'int32'),
+        AVBPropertyDef('freq',   'OMFI:EQBD:AV:BandFreq',   'int32'),
+        AVBPropertyDef('gain',   'OMFI:EQBD:AV:BandGain',   'int32'),
+        AVBPropertyDef('q',      'OMFI:EQBD:AV:BandQ',      'int32'),
+        AVBPropertyDef('enable', 'OMFI:EQBD:AV:BandEnable', 'bool'),
     ]
 
 @utils.register_class
 class EqualizerMultiBand(TrackEffect):
     class_id = b'EQMB'
     propertydefs = TrackEffect.propertydefs + [
-        AVBProperty('bands',         'OMFI:EQBD:AV:Bands',        'list'),
-        AVBProperty('effect_enable', 'OMFI:EQMB:AV:EffectEnable', 'bool'),
-        AVBProperty('filter_name',   'OMFI:EQMB:AV:FilterName',   'string'),
+        AVBPropertyDef('bands',         'OMFI:EQBD:AV:Bands',        'list'),
+        AVBPropertyDef('effect_enable', 'OMFI:EQMB:AV:EffectEnable', 'bool'),
+        AVBPropertyDef('filter_name',   'OMFI:EQMB:AV:FilterName',   'string'),
     ]
 
     def read(self, f):
@@ -434,7 +434,7 @@ class EqualizerMultiBand(TrackEffect):
 class TimeWarp(TrackGroup):
     class_id = b'WARP'
     propertydefs = TrackGroup.propertydefs + [
-        AVBProperty('phase_offset', 'OMFI:WARP:PhaseOffset', 'int32'),
+        AVBPropertyDef('phase_offset', 'OMFI:WARP:PhaseOffset', 'int32'),
     ]
 
     def read(self, f):
@@ -451,8 +451,8 @@ class TimeWarp(TrackGroup):
 class CaptureMask(TimeWarp):
     class_id = b'MASK'
     propertydefs = TimeWarp.propertydefs + [
-        AVBProperty('is_double', 'OMFI:MASK:IsDouble', 'bool'),
-        AVBProperty('mask_bits', 'OMFI:MASK:MaskBits', 'int32'),
+        AVBPropertyDef('is_double', 'OMFI:MASK:IsDouble', 'bool'),
+        AVBPropertyDef('mask_bits', 'OMFI:MASK:MaskBits', 'int32'),
     ]
     def read(self, f):
         super(CaptureMask, self).read(f)
@@ -474,10 +474,10 @@ class CaptureMask(TimeWarp):
 class MotionEffect(TimeWarp):
     class_id = b'SPED'
     propertydefs = TimeWarp.propertydefs + [
-        AVBProperty('rate',                   'OMFI:SPED:Rate',                 'rational'),
-        AVBProperty('offset_adjust',          'OMIF:SPED:OffsetAdjust',         'double'),
-        AVBProperty('source_param_list',      'OMFI:SPED:SourceParamList',      'reference'),
-        AVBProperty('new_source_calculation', 'OMIF:SPED:NewSourceCalculation', 'bool'),
+        AVBPropertyDef('rate',                   'OMFI:SPED:Rate',                 'rational'),
+        AVBPropertyDef('offset_adjust',          'OMIF:SPED:OffsetAdjust',         'double'),
+        AVBPropertyDef('source_param_list',      'OMFI:SPED:SourceParamList',      'reference'),
+        AVBPropertyDef('new_source_calculation', 'OMIF:SPED:NewSourceCalculation', 'bool'),
     ]
     def read(self, f):
         super(MotionEffect, self).read(f)
@@ -527,7 +527,7 @@ class Repeat(TimeWarp):
 class RepSet(TrackGroup):
     class_id = b'RSET'
     propertydefs = TrackGroup.propertydefs + [
-        AVBProperty('rep_set_type', 'OMFI:RSET:repSetType', 'int32'),
+        AVBPropertyDef('rep_set_type', 'OMFI:RSET:repSetType', 'int32'),
     ]
     def read(self, f):
         super(RepSet, self).read(f)
@@ -553,19 +553,19 @@ class RepSet(TrackGroup):
 class TransistionEffect(TrackGroup):
     class_id = b'TNFX'
     propertydefs = TrackGroup.propertydefs + [
-        AVBProperty('cutpoint',            'OMFI:TRAN:CutPoint',                   'int32'),
-        AVBProperty('left_length',         'OMFI:TNFX:MC:LeftLength',              'int32'),
-        AVBProperty('right_length',        'OMFI:TNFX:MC:RightLength',             'int32'),
-        AVBProperty('info_version',        'OMFI:TNFX:MC:GlobalInfoVersion',       'int16'),
-        AVBProperty('info_current',        'OMFI:TNFX:MC:GlobalInfo.kfCurrent',    'int32'),
-        AVBProperty('info_smooth',         'OMFI:TNFX:MC:GlobalInfo.kfSmooth',     'int32'),
-        AVBProperty('info_color_item',     'OMFI:TNFX:MC:GlobalInfo.colorItem',    'int16'),
-        AVBProperty('info_quality',        'OMFI:TNFX:MC:GlobalInfo.quality',      'int16'),
-        AVBProperty('info_is_reversed',    'OMFI:TNFX:MC:GlobalInfo.isReversed',   'int8'),
-        AVBProperty('info_aspect_on',      'OMFI:TNTNFXFX:MC:GlobalInfo.aspectOn', 'bool'),
-        AVBProperty('info_force_software', 'OMFI:TNFX:MC:ForceSoftware',           'bool'),
-        AVBProperty('info_never_hardware', 'OMFI:TNFX:MC:NeverHardware',           'bool'),
-        AVBProperty('trackman',            'OMFI:TNFX:MC:TrackMan',           'reference'),
+        AVBPropertyDef('cutpoint',            'OMFI:TRAN:CutPoint',                   'int32'),
+        AVBPropertyDef('left_length',         'OMFI:TNFX:MC:LeftLength',              'int32'),
+        AVBPropertyDef('right_length',        'OMFI:TNFX:MC:RightLength',             'int32'),
+        AVBPropertyDef('info_version',        'OMFI:TNFX:MC:GlobalInfoVersion',       'int16'),
+        AVBPropertyDef('info_current',        'OMFI:TNFX:MC:GlobalInfo.kfCurrent',    'int32'),
+        AVBPropertyDef('info_smooth',         'OMFI:TNFX:MC:GlobalInfo.kfSmooth',     'int32'),
+        AVBPropertyDef('info_color_item',     'OMFI:TNFX:MC:GlobalInfo.colorItem',    'int16'),
+        AVBPropertyDef('info_quality',        'OMFI:TNFX:MC:GlobalInfo.quality',      'int16'),
+        AVBPropertyDef('info_is_reversed',    'OMFI:TNFX:MC:GlobalInfo.isReversed',   'int8'),
+        AVBPropertyDef('info_aspect_on',      'OMFI:TNTNFXFX:MC:GlobalInfo.aspectOn', 'bool'),
+        AVBPropertyDef('info_force_software', 'OMFI:TNFX:MC:ForceSoftware',           'bool'),
+        AVBPropertyDef('info_never_hardware', 'OMFI:TNFX:MC:NeverHardware',           'bool'),
+        AVBPropertyDef('trackman',            'OMFI:TNFX:MC:TrackMan',           'reference'),
     ]
     def read(self, f):
         super(TransistionEffect, self).read(f)
@@ -613,8 +613,8 @@ class TransistionEffect(TrackGroup):
 class Selector(TrackGroup):
     class_id = b'SLCT'
     propertydefs = TrackGroup.propertydefs + [
-        AVBProperty('is_ganged', 'OMFI:SLCT:IsGanged',      'bool'),
-        AVBProperty('selected',  'OMFI:SLCT:SelectedTrack', 'int16'),
+        AVBPropertyDef('is_ganged', 'OMFI:SLCT:IsGanged',      'bool'),
+        AVBPropertyDef('selected',  'OMFI:SLCT:SelectedTrack', 'int16'),
     ]
 
     def read(self, f):
@@ -641,12 +641,12 @@ class Selector(TrackGroup):
 class Composition(TrackGroup):
     class_id = b'CMPO'
     propertydefs = TrackGroup.propertydefs + [
-        AVBProperty('last_modified', 'OMFI:MOBJ:LastModified',  'int32'),
-        AVBProperty('mob_type_id',   '__OMFI:MOBJ:MobType',     'int8'),
-        AVBProperty('usage_code',    'OMFI:MOBJ:UsageCode',     'int8'),
-        AVBProperty('descriptor',    'OMFI:MOBJ:PhysicalMedia', 'reference'),
-        AVBProperty('creation_time', 'OMFI:MOBJ:_CreationTime', 'int32'),
-        AVBProperty('mob_id',        'MobID',                   'MobID'),
+        AVBPropertyDef('last_modified', 'OMFI:MOBJ:LastModified',  'int32'),
+        AVBPropertyDef('mob_type_id',   '__OMFI:MOBJ:MobType',     'int8'),
+        AVBPropertyDef('usage_code',    'OMFI:MOBJ:UsageCode',     'int8'),
+        AVBPropertyDef('descriptor',    'OMFI:MOBJ:PhysicalMedia', 'reference'),
+        AVBPropertyDef('creation_time', 'OMFI:MOBJ:_CreationTime', 'int32'),
+        AVBPropertyDef('mob_id',        'MobID',                   'MobID'),
     ]
 
     def read(self, f):

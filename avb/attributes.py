@@ -7,7 +7,7 @@ from __future__ import (
 
 from . import utils
 from . import core
-from .core import AVBProperty
+from .core import AVBPropertyDef
 
 from . utils import (
     read_byte,

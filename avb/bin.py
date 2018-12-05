@@ -8,7 +8,7 @@ from __future__ import (
 from . import core
 from . import utils
 
-from . core import AVBProperty
+from . core import AVBPropertyDef
 
 from . utils import (
     read_byte,
@@ -27,11 +27,11 @@ from . utils import (
 class Setting(core.AVBObject):
     class_id = b'ASET'
     propertydefs = [
-    AVBProperty('name',       'name',       'string'),
-    AVBProperty('kind',       'kind',       'string'),
-    AVBProperty('attr_count', 'attributes', 'int16'),
-    AVBProperty('attr_type',  'type',       'int16'),
-    AVBProperty('attributes', 'attrList',   'reference'),
+        AVBPropertyDef('name',       'name',       'string'),
+        AVBPropertyDef('kind',       'kind',       'string'),
+        AVBPropertyDef('attr_count', 'attributes', 'int16'),
+        AVBPropertyDef('attr_type',  'type',       'int16'),
+        AVBPropertyDef('attributes', 'attrList',   'reference'),
     ]
     def read(self, f):
         super(Setting, self).read(f)
@@ -51,8 +51,8 @@ class Setting(core.AVBObject):
 class BinViewSetting(Setting):
     class_id = b'BVst'
     propertydefs = Setting.propertydefs + [
-    AVBProperty('columns',  'Columns',  'list'),
-    AVBProperty('format_descriptor', 'FormatDescriptor', 'string'),
+        AVBPropertyDef('columns',  'Columns',  'list'),
+        AVBPropertyDef('format_descriptor', 'FormatDescriptor', 'string'),
     ]
 
     def read(self, f):
@@ -102,11 +102,11 @@ class BinViewSetting(Setting):
 class BinItem(core.AVBObject):
 
     propertydefs = [
-    AVBProperty('ref',         'Composition',  'reference'),
-    AVBProperty('x',           'Xpos',         'int16'),
-    AVBProperty('y',           'Ypos',         'int16'),
-    AVBProperty('keyframe',    'Keyframe',     'int32'),
-    AVBProperty('user_placed', 'userPlaced',   'bool'),
+        AVBPropertyDef('ref',         'Composition',  'reference'),
+        AVBPropertyDef('x',           'Xpos',         'int16'),
+        AVBPropertyDef('y',           'Ypos',         'int16'),
+        AVBPropertyDef('keyframe',    'Keyframe',     'int32'),
+        AVBPropertyDef('user_placed', 'userPlaced',   'bool'),
     ]
 
     def read(self, f):
@@ -122,33 +122,33 @@ class BinItem(core.AVBObject):
 
 class SiftItem(core.AVBObject):
     propertydefs = [
-    AVBProperty('method', 'SiftMethod', 'int16'),
-    AVBProperty('string', 'SiftString', 'string'),
-    AVBProperty('column', 'SiftColumn', 'string'),
+        AVBPropertyDef('method', 'SiftMethod', 'int16'),
+        AVBPropertyDef('string', 'SiftString', 'string'),
+        AVBPropertyDef('column', 'SiftColumn', 'string'),
     ]
 
 @utils.register_class
 class Bin(core.AVBObject):
     class_id = b'ABIN'
     propertydefs = [
-    AVBProperty('view_setting',   'binviewsetting', 'reference'),
-    AVBProperty('uid_high',         'binuid.high',    'uint32'),
-    AVBProperty('uid_low',          'binuid.low',     'uint32'),
-    AVBProperty('items',            'Items',          'list'), # custom
-    AVBProperty('display_mask',     'DisplayMask',    'int32'),
-    AVBProperty('display_mode',     'DisplayMode',    'int32'),
-    AVBProperty('sifted',           'Sifted',         'bool'),
-    AVBProperty('sifted_settings',  'SiftedSettring', 'list'), #custom
-    AVBProperty('sort_columns',     'SortColumns',    'list'),
-    AVBProperty('mac_font',         'MacFont',        'int16'),
-    AVBProperty('mac_font_size',    'MacFontSize',    'int16'),
-    AVBProperty('mac_image_scale',  'MacImageScale',  'int16'),
-    AVBProperty('home_rect',        'HomeRect',       'rect'),
-    AVBProperty('background_color', 'BackColor',      'color'),
-    AVBProperty('forground_color',  'ForeColor',      'color'),
-    AVBProperty('ql_image_scale',   'QLImageScale',   'int16'),
-    AVBProperty('was_iconic',       'WasIconic',      'bool'),
-    AVBProperty('attributes',       'BinAttr',        'reference'),
+        AVBPropertyDef('view_setting',   'binviewsetting', 'reference'),
+        AVBPropertyDef('uid_high',         'binuid.high',    'uint32'),
+        AVBPropertyDef('uid_low',          'binuid.low',     'uint32'),
+        AVBPropertyDef('items',            'Items',          'list'), # custom
+        AVBPropertyDef('display_mask',     'DisplayMask',    'int32'),
+        AVBPropertyDef('display_mode',     'DisplayMode',    'int32'),
+        AVBPropertyDef('sifted',           'Sifted',         'bool'),
+        AVBPropertyDef('sifted_settings',  'SiftedSettring', 'list'), #custom
+        AVBPropertyDef('sort_columns',     'SortColumns',    'list'),
+        AVBPropertyDef('mac_font',         'MacFont',        'int16'),
+        AVBPropertyDef('mac_font_size',    'MacFontSize',    'int16'),
+        AVBPropertyDef('mac_image_scale',  'MacImageScale',  'int16'),
+        AVBPropertyDef('home_rect',        'HomeRect',       'rect'),
+        AVBPropertyDef('background_color', 'BackColor',      'color'),
+        AVBPropertyDef('forground_color',  'ForeColor',      'color'),
+        AVBPropertyDef('ql_image_scale',   'QLImageScale',   'int16'),
+        AVBPropertyDef('was_iconic',       'WasIconic',      'bool'),
+        AVBPropertyDef('attributes',       'BinAttr',        'reference'),
     ]
 
     def read(self, f):

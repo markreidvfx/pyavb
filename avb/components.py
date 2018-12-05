@@ -6,7 +6,7 @@ from __future__ import (
     )
 
 from . import core
-from .core import AVBProperty
+from .core import AVBPropertyDef
 from . import utils
 from . import mobid
 
@@ -33,16 +33,16 @@ from . utils import (
 class Component(core.AVBObject):
     class_id = b'COMP'
     propertydefs = [
-        AVBProperty('left_bob',      '__OMFI:CPNT:LeftBob',    'reference'),
-        AVBProperty('right_bob',     '__OMFI:CPNT:RightBob',   'reference'),
-        AVBProperty('media_kind_id', 'OMFI:CPNT:TrackKind',    'int16'),
-        AVBProperty('edit_rate',     'EdRate',                 'fexp10'),
-        AVBProperty('name',          'OMFI:CPNT:Name',         'string'),
-        AVBProperty('effect_id',     'OMFI:CPNT:EffectID',     'string'),
-        AVBProperty('attributes',    'OMFI:CPNT:Attributes',   'reference'),
-        AVBProperty('session_attrs', 'OMFI:CPNT:SessionAttrs', 'reference'),
-        AVBProperty('precomputed',   'OMFI:CPNT:Precomputed',  'reference'),
-        AVBProperty('param_list',    'OMFI:CPNT:ParamList',    'reference'),
+        AVBPropertyDef('left_bob',      '__OMFI:CPNT:LeftBob',    'reference'),
+        AVBPropertyDef('right_bob',     '__OMFI:CPNT:RightBob',   'reference'),
+        AVBPropertyDef('media_kind_id', 'OMFI:CPNT:TrackKind',    'int16'),
+        AVBPropertyDef('edit_rate',     'EdRate',                 'fexp10'),
+        AVBPropertyDef('name',          'OMFI:CPNT:Name',         'string'),
+        AVBPropertyDef('effect_id',     'OMFI:CPNT:EffectID',     'string'),
+        AVBPropertyDef('attributes',    'OMFI:CPNT:Attributes',   'reference'),
+        AVBPropertyDef('session_attrs', 'OMFI:CPNT:SessionAttrs', 'reference'),
+        AVBPropertyDef('precomputed',   'OMFI:CPNT:Precomputed',  'reference'),
+        AVBPropertyDef('param_list',    'OMFI:CPNT:ParamList',    'reference'),
     ]
 
     def read(self, f):
@@ -102,7 +102,7 @@ class Component(core.AVBObject):
 class Sequence(Component):
     class_id = b"SEQU"
     propertydefs = Component.propertydefs + [
-        AVBProperty('components_refs', 'OMFI:SEQU:Sequence', 'ref_list'),
+        AVBPropertyDef('components_refs', 'OMFI:SEQU:Sequence', 'ref_list'),
     ]
 
     def read(self, f):
@@ -130,7 +130,7 @@ class Sequence(Component):
 class Clip(Component):
     class_id = b'CLIP'
     propertydefs = Component.propertydefs + [
-        AVBProperty('length', 'OMFI:CLIP:Length', 'int32'),
+        AVBPropertyDef('length', 'OMFI:CLIP:Length', 'int32'),
     ]
     def read(self, f):
         super(Clip, self).read(f)
@@ -145,9 +145,9 @@ class Clip(Component):
 class SourceClip(Clip):
     class_id = b'SCLP'
     propertydefs = Clip.propertydefs + [
-        AVBProperty('track_id',   'OMFI:SCLP:SourceTrack',     'int16'),
-        AVBProperty('start_time', 'OMFI:SCLP:SourcePosition',  'int32'),
-        AVBProperty('mob_id',     'MobID',                     'MobID'),
+        AVBPropertyDef('track_id',   'OMFI:SCLP:SourceTrack',     'int16'),
+        AVBPropertyDef('start_time', 'OMFI:SCLP:SourcePosition',  'int32'),
+        AVBPropertyDef('mob_id',     'MobID',                     'MobID'),
     ]
 
     def read(self, f):
@@ -176,9 +176,9 @@ class SourceClip(Clip):
 class Timecode(Clip):
     class_id = b'TCCP'
     propertydefs = Clip.propertydefs + [
-        AVBProperty('flags', 'OMFI:TCCP:Flags',   'int32'),
-        AVBProperty('fps',   'OMFI:TCCP:FPS',     'int32'),
-        AVBProperty('start', 'OMFI:TCCP:StartTC', 'int32'),
+        AVBPropertyDef('flags', 'OMFI:TCCP:Flags',   'int32'),
+        AVBPropertyDef('fps',   'OMFI:TCCP:FPS',     'int32'),
+        AVBPropertyDef('start', 'OMFI:TCCP:StartTC', 'int32'),
     ]
 
     def read(self, f):
@@ -205,11 +205,11 @@ class Timecode(Clip):
 class Edgecode(Clip):
     class_id = b'ECCP'
     propertydefs = Clip.propertydefs + [
-        AVBProperty('header',      'OMFI:ECCP:Header',      'bytes'),
-        AVBProperty('film_kind',   'OMFI:ECCP:FilmKind',   'uint8'),
-        AVBProperty('code_format', 'OMFI:ECCP:CodeFormat', 'uint8'),
-        AVBProperty('base_perf',   'OMFI:ECCP:BasePerf',   'uint16'),
-        AVBProperty('start_ec',    'OMFI:ECCP:StartEC',    'int32'),
+        AVBPropertyDef('header',      'OMFI:ECCP:Header',      'bytes'),
+        AVBPropertyDef('film_kind',   'OMFI:ECCP:FilmKind',   'uint8'),
+        AVBPropertyDef('code_format', 'OMFI:ECCP:CodeFormat', 'uint8'),
+        AVBPropertyDef('base_perf',   'OMFI:ECCP:BasePerf',   'uint16'),
+        AVBPropertyDef('start_ec',    'OMFI:ECCP:StartEC',    'int32'),
     ]
     def read(self, f):
         super(Edgecode, self).read(f)
@@ -234,8 +234,8 @@ class Edgecode(Clip):
 class TrackRef(Clip):
     class_id = b'TRKR'
     propertydefs = Clip.propertydefs + [
-        AVBProperty('relative_scope', 'OMFI:TRKR:RelativeScope', 'int16'),
-        AVBProperty('relative_track', 'OMFI:TRKR:RelativeTrack', 'int16'),
+        AVBPropertyDef('relative_scope', 'OMFI:TRKR:RelativeScope', 'int16'),
+        AVBPropertyDef('relative_track', 'OMFI:TRKR:RelativeTrack', 'int16'),
     ]
     def read(self, f):
         super(TrackRef, self).read(f)
@@ -257,10 +257,10 @@ CP_TYPE_DOUBLE = 2
 
 class ParamControlPoint(core.AVBObject):
     propertydefs = [
-        AVBProperty('offset',    'OMFI:PRCL:Offset',     'rational'),
-        AVBProperty('timescale', 'OMFI:PRCL:TimeScale',  'int32'),
-        AVBProperty('value',     'OMFI:PRCL:Value',      'number'), # int or double
-        AVBProperty('pp',        'OMFI:PRCL:PP',         'list'),
+        AVBPropertyDef('offset',    'OMFI:PRCL:Offset',     'rational'),
+        AVBPropertyDef('timescale', 'OMFI:PRCL:TimeScale',  'int32'),
+        AVBPropertyDef('value',     'OMFI:PRCL:Value',      'number'), # int or double
+        AVBPropertyDef('pp',        'OMFI:PRCL:PP',         'list'),
     ]
 
     def __init__(self, root):
@@ -270,20 +270,20 @@ class ParamControlPoint(core.AVBObject):
 # not sure hwat PP's stands for
 class ParamPerPoint(core.AVBObject):
     propertydefs = [
-        AVBProperty('code',  'OMFI:PRCL:PPCode',  'int16'),
-        AVBProperty('type',  'OMFI:PRCL:PPType',  'int16'),
-        AVBProperty('value', 'OMFI:PRCL:PPValue', 'number'), # int or double
+        AVBPropertyDef('code',  'OMFI:PRCL:PPCode',  'int16'),
+        AVBPropertyDef('type',  'OMFI:PRCL:PPType',  'int16'),
+        AVBPropertyDef('value', 'OMFI:PRCL:PPValue', 'number'), # int or double
     ]
 
 @utils.register_class
 class ParamClip(Clip):
     class_id = b'PRCL'
     propertydefs = Clip.propertydefs + [
-        AVBProperty('interp_kind',    'OMFI:PRCL:InterpKind',    'int32'),
-        AVBProperty('value_type',     'OMFI:PRCL:ValueType',     'int16'),
-        AVBProperty('extrap_kind',    'OMFI:PCRL:ExtrapKind',    'int32'),
-        AVBProperty('control_points', 'OMFI:PRCL:ControlPoints', 'list'),
-        AVBProperty('fields',         'OMFI:PRCL:Fields',        'int32'),
+        AVBPropertyDef('interp_kind',    'OMFI:PRCL:InterpKind',    'int32'),
+        AVBPropertyDef('value_type',     'OMFI:PRCL:ValueType',     'int16'),
+        AVBPropertyDef('extrap_kind',    'OMFI:PCRL:ExtrapKind',    'int32'),
+        AVBPropertyDef('control_points', 'OMFI:PRCL:ControlPoints', 'list'),
+        AVBPropertyDef('fields',         'OMFI:PRCL:Fields',        'int32'),
     ]
 
     def read(self, f):
@@ -354,17 +354,17 @@ class ParamClip(Clip):
 
 class ControlPoint(core.AVBObject):
     propertydefs = [
-        AVBProperty('offset',     'OMFI:CTRL:Offset',    'rational'),
-        AVBProperty('time_scale', 'OMFI:CTRL:TimeScale', 'int32'),
-        AVBProperty('value',      'OMFI:CTRL:Value',     'bool'),
-        AVBProperty('pp',         'OMFI:CTRL:PP',        'list'),
+        AVBPropertyDef('offset',     'OMFI:CTRL:Offset',    'rational'),
+        AVBPropertyDef('time_scale', 'OMFI:CTRL:TimeScale', 'int32'),
+        AVBPropertyDef('value',      'OMFI:CTRL:Value',     'bool'),
+        AVBPropertyDef('pp',         'OMFI:CTRL:PP',        'list'),
 
     ]
 
 class PerPoint(core.AVBObject):
     propertydefs = [
-        AVBProperty('code',    'OMFI:CTRL:PPCode',  'int16'),
-        AVBProperty('value',   'OMFI:CTRL:PP',      'rational'),
+        AVBPropertyDef('code',    'OMFI:CTRL:PPCode',  'int16'),
+        AVBPropertyDef('value',   'OMFI:CTRL:PP',      'rational'),
     ]
 
 
@@ -372,8 +372,8 @@ class PerPoint(core.AVBObject):
 class ControlClip(Clip):
     class_id = b'CTRL'
     propertydefs = Clip.propertydefs + [
-        AVBProperty('interp_kind',    'OMFI:CTRL:InterpKin',    'int32'),
-        AVBProperty('control_points', 'OMFI:CTRL:ControlPoints', 'list'),
+        AVBPropertyDef('interp_kind',    'OMFI:CTRL:InterpKin',    'int32'),
+        AVBPropertyDef('control_points', 'OMFI:CTRL:ControlPoints', 'list'),
     ]
     def read(self, f):
         super(ControlClip, self).read(f)

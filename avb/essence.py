@@ -9,7 +9,7 @@ from io import BytesIO
 
 from . import core
 from . import utils
-from .core import AVBProperty
+from .core import AVBPropertyDef
 
 from . utils import (
     read_byte,
@@ -37,12 +37,12 @@ from . utils import (
 class MediaDescriptor(core.AVBObject):
     class_id = b'MDES'
     propertydefs = [
-        AVBProperty('mob_kind',       'OMFI:MDES:MobKind',         'int8'),
-        AVBProperty('locator',        'OMFI:MDES:Locator',         'reference'),
-        AVBProperty('intermediate',   'OMFI:MDES:MC:Intermediate', 'bool'),
-        AVBProperty('physical_media', 'OMFI:MOBJ:PhysicalMedia',   'reference'),
-        AVBProperty('uuid',           'OMFI:AMDL:acfUID',          'UUID'),
-        AVBProperty('attributes',     'OMFI:AMDL:Attributes',      'reference'),
+        AVBPropertyDef('mob_kind',       'OMFI:MDES:MobKind',         'int8'),
+        AVBPropertyDef('locator',        'OMFI:MDES:Locator',         'reference'),
+        AVBPropertyDef('intermediate',   'OMFI:MDES:MC:Intermediate', 'bool'),
+        AVBPropertyDef('physical_media', 'OMFI:MOBJ:PhysicalMedia',   'reference'),
+        AVBPropertyDef('uuid',           'OMFI:AMDL:acfUID',          'UUID'),
+        AVBPropertyDef('attributes',     'OMFI:AMDL:Attributes',      'reference'),
     ]
 
     def read(self, f):
@@ -82,7 +82,7 @@ class MediaDescriptor(core.AVBObject):
 class TapeDescriptor(MediaDescriptor):
     class_id = b'MDTP'
     propertydefs = MediaDescriptor.propertydefs + [
-        AVBProperty('cframe', 'OMFI:MDTP:CFrame', "int16")
+        AVBPropertyDef('cframe', 'OMFI:MDTP:CFrame', "int16")
     ]
 
     def read(self, f):
@@ -99,10 +99,10 @@ class TapeDescriptor(MediaDescriptor):
 class MediaFileDescriptor(MediaDescriptor):
     class_id = b'MDFL'
     propertydefs = MediaDescriptor.propertydefs + [
-        AVBProperty('edit_rate', 'EdRate', "fexp10"),
-        AVBProperty('length', 'OMFI:MDFL:Length', 'int32'),
-        AVBProperty('is_omfi', 'OMFI:MDFL:IsOMFI', 'int16'),
-        AVBProperty('data_offset', 'OMFI:MDFL:dataOffset', 'int32'),
+        AVBPropertyDef('edit_rate', 'EdRate', "fexp10"),
+        AVBPropertyDef('length', 'OMFI:MDFL:Length', 'int32'),
+        AVBPropertyDef('is_omfi', 'OMFI:MDFL:IsOMFI', 'int16'),
+        AVBPropertyDef('data_offset', 'OMFI:MDFL:dataOffset', 'int32'),
     ]
 
     def read(self, f):
@@ -125,7 +125,7 @@ class MediaFileDescriptor(MediaDescriptor):
 class MultiDescriptor(MediaFileDescriptor):
     class_id = b'MULD'
     propertydefs = MediaFileDescriptor.propertydefs + [
-        AVBProperty('descriptors', 'OMFI:MULD:Descriptors', "ref_list"),
+        AVBPropertyDef('descriptors', 'OMFI:MULD:Descriptors', "ref_list"),
     ]
     def read(self, f):
         super(MultiDescriptor, self).read(f)
@@ -145,26 +145,26 @@ class MultiDescriptor(MediaFileDescriptor):
 class PCMADescriptor(MediaFileDescriptor):
     class_id = b'PCMA'
     propertydefs = MediaFileDescriptor.propertydefs + [
-        AVBProperty('channels',                    'OMFI:MDAU:NumChannels',               'uint16'),
-        AVBProperty('quantization_bits',           'OMFI:MDAU:BitsPerSample',             'uint16'),
-        AVBProperty('sample_rate',                 'EdRate',                              'fexp10'),
-        AVBProperty('locked',                      'OMFI:PCMA:Locked',                    'bool'),
-        AVBProperty('audio_ref_level',             'OMFI:PCMA:AudioRefLevel',             'int16'),
-        AVBProperty('electro_spatial_formulation', 'OMFI:PCMA:ElectroSpatialFormulation', 'int32'),
-        AVBProperty('dial_norm',                   'OMFI:PCMA:DialNorm',                  'uint16'),
-        AVBProperty('coding_format',               'OMFI:PCMA:AudioCodingFormat',         'int32'),
-        AVBProperty('block_align',                 'OMFI:PCMA:BlockAlignment',            'int32'),
-        AVBProperty('sequence_offset',             'OMFI:PCMA:SequenceOffset',            'uint16'),
-        AVBProperty('average_bps',                 'OMFI:PCMA:AverageBytesPerSecond',     'int32'),
-        AVBProperty('has_peak_envelope_data',      'OMFI:PCMA:HasPeakEnvelopeData',       'bool'),
-        AVBProperty('peak_envelope_version',       'OMFI:PCMA:PeakEnvelopeVersion',       'int32'),
-        AVBProperty('peak_envelope_format',        'OMFI:PCMA:PeakEnvelopeFormat',        'int32'),
-        AVBProperty('points_per_peak_value',       'OMFI:PCMA:PointsPerPeakValue',        'int32'),
-        AVBProperty('peak_envelope_block_size',    'OMFI:PCMA:PeakEnvelopeBlockSize',     'int32'),
-        AVBProperty('peak_channel_count',          'OMFI:PCMA:PeakChannelCount',          'int32'),
-        AVBProperty('peak_frame_count',            'OMFI:PCMA:PeakFrameCount',            'int32'),
-        AVBProperty('peak_of_peaks_offset',        'OMFI:PCMA:PeakOfPeaksOffset',         'uint64'),
-        AVBProperty('peak_envelope_timestamp',     'OMFI:PCMA:PeakEnvelopeTimestamp',     'int32'),
+        AVBPropertyDef('channels',                    'OMFI:MDAU:NumChannels',               'uint16'),
+        AVBPropertyDef('quantization_bits',           'OMFI:MDAU:BitsPerSample',             'uint16'),
+        AVBPropertyDef('sample_rate',                 'EdRate',                              'fexp10'),
+        AVBPropertyDef('locked',                      'OMFI:PCMA:Locked',                    'bool'),
+        AVBPropertyDef('audio_ref_level',             'OMFI:PCMA:AudioRefLevel',             'int16'),
+        AVBPropertyDef('electro_spatial_formulation', 'OMFI:PCMA:ElectroSpatialFormulation', 'int32'),
+        AVBPropertyDef('dial_norm',                   'OMFI:PCMA:DialNorm',                  'uint16'),
+        AVBPropertyDef('coding_format',               'OMFI:PCMA:AudioCodingFormat',         'int32'),
+        AVBPropertyDef('block_align',                 'OMFI:PCMA:BlockAlignment',            'int32'),
+        AVBPropertyDef('sequence_offset',             'OMFI:PCMA:SequenceOffset',            'uint16'),
+        AVBPropertyDef('average_bps',                 'OMFI:PCMA:AverageBytesPerSecond',     'int32'),
+        AVBPropertyDef('has_peak_envelope_data',      'OMFI:PCMA:HasPeakEnvelopeData',       'bool'),
+        AVBPropertyDef('peak_envelope_version',       'OMFI:PCMA:PeakEnvelopeVersion',       'int32'),
+        AVBPropertyDef('peak_envelope_format',        'OMFI:PCMA:PeakEnvelopeFormat',        'int32'),
+        AVBPropertyDef('points_per_peak_value',       'OMFI:PCMA:PointsPerPeakValue',        'int32'),
+        AVBPropertyDef('peak_envelope_block_size',    'OMFI:PCMA:PeakEnvelopeBlockSize',     'int32'),
+        AVBPropertyDef('peak_channel_count',          'OMFI:PCMA:PeakChannelCount',          'int32'),
+        AVBPropertyDef('peak_frame_count',            'OMFI:PCMA:PeakFrameCount',            'int32'),
+        AVBPropertyDef('peak_of_peaks_offset',        'OMFI:PCMA:PeakOfPeaksOffset',         'uint64'),
+        AVBPropertyDef('peak_envelope_timestamp',     'OMFI:PCMA:PeakEnvelopeTimestamp',     'int32'),
     ]
 
     def read(self, f):
@@ -208,40 +208,40 @@ class PCMADescriptor(MediaFileDescriptor):
 class DIDDescriptor(MediaFileDescriptor):
     class_id = b'DIDD'
     propertydefs = MediaFileDescriptor.propertydefs + [
-        AVBProperty('stored_height',              'OMFI:DIDD:StoredHeight',                            'int32'),
-        AVBProperty('stored_width',               'OMFI:DIDD:StoredWidth',                             'int32'),
-        AVBProperty('sampled_height',             'OMFI:DIDD:SampledHeight',                           'int32'),
-        AVBProperty('sampled_width',              'OMFI:DIDD:SampledWidth',                            'int32'),
-        AVBProperty('sampled_x_offset',           'OMFI:DIDD:SampledXOffset',                          'int32'),
-        AVBProperty('sampled_y_offset',           'OMFI:DIDD:SampledYOffset',                          'int32'),
-        AVBProperty('display_height',             'OMFI:DIDD:DisplayHeight',                           'int32'),
-        AVBProperty('display_width',              'OMFI:DIDD:DisplayWidth',                            'int32'),
-        AVBProperty('display_x_offset',           'OMFI:DIDD:DisplayXOffset',                          'int32'),
-        AVBProperty('display_y_offset',           'OMFI:DIDD:DisplayYOffset',                          'int32'),
-        AVBProperty('frame_layout',               'OMFI:DIDD:FrameLayout',                             'int16'),
-        AVBProperty('aspect_ratio',               'OMFI:DIDD:ImageAspectRatio',                        'rational'),
-        AVBProperty('line_map',                   'OMFI:DIDD:VideoLineMap',                            'list'),
-        AVBProperty('alpha_transparency',         'OMFI:DIDD:AlphaTransparency',                       'int32'),
-        AVBProperty('uniformness',                'OMFI:DIDD:Uniformness',                             'bool'),
-        AVBProperty('did_image_size',             'OMFI:DIDD:DIDImageSize',                            'int32'),
-        AVBProperty('compress_method',            'OMFI:DIDD:DIDCompressMethod',                       'bytes'),
-        AVBProperty('resolution_id',              'OMFI:DIDD:DIDResolutionID',                         'int32'),
-        AVBProperty('image_alignment_factor',     'OMFI:DIDD:ImageAlignmentFactor',                    'int32'),
-        AVBProperty('frame_index_byte_order',     'OMFI:DIDD:FrameIndexByteOrder',                     'int16'),
-        AVBProperty('frame_sample_size',          'OMFI:DIDD:FrameSampleSize',                         'int32'),
-        AVBProperty('first_frame_offset',         'OMFI:DIDD:FirstFrameOffset',                        'int32'),
-        AVBProperty('client_fill_start',          'OMFI:DIDD:ClientFillStart',                         'int32'),
-        AVBProperty('client_fill_end',            'OMFI:DIDD:ClientFillEnd',                           'int32'),
-        AVBProperty('offset_to_rle_frame_index',  'OMFI:DIDD:OffsetToRLEFrameIndexes',                 'int32'),
-        AVBProperty('valid_box',                  'OMFI:DIDD:Valid',                                   'bounds_box'),
-        AVBProperty('essence_box',                'OMFI:DIDD:Essence',                                 'bounds_box'),
-        AVBProperty('source_box',                 'OMFI:DIDD:Source',                                  'bounds_box'),
-        AVBProperty('framing_box',                'OMFI:DIDD:Framing',                                 'bounds_box'),
-        AVBProperty('reformatting_option',        'OMFI:DIDD:ReformattingOption',                      'int32'),
-        AVBProperty('transfer_characteristic',    'OMFI:DIDD:TransferCharacteristic',                  'UUID'),
-        AVBProperty('color_primaries',            'OMFI:DIDD:ColorPrimaries',                          'UUID'),
-        AVBProperty('coding_equations',           'OMFI:DIDD:CodingEquations',                         'UUID'),
-        AVBProperty('frame_checked_with_mapper',  'OMFI:DIDD:FrameSampleSizeHasBeenCheckedWithMapper', 'bool'),
+        AVBPropertyDef('stored_height',              'OMFI:DIDD:StoredHeight',                            'int32'),
+        AVBPropertyDef('stored_width',               'OMFI:DIDD:StoredWidth',                             'int32'),
+        AVBPropertyDef('sampled_height',             'OMFI:DIDD:SampledHeight',                           'int32'),
+        AVBPropertyDef('sampled_width',              'OMFI:DIDD:SampledWidth',                            'int32'),
+        AVBPropertyDef('sampled_x_offset',           'OMFI:DIDD:SampledXOffset',                          'int32'),
+        AVBPropertyDef('sampled_y_offset',           'OMFI:DIDD:SampledYOffset',                          'int32'),
+        AVBPropertyDef('display_height',             'OMFI:DIDD:DisplayHeight',                           'int32'),
+        AVBPropertyDef('display_width',              'OMFI:DIDD:DisplayWidth',                            'int32'),
+        AVBPropertyDef('display_x_offset',           'OMFI:DIDD:DisplayXOffset',                          'int32'),
+        AVBPropertyDef('display_y_offset',           'OMFI:DIDD:DisplayYOffset',                          'int32'),
+        AVBPropertyDef('frame_layout',               'OMFI:DIDD:FrameLayout',                             'int16'),
+        AVBPropertyDef('aspect_ratio',               'OMFI:DIDD:ImageAspectRatio',                        'rational'),
+        AVBPropertyDef('line_map',                   'OMFI:DIDD:VideoLineMap',                            'list'),
+        AVBPropertyDef('alpha_transparency',         'OMFI:DIDD:AlphaTransparency',                       'int32'),
+        AVBPropertyDef('uniformness',                'OMFI:DIDD:Uniformness',                             'bool'),
+        AVBPropertyDef('did_image_size',             'OMFI:DIDD:DIDImageSize',                            'int32'),
+        AVBPropertyDef('compress_method',            'OMFI:DIDD:DIDCompressMethod',                       'bytes'),
+        AVBPropertyDef('resolution_id',              'OMFI:DIDD:DIDResolutionID',                         'int32'),
+        AVBPropertyDef('image_alignment_factor',     'OMFI:DIDD:ImageAlignmentFactor',                    'int32'),
+        AVBPropertyDef('frame_index_byte_order',     'OMFI:DIDD:FrameIndexByteOrder',                     'int16'),
+        AVBPropertyDef('frame_sample_size',          'OMFI:DIDD:FrameSampleSize',                         'int32'),
+        AVBPropertyDef('first_frame_offset',         'OMFI:DIDD:FirstFrameOffset',                        'int32'),
+        AVBPropertyDef('client_fill_start',          'OMFI:DIDD:ClientFillStart',                         'int32'),
+        AVBPropertyDef('client_fill_end',            'OMFI:DIDD:ClientFillEnd',                           'int32'),
+        AVBPropertyDef('offset_to_rle_frame_index',  'OMFI:DIDD:OffsetToRLEFrameIndexes',                 'int32'),
+        AVBPropertyDef('valid_box',                  'OMFI:DIDD:Valid',                                   'bounds_box'),
+        AVBPropertyDef('essence_box',                'OMFI:DIDD:Essence',                                 'bounds_box'),
+        AVBPropertyDef('source_box',                 'OMFI:DIDD:Source',                                  'bounds_box'),
+        AVBPropertyDef('framing_box',                'OMFI:DIDD:Framing',                                 'bounds_box'),
+        AVBPropertyDef('reformatting_option',        'OMFI:DIDD:ReformattingOption',                      'int32'),
+        AVBPropertyDef('transfer_characteristic',    'OMFI:DIDD:TransferCharacteristic',                  'UUID'),
+        AVBPropertyDef('color_primaries',            'OMFI:DIDD:ColorPrimaries',                          'UUID'),
+        AVBPropertyDef('coding_equations',           'OMFI:DIDD:CodingEquations',                         'UUID'),
+        AVBPropertyDef('frame_checked_with_mapper',  'OMFI:DIDD:FrameSampleSizeHasBeenCheckedWithMapper', 'bool'),
     ]
 
     def read(self, f):
@@ -448,16 +448,16 @@ class DIDDescriptor(MediaFileDescriptor):
 class CDCIDescriptor(DIDDescriptor):
     class_id = b'CDCI'
     propertydefs = DIDDescriptor.propertydefs + [
-        AVBProperty('horizontal_subsampling', 'OMFI:CDCI:HorizontalSubsampling',         'uint32'),
-        AVBProperty('vertical_subsampling',   'OMFI:CDCI:VerticalSubsampling',           'uint32'),
-        AVBProperty('component_width',        'OMFI:CDCI:ComponentWidth',                'int32'),
-        AVBProperty('color_sitting',          'OMFI:CDCI:ColorSiting',                   'int16'),
-        AVBProperty('black_ref_level',        'OMFI:CDCI:BlackReferenceLevel',           'uint32'),
-        AVBProperty('white_ref_level',        'OMFI:CDCI:WhiteReferenceLevel',           'uint32'),
-        AVBProperty('color_range',            'OMFI:CDCI:ColorRange',                    'uint32'),
-        AVBProperty('frame_index_offset',     'OMFI:JPED:OffsetToFrameIndexes',          'uint64'),
-        AVBProperty('alpha_sampled_width',    'OMFI:CDCI:AlphaSamledWidth',              'uint32'),
-        AVBProperty('ignore_bw',              'OMFI:CDCI:IgnoreBWRefLevelAndColorRange', 'uint32'),
+        AVBPropertyDef('horizontal_subsampling', 'OMFI:CDCI:HorizontalSubsampling',         'uint32'),
+        AVBPropertyDef('vertical_subsampling',   'OMFI:CDCI:VerticalSubsampling',           'uint32'),
+        AVBPropertyDef('component_width',        'OMFI:CDCI:ComponentWidth',                'int32'),
+        AVBPropertyDef('color_sitting',          'OMFI:CDCI:ColorSiting',                   'int16'),
+        AVBPropertyDef('black_ref_level',        'OMFI:CDCI:BlackReferenceLevel',           'uint32'),
+        AVBPropertyDef('white_ref_level',        'OMFI:CDCI:WhiteReferenceLevel',           'uint32'),
+        AVBPropertyDef('color_range',            'OMFI:CDCI:ColorRange',                    'uint32'),
+        AVBPropertyDef('frame_index_offset',     'OMFI:JPED:OffsetToFrameIndexes',          'uint64'),
+        AVBPropertyDef('alpha_sampled_width',    'OMFI:CDCI:AlphaSamledWidth',              'uint32'),
+        AVBPropertyDef('ignore_bw',              'OMFI:CDCI:IgnoreBWRefLevelAndColorRange', 'uint32'),
     ]
 
     def read(self, f):
@@ -510,15 +510,15 @@ def decode_pixel_layout(pixel_layout, pixel_struct):
 class RGBADescriptor(DIDDescriptor):
     class_id = b'RGBA'
     propertydefs = DIDDescriptor.propertydefs + [
-        AVBProperty('pixel_layout',       'OMFI:RGBA:PixelLayout',          'list'),
-        AVBProperty('palette',            'OMFI:RGBA:Palette',              'list'),
-        AVBProperty('frame_index_offset', 'OMFI:RGBA:OffsetToFrameIndexes', 'uint64'),
-        AVBProperty('has_comp_min_ref',   'OMFI:RGBA:HasCompMinRef',        'bool'),
-        AVBProperty('comp_min_ref',       'OMFI:RGBA:ComponentMinRef',      'uint32'),
-        AVBProperty('has_comp_max_ref',   'OMFI:RGBA:HasCompMaxRef',        'bool'),
-        AVBProperty('comp_max_ref',       'OMFI:RGBA:ComponentMaxRef',      'uint32'),
-        AVBProperty('alpha_min_ref',      'OMFI:RGBA:AlphaMinRef',          'uint32'),
-        AVBProperty('alpha_max_ref',      'OMFI:RGBA:AlphaMaxRef',          'uint32'),
+        AVBPropertyDef('pixel_layout',       'OMFI:RGBA:PixelLayout',          'list'),
+        AVBPropertyDef('palette',            'OMFI:RGBA:Palette',              'list'),
+        AVBPropertyDef('frame_index_offset', 'OMFI:RGBA:OffsetToFrameIndexes', 'uint64'),
+        AVBPropertyDef('has_comp_min_ref',   'OMFI:RGBA:HasCompMinRef',        'bool'),
+        AVBPropertyDef('comp_min_ref',       'OMFI:RGBA:ComponentMinRef',      'uint32'),
+        AVBPropertyDef('has_comp_max_ref',   'OMFI:RGBA:HasCompMaxRef',        'bool'),
+        AVBPropertyDef('comp_max_ref',       'OMFI:RGBA:ComponentMaxRef',      'uint32'),
+        AVBPropertyDef('alpha_min_ref',      'OMFI:RGBA:AlphaMinRef',          'uint32'),
+        AVBPropertyDef('alpha_max_ref',      'OMFI:RGBA:AlphaMaxRef',          'uint32'),
     ]
 
     def read(self, f):

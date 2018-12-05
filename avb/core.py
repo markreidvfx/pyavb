@@ -5,7 +5,7 @@ from __future__ import (
     division,
     )
 
-class AVBProperty(object):
+class AVBPropertyDef(object):
     def __init__(self, name, long_name, data_type, tag=None):
         self.name = name
         self.long_name = name

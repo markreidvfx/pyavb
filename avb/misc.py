@@ -7,7 +7,7 @@ from __future__ import (
 
 from . import core
 from . import utils
-from .core import AVBProperty
+from .core import AVBPropertyDef
 from . import mobid
 
 from . utils import (
@@ -34,8 +34,8 @@ from . utils import (
 class FileLocator(core.AVBObject):
     class_id = b'FILE'
     propertydefs = [
-        AVBProperty('path_name', 'OMFI:FL:PathName', 'string'),
-        AVBProperty('paths',     'OMFI:FL:Paths',     'list'),
+        AVBPropertyDef('path_name', 'OMFI:FL:PathName', 'string'),
+        AVBPropertyDef('paths',     'OMFI:FL:Paths',     'list'),
     ]
 
     def read(self, f):
@@ -74,7 +74,7 @@ class FileLocator(core.AVBObject):
 class GraphicEffect(core.AVBObject):
     class_id = b'GRFX'
     propertydefs = [
-        AVBProperty('pict_data', 'OMFI:MC:GRFX:PictData', 'bytes'),
+        AVBPropertyDef('pict_data', 'OMFI:MC:GRFX:PictData', 'bytes'),
     ]
     def read(self, f):
         super(GraphicEffect, self).read(f)
@@ -91,44 +91,44 @@ class GraphicEffect(core.AVBObject):
 
 class EffectParam(core.AVBObject):
     propertydefs = [
-        AVBProperty('percent_time',     'OMFI:FXPS:percentTime',         'int32'),
-        AVBProperty('level',            'OMFI:FXPS:level',               'int32'),
-        AVBProperty('pos_x',            'OMFI:FXPS:posX',                'int32'),
-        AVBProperty('floor_x',          'OMFI:FXPS:xFloor',              'int32'),
-        AVBProperty('ceil_x',           'OMFI:FXPS:xCeiling',            'int32'),
-        AVBProperty('pos_y',            'OMFI:FXPS:posY',                'int32'),
-        AVBProperty('floor_y',          'OMFI:FXPS:yFloor',              'int32'),
-        AVBProperty('ceil_y',           'OMFI:FXPS:yCeiling',            'int32'),
-        AVBProperty('scale_x',          'OMFI:FXPS:xScale',              'int32'),
-        AVBProperty('scale_y',          'OMFI:FXPS:yScale',              'int32'),
-        AVBProperty('crop_left',        'OMFI:FXPS:cropLeft',            'int32'),
-        AVBProperty('crop_right',       'OMFI:FXPS:cropRight',           'int32'),
-        AVBProperty('crop_top',         'OMFI:FXPS:cropTop',             'int32'),
-        AVBProperty('crop_bottom',      'OMFI:FXPS:cropBottom',          'int32'),
-        AVBProperty('box',              'OMFI:FXPS:box',                 'list'),
-        AVBProperty('box_xscale',       'OMFI:FXPS:boxLvl2Xscale',       'bool'),
-        AVBProperty('box_yscale',       'OMFI:FXPS:boxLvl2Yscale',       'bool'),
-        AVBProperty('box_xpos',         'OMFI:FXPS:FXboxLvl2Xpos',       'bool'),
-        AVBProperty('box_ypos',         'OMFI:FXPS:omFXboxLvl2Ypos',     'bool'),
-        AVBProperty('border_width',     'OMFI:FXPS:borderWidth',         'int32'),
-        AVBProperty('border_soft',      'OMFI:FXPS:borderSoft',          'int32'),
-        AVBProperty('splill_gain2',     'OMFI:FXPS:spillSecondGain',     'int16'),
-        AVBProperty('splill_gain',      'OMFI:FXPS:spillGain',           'int16'),
-        AVBProperty('splill_soft2',     'OMFI:FXPS:spillSecondSoft',     'int16'),
-        AVBProperty('splill_soft',      'OMFI:FXPS:spillSoft',           'int16'),
-        AVBProperty('enable_key_flags', 'OMFI:FXPS:enableKeyFlags',      'int8'),
-        AVBProperty('colors',           'OMFI:FXPS:Colors',              'list'),
-        AVBProperty('user_param',       'OMFI:FXPS:userParam',           'bytes'),
-        AVBProperty('selected',         'OMFI:FXPS:selected',            'bool'),
+        AVBPropertyDef('percent_time',     'OMFI:FXPS:percentTime',         'int32'),
+        AVBPropertyDef('level',            'OMFI:FXPS:level',               'int32'),
+        AVBPropertyDef('pos_x',            'OMFI:FXPS:posX',                'int32'),
+        AVBPropertyDef('floor_x',          'OMFI:FXPS:xFloor',              'int32'),
+        AVBPropertyDef('ceil_x',           'OMFI:FXPS:xCeiling',            'int32'),
+        AVBPropertyDef('pos_y',            'OMFI:FXPS:posY',                'int32'),
+        AVBPropertyDef('floor_y',          'OMFI:FXPS:yFloor',              'int32'),
+        AVBPropertyDef('ceil_y',           'OMFI:FXPS:yCeiling',            'int32'),
+        AVBPropertyDef('scale_x',          'OMFI:FXPS:xScale',              'int32'),
+        AVBPropertyDef('scale_y',          'OMFI:FXPS:yScale',              'int32'),
+        AVBPropertyDef('crop_left',        'OMFI:FXPS:cropLeft',            'int32'),
+        AVBPropertyDef('crop_right',       'OMFI:FXPS:cropRight',           'int32'),
+        AVBPropertyDef('crop_top',         'OMFI:FXPS:cropTop',             'int32'),
+        AVBPropertyDef('crop_bottom',      'OMFI:FXPS:cropBottom',          'int32'),
+        AVBPropertyDef('box',              'OMFI:FXPS:box',                 'list'),
+        AVBPropertyDef('box_xscale',       'OMFI:FXPS:boxLvl2Xscale',       'bool'),
+        AVBPropertyDef('box_yscale',       'OMFI:FXPS:boxLvl2Yscale',       'bool'),
+        AVBPropertyDef('box_xpos',         'OMFI:FXPS:FXboxLvl2Xpos',       'bool'),
+        AVBPropertyDef('box_ypos',         'OMFI:FXPS:omFXboxLvl2Ypos',     'bool'),
+        AVBPropertyDef('border_width',     'OMFI:FXPS:borderWidth',         'int32'),
+        AVBPropertyDef('border_soft',      'OMFI:FXPS:borderSoft',          'int32'),
+        AVBPropertyDef('splill_gain2',     'OMFI:FXPS:spillSecondGain',     'int16'),
+        AVBPropertyDef('splill_gain',      'OMFI:FXPS:spillGain',           'int16'),
+        AVBPropertyDef('splill_soft2',     'OMFI:FXPS:spillSecondSoft',     'int16'),
+        AVBPropertyDef('splill_soft',      'OMFI:FXPS:spillSoft',           'int16'),
+        AVBPropertyDef('enable_key_flags', 'OMFI:FXPS:enableKeyFlags',      'int8'),
+        AVBPropertyDef('colors',           'OMFI:FXPS:Colors',              'list'),
+        AVBPropertyDef('user_param',       'OMFI:FXPS:userParam',           'bytes'),
+        AVBPropertyDef('selected',         'OMFI:FXPS:selected',            'bool'),
     ]
 
 @utils.register_class
 class EffectParamList(core.AVBObject):
     class_id = b'FXPS'
     propertydefs = [
-        AVBProperty('orig_length',   'OMFI:FXPS:originalLength',   'int32'),
-        AVBProperty('window_offset', 'OMFI:FXPS:omFXwindowOffset', 'int32'),
-        AVBProperty('keyframe_size', 'OMFI:FXPS:keyFrameSize',     'int32'),
+        AVBPropertyDef('orig_length',   'OMFI:FXPS:originalLength',   'int32'),
+        AVBPropertyDef('window_offset', 'OMFI:FXPS:omFXwindowOffset', 'int32'),
+        AVBPropertyDef('keyframe_size', 'OMFI:FXPS:keyFrameSize',     'int32'),
     ]
     def read(self, f):
         super(EffectParamList, self).read(f)
@@ -204,9 +204,9 @@ class EffectParamList(core.AVBObject):
 class CFUserParam(core.AVBObject):
     class_id = b'AVUP'
     propertydefs = [
-        AVBProperty('byte_order', 'OMFI:AVUP:ByteOrder', 'uint16'),
-        AVBProperty('uuid',       'OMFI:AVUP:TypeID',    'UUID'),
-        AVBProperty('data',       'OMFI:AVUP:ValueData', 'bytes'),
+        AVBPropertyDef('byte_order', 'OMFI:AVUP:ByteOrder', 'uint16'),
+        AVBPropertyDef('uuid',       'OMFI:AVUP:TypeID',    'UUID'),
+        AVBPropertyDef('data',       'OMFI:AVUP:ValueData', 'bytes'),
     ]
 
     def read(self, f):
@@ -230,13 +230,13 @@ class CFUserParam(core.AVBObject):
 class ParameterItems(core.AVBObject):
     class_id = b'PRIT'
     propertydefs = [
-        AVBProperty('uuid',            'OMFI:PRIT:GUID',                   'UUID'),
-        AVBProperty('value_type',      'OMFI:PRIT:ValueType',              'int16'),
-        AVBProperty('value',           'OMFI:PRIT:Value',                  'int32'),
-        AVBProperty('name',            'OMFI:PRIT:Name',                   'string'),
-        AVBProperty('enable',          'OMFI:PRIT:Enabled',                'bool'),
-        AVBProperty('control_track',   'OMFI:PRIT:ControlTrack',           'reference'),
-        AVBProperty('contribs_to_sig', 'OMFI:PRIT:ContributesToSignature', 'bool'),
+        AVBPropertyDef('uuid',            'OMFI:PRIT:GUID',                   'UUID'),
+        AVBPropertyDef('value_type',      'OMFI:PRIT:ValueType',              'int16'),
+        AVBPropertyDef('value',           'OMFI:PRIT:Value',                  'int32'),
+        AVBPropertyDef('name',            'OMFI:PRIT:Name',                   'string'),
+        AVBPropertyDef('enable',          'OMFI:PRIT:Enabled',                'bool'),
+        AVBPropertyDef('control_track',   'OMFI:PRIT:ControlTrack',           'reference'),
+        AVBPropertyDef('contribs_to_sig', 'OMFI:PRIT:ContributesToSignature', 'bool'),
     ]
 
     def read(self, f):
@@ -273,9 +273,9 @@ class ParameterItems(core.AVBObject):
 class MSMLocator(core.AVBObject):
     class_id = b'MSML'
     propertydefs = [
-        AVBProperty('last_known_volume', 'OMFI:MSML:LastKnownVolume', 'string'),
-        AVBProperty('domain_type',       'OMFI:MSML:DomainType',      'int32'),
-        AVBProperty('mob_id',            'MobID',                     'MobID'),
+        AVBPropertyDef('last_known_volume', 'OMFI:MSML:LastKnownVolume', 'string'),
+        AVBPropertyDef('domain_type',       'OMFI:MSML:DomainType',      'int32'),
+        AVBPropertyDef('mob_id',            'MobID',                     'MobID'),
     ]
     def read(self, f):
         super(MSMLocator, self).read(f)
@@ -332,7 +332,7 @@ class MSMLocator(core.AVBObject):
 class Position(core.AVBObject):
     class_id = b'APOS'
     propertydefs = [
-        AVBProperty('mob_id', "MobID", 'MobID'),
+        AVBPropertyDef('mob_id', "MobID", 'MobID'),
     ]
 
     def read(self, f):
@@ -353,10 +353,10 @@ class Position(core.AVBObject):
 class BOBPosition(Position):
     class_id = b'ABOB'
     propertydefs = Position.propertydefs + [
-        AVBProperty('sample_num',  "__OMFI:MSBO:sampleNum",   'int32'),
-        AVBProperty('length',      "__OMFI:MSBO:length",      'int32'),
-        AVBProperty('track_type',  "OMFI:trkt:Track.trkType", 'int32'),
-        AVBProperty('track_index', "OMFI:trkt:Track.trkLNum", 'int32'),
+        AVBPropertyDef('sample_num',  "__OMFI:MSBO:sampleNum",   'int32'),
+        AVBPropertyDef('length',      "__OMFI:MSBO:length",      'int32'),
+        AVBPropertyDef('track_type',  "OMFI:trkt:Track.trkType", 'int32'),
+        AVBPropertyDef('track_index', "OMFI:trkt:Track.trkLNum", 'int32'),
     ]
     def read(self, f):
         super(BOBPosition, self).read(f)
@@ -376,10 +376,10 @@ class BOBPosition(Position):
 class DIDPosition(BOBPosition):
     class_id = b'DIDP'
     propertydefs = BOBPosition.propertydefs + [
-        AVBProperty('strip',        "_Strip",       'int32'),
-        AVBProperty('offset',       "_Offset",      'uint64'),
-        AVBProperty('byte_length',  "_ByteLength",  'uint64'),
-        AVBProperty('spos_invalid', "_SPosInvalid", 'bool'),
+        AVBPropertyDef('strip',        "_Strip",       'int32'),
+        AVBPropertyDef('offset',       "_Offset",      'uint64'),
+        AVBPropertyDef('byte_length',  "_ByteLength",  'uint64'),
+        AVBPropertyDef('spos_invalid', "_SPosInvalid", 'bool'),
     ]
 
     def read(self, f):
@@ -399,9 +399,9 @@ class DIDPosition(BOBPosition):
 class BinRef(core.AVBObject):
     class_id = b'MCBR'
     propertydefs = [
-        AVBProperty('uid_high', 'OMFI:MCBR:MC:binID.high', 'int32'),
-        AVBProperty('uid_low',  'OMFI:MCBR:MC:binID.low',  'int32'),
-        AVBProperty('name',     'OMFI:MCBR:MC:binName',    'string'),
+        AVBPropertyDef('uid_high', 'OMFI:MCBR:MC:binID.high', 'int32'),
+        AVBPropertyDef('uid_low',  'OMFI:MCBR:MC:binID.low',  'int32'),
+        AVBPropertyDef('name',     'OMFI:MCBR:MC:binName',    'string'),
     ]
     def read(self, f):
         super(BinRef, self).read(f)
@@ -430,8 +430,8 @@ class BinRef(core.AVBObject):
 class MobRef(core.AVBObject):
     class_id = b'MCMR'
     propertydefs = [
-            AVBProperty('position',      'OMFI:MCMR:MC:Position', 'int32'),
-            AVBProperty('mob_id',        'MobID', 'MobID'),
+            AVBPropertyDef('position',      'OMFI:MCMR:MC:Position', 'int32'),
+            AVBPropertyDef('mob_id',        'MobID', 'MobID'),
     ]
     def read(self, f):
         super(MobRef, self).read(f)
@@ -452,10 +452,10 @@ class MobRef(core.AVBObject):
 class Marker(MobRef):
     class_id = b'TMBC'
     propertydefs = MobRef.propertydefs + [
-        AVBProperty('comp_offset',   'OMFI:TMBC:MC:CompOffset',             'int32'),
-        AVBProperty('attributes',    'OMFI:TMBC:MC:Attributes',             'reference'),
-        AVBProperty('color',         'OMFI:TMBC:MC:CarbonAPI::RGBColor',    'list'),
-        AVBProperty('handled_codes', 'OMFI:TMBC:MC:handledBadControlCodes', 'bool'),
+        AVBPropertyDef('comp_offset',   'OMFI:TMBC:MC:CompOffset',             'int32'),
+        AVBPropertyDef('attributes',    'OMFI:TMBC:MC:Attributes',             'reference'),
+        AVBPropertyDef('color',         'OMFI:TMBC:MC:CarbonAPI::RGBColor',    'list'),
+        AVBPropertyDef('handled_codes', 'OMFI:TMBC:MC:handledBadControlCodes', 'bool'),
     ]
 
     def read(self, f):
@@ -490,8 +490,8 @@ class Marker(MobRef):
 class TrackerManager(core.AVBObject):
     class_id = b'TKMN'
     propertydefs = [
-        AVBProperty('data_slots',  'OMFI:TKMN:TrackerDataSlots',  'reference'),
-        AVBProperty('param_slots', 'OMFI:TKMN:TrackedParamSlots', 'reference'),
+        AVBPropertyDef('data_slots',  'OMFI:TKMN:TrackerDataSlots',  'reference'),
+        AVBPropertyDef('param_slots', 'OMFI:TKMN:TrackedParamSlots', 'reference'),
     ]
 
     def read(self, f):
@@ -508,8 +508,8 @@ class TrackerManager(core.AVBObject):
 class TrackerDataSlot(core.AVBObject):
     class_id = b'TKDS'
     propertydefs = [
-        AVBProperty('tracker_data',  'OMFI:TKDS:TrackerData',      'ref_list'),
-        AVBProperty('track_fg',      'OMFI:TKDAS:TrackForeground', 'bool'),
+        AVBPropertyDef('tracker_data',  'OMFI:TKDS:TrackerData',      'ref_list'),
+        AVBPropertyDef('track_fg',      'OMFI:TKDAS:TrackForeground', 'bool'),
     ]
 
     def read(self, f):
@@ -536,8 +536,8 @@ class TrackerDataSlot(core.AVBObject):
 class TrackerParameterSlot(core.AVBObject):
     class_id = b'TKPS'
     propertydefs = [
-        AVBProperty('settings', 'OMFI:TKPS:EffectSettings', 'bytes'),
-        AVBProperty('params',   'OMFI:TKPS:TrackedParam',   'ref_list'),
+        AVBPropertyDef('settings', 'OMFI:TKPS:EffectSettings', 'bytes'),
+        AVBPropertyDef('params',   'OMFI:TKPS:TrackedParam',   'ref_list'),
     ]
     def read(self, f):
         super(TrackerParameterSlot, self).read(f)
@@ -560,15 +560,15 @@ class TrackerParameterSlot(core.AVBObject):
 class TrackerData(core.AVBObject):
     class_id = b'TKDA'
     propertydefs = [
-        AVBProperty('settings',        'OMFI:TKDA:TrackerSettings',            'bytes'),
-        AVBProperty('clip_version',    'OMFI:TKDA:TrackerClipVersion',         'uint32'),
-        AVBProperty('clips',           'OMFI:TKDA:TrackerClip',                'ref_list'),
-        AVBProperty('offset_tracking', 'OMFI:TKDA:TrackerOffsetTracking',      'uint32'),
-        AVBProperty('smoothing',       'OMFI:TKDA:TrackerSmoothing',           'uint32'),
-        AVBProperty('jitter_removal',  'name="OMFI:TKDA:TrackerJitterRemoval', 'uint32'),
-        AVBProperty('filter_amount',  'name="OMFI:TKDA:TrackerFilterDataAmt',  'double'),
-        AVBProperty('clip5',           'OMFI:TKDA:TrackerClip',                'reference'),
-        AVBProperty('clip6',           'OMFI:TKDA:TrackerClip',                'reference'),
+        AVBPropertyDef('settings',        'OMFI:TKDA:TrackerSettings',            'bytes'),
+        AVBPropertyDef('clip_version',    'OMFI:TKDA:TrackerClipVersion',         'uint32'),
+        AVBPropertyDef('clips',           'OMFI:TKDA:TrackerClip',                'ref_list'),
+        AVBPropertyDef('offset_tracking', 'OMFI:TKDA:TrackerOffsetTracking',      'uint32'),
+        AVBPropertyDef('smoothing',       'OMFI:TKDA:TrackerSmoothing',           'uint32'),
+        AVBPropertyDef('jitter_removal',  'name="OMFI:TKDA:TrackerJitterRemoval', 'uint32'),
+        AVBPropertyDef('filter_amount',  'name="OMFI:TKDA:TrackerFilterDataAmt',  'double'),
+        AVBPropertyDef('clip5',           'OMFI:TKDA:TrackerClip',                'reference'),
+        AVBPropertyDef('clip6',           'OMFI:TKDA:TrackerClip',                'reference'),
 
     ]
     def read(self, f):
@@ -617,7 +617,7 @@ class TrackerData(core.AVBObject):
 class TrackerParameter(core.AVBObject):
     class_id = b'TKPA'
     propertydefs = [
-        AVBProperty('settings', 'OMFI:TKPA:ParamSettings','bytes'),
+        AVBPropertyDef('settings', 'OMFI:TKPA:ParamSettings','bytes'),
     ]
     def read(self, f):
         super(TrackerParameter, self).read(f)
