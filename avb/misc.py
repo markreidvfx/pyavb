@@ -485,3 +485,21 @@ class Marker(MobRef):
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         read_assert_tag(f, 0x03)
+
+@utils.register_class
+class TrackerManager(core.AVBObject):
+    class_id = b'TKMN'
+    properties = [
+        AVBProperty('data_slots',  'OMFI:TKMN:TrackerDataSlots',  'reference'),
+        AVBProperty('param_slots', 'OMFI:TKMN:TrackedParamSlots', 'reference'),
+    ]
+
+    def read(self, f):
+        super(TrackerManager, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        self.data_slots = read_object_ref(self.root, f)
+        self.param_slots = read_object_ref(self.root, f)
+
+        read_assert_tag(f, 0x03)
