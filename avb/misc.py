@@ -89,6 +89,117 @@ class GraphicEffect(core.AVBObject):
 
         read_assert_tag(f, 0x03)
 
+class EffectParam(core.AVBObject):
+    properties = [
+        AVBProperty('percent_time',     'OMFI:FXPS:percentTime',         'int32'),
+        AVBProperty('level',            'OMFI:FXPS:level',               'int32'),
+        AVBProperty('pos_x',            'OMFI:FXPS:posX',                'int32'),
+        AVBProperty('floor_x',          'OMFI:FXPS:xFloor',              'int32'),
+        AVBProperty('ceil_x',           'OMFI:FXPS:xCeiling',            'int32'),
+        AVBProperty('pos_y',            'OMFI:FXPS:posY',                'int32'),
+        AVBProperty('floor_y',          'OMFI:FXPS:yFloor',              'int32'),
+        AVBProperty('ceil_y',           'OMFI:FXPS:yCeiling',            'int32'),
+        AVBProperty('scale_x',          'OMFI:FXPS:xScale',              'int32'),
+        AVBProperty('scale_y',          'OMFI:FXPS:yScale',              'int32'),
+        AVBProperty('crop_left',        'OMFI:FXPS:cropLeft',            'int32'),
+        AVBProperty('crop_right',       'OMFI:FXPS:cropRight',           'int32'),
+        AVBProperty('crop_top',         'OMFI:FXPS:cropTop',             'int32'),
+        AVBProperty('crop_bottom',      'OMFI:FXPS:cropBottom',          'int32'),
+        AVBProperty('box',              'OMFI:FXPS:box',                 'list'),
+        AVBProperty('box_xscale',       'OMFI:FXPS:boxLvl2Xscale',       'bool'),
+        AVBProperty('box_yscale',       'OMFI:FXPS:boxLvl2Yscale',       'bool'),
+        AVBProperty('box_xpos',         'OMFI:FXPS:FXboxLvl2Xpos',       'bool'),
+        AVBProperty('box_ypos',         'OMFI:FXPS:omFXboxLvl2Ypos',     'bool'),
+        AVBProperty('border_width',     'OMFI:FXPS:borderWidth',         'int32'),
+        AVBProperty('border_soft',      'OMFI:FXPS:borderSoft',          'int32'),
+        AVBProperty('splill_gain2',     'OMFI:FXPS:spillSecondGain',     'int16'),
+        AVBProperty('splill_gain',      'OMFI:FXPS:spillGain',           'int16'),
+        AVBProperty('splill_soft2',     'OMFI:FXPS:spillSecondSoft',     'int16'),
+        AVBProperty('splill_soft',      'OMFI:FXPS:spillSoft',           'int16'),
+        AVBProperty('enable_key_flags', 'OMFI:FXPS:enableKeyFlags',      'int8'),
+        AVBProperty('colors',           'OMFI:FXPS:Colors',              'list'),
+        AVBProperty('user_param',       'OMFI:FXPS:userParam',           'bytes'),
+        AVBProperty('selected',         'OMFI:FXPS:selected',            'bool'),
+    ]
+
+@utils.register_class
+class EffectParamList(core.AVBObject):
+    class_id = b'FXPS'
+    properties = [
+        AVBProperty('orig_length',   'OMFI:FXPS:originalLength',   'int32'),
+        AVBProperty('window_offset', 'OMFI:FXPS:omFXwindowOffset', 'int32'),
+        AVBProperty('keyframe_size', 'OMFI:FXPS:keyFrameSize',     'int32'),
+    ]
+    def read(self, f):
+        super(EffectParamList, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x12)
+
+        self.orig_length = read_s32le(f)
+        self.window_offset = read_s32le(f)
+
+        count = read_s32le(f)
+        self.keyframe_size = read_s32le(f)
+
+        for i in range(count):
+            p = EffectParam(self.root)
+            start = f.tell()
+            p.percent_time = read_s32le(f)
+            p.level = read_s32le(f)
+            p.pos_x = read_s32le(f)
+            p.floor_x = read_s32le(f)
+            p.ceil_x = read_s32le(f)
+            p.pos_y = read_s32le(f)
+            p.floor_y = read_s32le(f)
+            p.ceil_y = read_s32le(f)
+            p.scale_x = read_s32le(f)
+            p.scale_y = read_s32le(f)
+
+            p.crop_left = read_s32le(f)
+            p.crop_right = read_s32le(f)
+            p.crop_top = read_s32le(f)
+            p.crop_bottom = read_s32le(f)
+
+            p.box = []
+            # boxTop
+            p.box.append(read_s32le(f))
+            # boxBottom
+            p.box.append(read_s32le(f))
+            # boxTop repeat??
+            p.box.append(read_s32le(f))
+            # boxRight
+            p.box.append(read_s32le(f))
+
+            p.box_xscale = read_bool(f)
+            p.box_yscale = read_bool(f)
+            p.box_xpos = read_bool(f)
+            p.box_ypos = read_bool(f)
+
+            p.border_width = read_s32le(f)
+            p.border_soft = read_s32le(f)
+
+            p.splill_gain2 = read_s16le(f)
+            p.splill_gain = read_s16le(f)
+            p.splill_soft2 = read_s16le(f)
+            p.splill_soft = read_s16le(f)
+
+            p.enable_key_flags = read_s8(f)
+
+            p.colors = []
+            color_count = read_s32le(f)
+            assert color_count >= 0
+            for j in range(color_count):
+                color = read_s32le(f)
+                p.colors.append(color)
+
+            param_size = read_s32le(f)
+            assert param_size >= 0
+
+            p.user_param = bytearray(f.read(param_size))
+            p.selected = read_bool(f)
+
+        read_assert_tag(f, 0x03)
+
 @utils.register_class
 class CFUserParam(core.AVBObject):
     class_id = b'AVUP'

@@ -62,6 +62,10 @@ class TestChuckDB(unittest.TestCase):
         for chunk_path in iter_chunks("MDTP"):
             decode_chunk(chunk_path)
 
+    def test_fxps_chunks(self):
+        for chunk_path in iter_chunks("FXPS"):
+            decode_chunk(chunk_path)
+
     def test_rept_chunks(self):
         for chunk_path in iter_chunks("REPT"):
             decode_chunk(chunk_path)
