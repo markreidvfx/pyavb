@@ -129,5 +129,10 @@ class TestChuckDB(unittest.TestCase):
     def test_tkda_chunks(self):
         for chunk_path in iter_chunks("TKDA"):
             decode_chunk(chunk_path)
+
+    def test_tkpa_chunks(self):
+        for chunk_path in iter_chunks("TKPA"):
+            decode_chunk(chunk_path)
+
 if __name__ == "__main__":
     unittest.main()

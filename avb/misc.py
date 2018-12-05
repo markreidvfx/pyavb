@@ -587,3 +587,20 @@ class TrackerData(core.AVBObject):
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         read_assert_tag(f, 0x03)
+
+
+@utils.register_class
+class TrackerParameter(core.AVBObject):
+    class_id = b'TKPA'
+    properties = [
+        AVBProperty('settings', 'OMFI:TKPA:ParamSettings','bytes'),
+    ]
+    def read(self, f):
+        super(TrackerParameter, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+        size = read_s16le(f)
+        assert size >= 0
+        self.settings = bytearray(f.read(size))
+
+        read_assert_tag(f, 0x03)
