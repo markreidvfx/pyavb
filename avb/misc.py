@@ -531,3 +531,59 @@ class TrackerDataSlot(core.AVBObject):
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         read_assert_tag(f, 0x03)
+
+@utils.register_class
+class TrackerData(core.AVBObject):
+    class_id = b'TKDA'
+    properties = [
+        AVBProperty('settings',        'OMFI:TKDA:TrackerSettings',            'bytes'),
+        AVBProperty('clip_version',    'OMFI:TKDA:TrackerClipVersion',         'uint32'),
+        AVBProperty('clips',           'OMFI:TKDA:TrackerClip',                'ref_list'),
+        AVBProperty('offset_tracking', 'OMFI:TKDA:TrackerOffsetTracking',      'uint32'),
+        AVBProperty('smoothing',       'OMFI:TKDA:TrackerSmoothing',           'uint32'),
+        AVBProperty('jitter_removal',  'name="OMFI:TKDA:TrackerJitterRemoval', 'uint32'),
+        AVBProperty('filter_amount',  'name="OMFI:TKDA:TrackerFilterDataAmt',  'double'),
+        AVBProperty('clip5',           'OMFI:TKDA:TrackerClip',                'reference'),
+        AVBProperty('clip6',           'OMFI:TKDA:TrackerClip',                'reference'),
+
+    ]
+    def read(self, f):
+        super(TrackerData, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        setting_size = read_s16le(f)
+        self.settings = bytearray(f.read(setting_size))
+        self.clip_version = read_u32le(f)
+
+        count = read_s16le(f)
+        self.clips = []
+        for i in range(count):
+            ref = read_object_ref(self.root, f)
+            self.clips.append(ref)
+
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                read_assert_tag(f, 72)
+                self.offset_tracking = read_u32le(f)
+            elif tag == 0x02:
+                read_assert_tag(f, 72)
+                self.smoothing = read_u32le(f)
+            elif tag == 0x03:
+                read_assert_tag(f, 72)
+                self.jitter_removal = read_u32le(f)
+            elif tag == 0x04:
+                read_assert_tag(f, 75)
+                self.filter_amount = read_doublele(f)
+            elif tag == 0x05:
+                read_assert_tag(f, 72)
+                ref = read_object_ref(self.root, f)
+                self.clip5 = ref
+            elif tag == 0x06:
+                read_assert_tag(f, 72)
+                ref = read_object_ref(self.root, f)
+                self.clip6 = ref
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
+
+        read_assert_tag(f, 0x03)
