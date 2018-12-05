@@ -26,7 +26,7 @@ from . utils import (
 
 class Setting(core.AVBObject):
     class_id = b'ASET'
-    properties = [
+    propertydefs = [
     AVBProperty('name',       'name',       'string'),
     AVBProperty('kind',       'kind',       'string'),
     AVBProperty('attr_count', 'attributes', 'int16'),
@@ -50,7 +50,7 @@ class Setting(core.AVBObject):
 @utils.register_class
 class BinViewSetting(Setting):
     class_id = b'BVst'
-    properties = Setting.properties + [
+    propertydefs = Setting.propertydefs + [
     AVBProperty('columns',  'Columns',  'list'),
     AVBProperty('format_descriptor', 'FormatDescriptor', 'string'),
     ]
@@ -101,7 +101,7 @@ class BinViewSetting(Setting):
 
 class BinItem(core.AVBObject):
 
-    properties = [
+    propertydefs = [
     AVBProperty('ref',         'Composition',  'reference'),
     AVBProperty('x',           'Xpos',         'int16'),
     AVBProperty('y',           'Ypos',         'int16'),
@@ -121,7 +121,7 @@ class BinItem(core.AVBObject):
         return self.object_ref.value
 
 class SiftItem(core.AVBObject):
-    properties = [
+    propertydefs = [
     AVBProperty('method', 'SiftMethod', 'int16'),
     AVBProperty('string', 'SiftString', 'string'),
     AVBProperty('column', 'SiftColumn', 'string'),
@@ -130,7 +130,7 @@ class SiftItem(core.AVBObject):
 @utils.register_class
 class Bin(core.AVBObject):
     class_id = b'ABIN'
-    properties = [
+    propertydefs = [
     AVBProperty('view_setting',   'binviewsetting', 'reference'),
     AVBProperty('uid_high',         'binuid.high',    'uint32'),
     AVBProperty('uid_low',          'binuid.low',     'uint32'),

@@ -12,14 +12,14 @@ class AVBProperty(object):
         self.type = type
 
 class AVBObject(object):
-    properties = []
+    propertydefs = []
 
     def __init__(self, root):
         self.root = root
         self.property_data = {}
 
     def __setattr__(self, name, value):
-        for item in self.properties:
+        for item in self.propertydefs:
             if name == item.name:
                 self.property_data[name] = value
                 return
@@ -27,7 +27,7 @@ class AVBObject(object):
         super(AVBObject, self).__setattr__(name, value)
 
     def get_property_def(self, name):
-        for item in self.properties:
+        for item in self.propertydefs:
             if item.name == name:
                 return item
 

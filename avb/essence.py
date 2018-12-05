@@ -36,7 +36,7 @@ from . utils import (
 @utils.register_class
 class MediaDescriptor(core.AVBObject):
     class_id = b'MDES'
-    properties = [
+    propertydefs = [
         AVBProperty('mob_kind',       'OMFI:MDES:MobKind',         'int8'),
         AVBProperty('locator',        'OMFI:MDES:Locator',         'reference'),
         AVBProperty('intermediate',   'OMFI:MDES:MC:Intermediate', 'bool'),
@@ -81,7 +81,7 @@ class MediaDescriptor(core.AVBObject):
 @utils.register_class
 class TapeDescriptor(MediaDescriptor):
     class_id = b'MDTP'
-    properties = MediaDescriptor.properties + [
+    propertydefs = MediaDescriptor.propertydefs + [
         AVBProperty('cframe', 'OMFI:MDTP:CFrame', "int16")
     ]
 
@@ -98,7 +98,7 @@ class TapeDescriptor(MediaDescriptor):
 
 class MediaFileDescriptor(MediaDescriptor):
     class_id = b'MDFL'
-    properties = MediaDescriptor.properties + [
+    propertydefs = MediaDescriptor.propertydefs + [
         AVBProperty('edit_rate', 'EdRate', "fexp10"),
         AVBProperty('length', 'OMFI:MDFL:Length', 'int32'),
         AVBProperty('is_omfi', 'OMFI:MDFL:IsOMFI', 'int16'),
@@ -124,7 +124,7 @@ class MediaFileDescriptor(MediaDescriptor):
 @utils.register_class
 class MultiDescriptor(MediaFileDescriptor):
     class_id = b'MULD'
-    properties = MediaFileDescriptor.properties + [
+    propertydefs = MediaFileDescriptor.propertydefs + [
         AVBProperty('descriptors', 'OMFI:MULD:Descriptors', "ref_list"),
     ]
     def read(self, f):
@@ -144,7 +144,7 @@ class MultiDescriptor(MediaFileDescriptor):
 @utils.register_class
 class PCMADescriptor(MediaFileDescriptor):
     class_id = b'PCMA'
-    properties = MediaFileDescriptor.properties + [
+    propertydefs = MediaFileDescriptor.propertydefs + [
         AVBProperty('channels',                    'OMFI:MDAU:NumChannels',               'uint16'),
         AVBProperty('quantization_bits',           'OMFI:MDAU:BitsPerSample',             'uint16'),
         AVBProperty('sample_rate',                 'EdRate',                              'fexp10'),
@@ -207,7 +207,7 @@ class PCMADescriptor(MediaFileDescriptor):
 @utils.register_class
 class DIDDescriptor(MediaFileDescriptor):
     class_id = b'DIDD'
-    properties = MediaFileDescriptor.properties + [
+    propertydefs = MediaFileDescriptor.propertydefs + [
         AVBProperty('stored_height',              'OMFI:DIDD:StoredHeight',                            'int32'),
         AVBProperty('stored_width',               'OMFI:DIDD:StoredWidth',                             'int32'),
         AVBProperty('sampled_height',             'OMFI:DIDD:SampledHeight',                           'int32'),
@@ -447,7 +447,7 @@ class DIDDescriptor(MediaFileDescriptor):
 @utils.register_class
 class CDCIDescriptor(DIDDescriptor):
     class_id = b'CDCI'
-    properties = DIDDescriptor.properties + [
+    propertydefs = DIDDescriptor.propertydefs + [
         AVBProperty('horizontal_subsampling', 'OMFI:CDCI:HorizontalSubsampling',         'uint32'),
         AVBProperty('vertical_subsampling',   'OMFI:CDCI:VerticalSubsampling',           'uint32'),
         AVBProperty('component_width',        'OMFI:CDCI:ComponentWidth',                'int32'),
@@ -509,7 +509,7 @@ def decode_pixel_layout(pixel_layout, pixel_struct):
 @utils.register_class
 class RGBADescriptor(DIDDescriptor):
     class_id = b'RGBA'
-    properties = DIDDescriptor.properties + [
+    propertydefs = DIDDescriptor.propertydefs + [
         AVBProperty('pixel_layout',       'OMFI:RGBA:PixelLayout',          'list'),
         AVBProperty('palette',            'OMFI:RGBA:Palette',              'list'),
         AVBProperty('frame_index_offset', 'OMFI:RGBA:OffsetToFrameIndexes', 'uint64'),
