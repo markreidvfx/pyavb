@@ -121,5 +121,9 @@ class TestChuckDB(unittest.TestCase):
     def test_aspi_chunks(self):
         for chunk_path in iter_chunks("ASPI"):
             decode_chunk(chunk_path)
+
+    def test_tkds_chunks(self):
+        for chunk_path in iter_chunks("TKDS"):
+            decode_chunk(chunk_path)
 if __name__ == "__main__":
     unittest.main()

@@ -503,3 +503,31 @@ class TrackerManager(core.AVBObject):
         self.param_slots = read_object_ref(self.root, f)
 
         read_assert_tag(f, 0x03)
+
+@utils.register_class
+class TrackerDataSlot(core.AVBObject):
+    class_id = b'TKDS'
+    properties = [
+        AVBProperty('tracker_data',  'OMFI:TKDS:TrackerData',      'ref_list'),
+        AVBProperty('track_fg',      'OMFI:TKDAS:TrackForeground', 'bool'),
+    ]
+
+    def read(self, f):
+        super(TrackerDataSlot, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        count = read_s32le(f)
+        self.tracker_data = []
+        for i in range(count):
+            ref = read_object_ref(self.root, f)
+            self.tracker_data.append(ref)
+
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                read_assert_tag(f, 66)
+                self.track_fg = read_bool(f)
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
+
+        read_assert_tag(f, 0x03)
