@@ -110,15 +110,15 @@ class BinItem(core.AVBObject):
     ]
 
     def read(self, f):
-        self.object_ref = read_object_ref(self.root, f)
+        self.ref = read_object_ref(self.root, f)
         self.x = read_s16le(f)
         self.y = read_s16le(f)
         self.keyframe = read_s32le(f)
         self.user_placed = read_byte(f)
 
-    @property
-    def ref(self):
-        return self.object_ref.value
+    # @property
+    # def ref(self):
+    #     return self.object_ref.value
 
 class SiftItem(core.AVBObject):
     propertydefs = [

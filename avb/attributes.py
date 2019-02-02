@@ -7,7 +7,7 @@ from __future__ import (
 
 from . import utils
 from . import core
-from .core import AVBPropertyDef
+from .core import AVBPropertyDef, AVBPropertyData, AVBRefList
 
 from . utils import (
     read_byte,
@@ -25,7 +25,7 @@ OBJ_ATTR  = 3
 BOB_ATTR  = 4
 
 @utils.register_class
-class Attributes(dict):
+class Attributes(AVBPropertyData):
     class_id = b'ATTR'
 
     def __init__(self, root):
@@ -58,14 +58,8 @@ class Attributes(dict):
         # print("read", result)
         self.update(result)
 
-class RefList(list):
-
-    def __init__(self, root):
-        super(RefList, self).__init__()
-        self.root = root
-
 @utils.register_class
-class ParameterList(RefList):
+class ParameterList(AVBRefList):
     class_id = b'PRLS'
 
     def read(self, f):
@@ -80,7 +74,7 @@ class ParameterList(RefList):
         assert read_byte(f) == 0x03
 
 @utils.register_class
-class TimeCrumbList(RefList):
+class TimeCrumbList(AVBRefList):
     class_id = b'TMCS'
 
     def read(self, f):

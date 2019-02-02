@@ -6,7 +6,7 @@ from __future__ import (
     )
 
 from . import core
-from .core import AVBPropertyDef
+from .core import AVBPropertyDef, AVBRefList
 from .components import Component
 from . import utils
 from . import mobid
@@ -34,6 +34,7 @@ class Track(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('flags',            'OMFI:TRAK:OptFlags',       'int16'),
         AVBPropertyDef('index',            'OMFI:TRAK:LabelNumber',    'int16'),
+        AVBPropertyDef('attributes',       'OMFI:TRAK:Attributes',     'reference'),
         AVBPropertyDef('session_attr',     'OMFI:TRAK:SessionAttrs',   'reference'),
         AVBPropertyDef('component',        'OMFI:TRAK:TrackComponent', 'reference'),
         AVBPropertyDef('filler_proxy',     'OMFI:TRAK:FillerProxy',    'reference'),
@@ -41,11 +42,12 @@ class Track(core.AVBObject):
         AVBPropertyDef('control_code',     'OMFI:TRAK:ControlCode',    'int16'),
         AVBPropertyDef('control_sub_code', 'OMFI:TRAK:ControlSubCode', 'int16'),
         AVBPropertyDef('lock_number',      'OMFI:TRAK:LockNubmer',     'int16'),
+        AVBPropertyDef('refs',             'OMFI:TRAK:Refs',           'list'), # custom
 
     ]
     def __init__(self, root):
         super(Track, self).__init__(root)
-        self.refs = []
+        self.refs = AVBRefList(self.root)
 
     @property
     def segment(self):
@@ -79,13 +81,18 @@ class TrackGroup(Component):
 
         track_count = read_s32le(f)
         self.tracks = []
-
+        # print("tracks:", track_count)
         # really annoying, tracks can have variable lengths!!
         has_tracks = True
         for i in range(track_count):
             # print(peek_data(f).encode("hex"))
             track = Track(self.root)
             track.flags = read_u16le(f)
+
+            # TNFX Strange TransistionEffect
+            if track.flags == 0:
+                self.tracks.append(track)
+                continue
 
             # PVOL has a different track structure
             # contains ref to CTRL and might have 1 or 2 control vars
@@ -103,7 +110,7 @@ class TrackGroup(Component):
 
             # these flags don't have track label
             # slct_01.chunk
-            if track.flags not in (4, 12):
+            if track.flags not in (4, 12, 16):
                 track.index = read_s16le(f)
 
 
@@ -112,10 +119,10 @@ class TrackGroup(Component):
                 break
 
             # print "{0:016b}".format(track.flags)
-            # print( str(self.class_id), "index: %04d" % track.index, "flags 0x%04X" % track.flags, track.flags)
+            # print( i, str(self.class_id), "index: %04d" % track.index, "flags 0x%04X" % track.flags, track.flags)
             ref_count = 1
 
-            if track.flags in (4, 5):
+            if track.flags in (4, 5, 16):
                 ref_count = 1
             elif track.flags in (12, 13, 21, 517,):
                 ref_count = 2
@@ -124,21 +131,20 @@ class TrackGroup(Component):
             elif track.flags in (541, 527):
                 ref_count = 4
 
-            # TODO: find sample?
+            # has Attributes and SessionAttrs?? DIDP
             elif track.flags in (543,):
                 ref_count = 5
             else:
                 raise ValueError("%s: unknown track flag %d" % (str(self.class_id), track.flags))
 
-
-
             for j in range(ref_count):
                 ref = read_object_ref(self.root, f)
                 track.refs.append(ref)
 
-            if ref_count == 5:
-                print(track.refs)
-                raise Exception()
+            # if ref_count == 5:
+            #     print(self.name)
+            #     print(track.refs)
+            #     raise Exception()
 
             self.tracks.append(track)
 

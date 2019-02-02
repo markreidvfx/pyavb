@@ -7,7 +7,7 @@ from __future__ import (
 
 from . import core
 from . import utils
-from .core import AVBPropertyDef
+from .core import AVBPropertyDef, AVBRefList
 from . import mobid
 
 from . utils import (
@@ -518,7 +518,7 @@ class TrackerDataSlot(core.AVBObject):
         read_assert_tag(f, 0x01)
 
         count = read_s32le(f)
-        self.tracker_data = []
+        self.tracker_data = AVBRefList(self.root)
         for i in range(count):
             ref = read_object_ref(self.root, f)
             self.tracker_data.append(ref)
@@ -549,7 +549,7 @@ class TrackerParameterSlot(core.AVBObject):
 
         count = read_s32le(f)
         assert count >= 0
-        self.params = []
+        self.params = AVBRefList(self.root)
         for i in range(count):
             ref = read_object_ref(self.root, f)
             self.params.append(ref)
@@ -581,7 +581,7 @@ class TrackerData(core.AVBObject):
         self.clip_version = read_u32le(f)
 
         count = read_s16le(f)
-        self.clips = []
+        self.clips = AVBRefList(self.root)
         for i in range(count):
             ref = read_object_ref(self.root, f)
             self.clips.append(ref)

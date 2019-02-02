@@ -5,18 +5,62 @@ from __future__ import (
     division,
     )
 
+from . import utils
+
 class AVBPropertyDef(object):
     def __init__(self, name, long_name, data_type, tag=None):
         self.name = name
         self.long_name = name
-        self.type = type
+        self.type = data_type
+    def __repr__(self):
+        s = ""
+        s += "%s.%s"  % (self.__class__.__module__,
+                                self.__class__.__name__)
+
+        s += " " + str(self.name)
+        s += " " + str(self.type)
+
+        return '<%s at 0x%x>' % (s, id(self))
+
+class AVBPropertyData(dict):
+
+    def deref(self, value):
+        if isinstance(value, utils.AVBObjectRef):
+            return value.value
+        return value
+
+    def __getitem__(self, key):
+        return self.deref(super(AVBPropertyData, self).__getitem__(key))
+
+    def items(self):
+        for key, value in super(AVBPropertyData, self).items():
+            yield key, self.deref(value)
+
+class AVBRefList(list):
+
+    def __init__(self, root):
+        super(AVBRefList, self).__init__()
+        self.root = root
+
+    def deref(self, value):
+        if isinstance(value, utils.AVBObjectRef):
+            return value.value
+        return value
+
+    def __getattr__(self, index):
+        return self.deref(super(AVBRefList, self).__getitem__(index))
+
+    def __iter__(self):
+        for value in super(AVBRefList, self).__iter__():
+            yield self.deref(value)
+
 
 class AVBObject(object):
     propertydefs = []
 
     def __init__(self, root):
         self.root = root
-        self.property_data = {}
+        self.property_data = AVBPropertyData()
 
     def __setattr__(self, name, value):
         for item in self.propertydefs:
@@ -34,13 +78,15 @@ class AVBObject(object):
     def __getattr__(self, name):
         if name in self.property_data:
             v =  self.property_data[name]
+            if isinstance(v, utils.AVBObjectRef):
+                return v.value
             # p_def = self.get_property_def(name)
             # if p_def.type == 'reference':
             #     return v
 
             return v
-
-        return super(AVBObject, self).__getattr__(name)
+        raise AttributeError("'%s' has no attribute '%s'" % (self.__class__.__name__, name))
+        # return super(AVBObject, self).__getattr__(name)
 
     def read(self, f):
         pass
@@ -48,7 +94,9 @@ class AVBObject(object):
     def __repr__(self):
         s = "%s.%s"  % (self.__class__.__module__,
                                 self.__class__.__name__)
-        s = str(self.class_id) + " " + s
+
+        if hasattr(self, 'class_id') and self.class_id:
+            s = str(self.class_id) + " " + s
 
         if hasattr(self, 'name') and self.name:
             s += " " + self.name

@@ -6,7 +6,7 @@ from __future__ import (
     )
 
 from . import core
-from .core import AVBPropertyDef
+from .core import AVBPropertyDef, AVBRefList
 from . import utils
 from . import mobid
 
@@ -58,15 +58,14 @@ class Component(core.AVBObject):
 
         self.media_kind_id = read_s16le(f)
         self.edit_rate = read_exp10_encoded_float(f)
-        self.name = read_string(f)
-        self.effect_id = read_string(f)
+        self.name = read_string(f) or None
+        self.effect_id = read_string(f) or None
 
-        self.attribute_ref = read_object_ref(self.root, f)
-        self.session_ref = read_object_ref(self.root, f)
+        self.attributes = read_object_ref(self.root, f)
+        self.session_attrs = read_object_ref(self.root, f)
 
         self.precomputed = read_object_ref(self.root, f)
 
-        self.param_list = None
         for tag in iter_ext(f):
 
             if tag == 0x01:
@@ -114,17 +113,17 @@ class Sequence(Component):
         assert version == 0x03
 
         count = read_u32le(f)
-        self.component_refs = []
+        self.components_refs = AVBRefList(self.root)
         for i in range(count):
             ref = read_object_ref(self.root, f)
             # print ref
-            self.component_refs.append(ref)
+            self.components_refs.append(ref)
 
         tag = read_byte(f)
         assert tag == 0x03
 
     def components(self):
-        for ref in self.component_refs:
+        for ref in self.components_refs:
             yield ref.value
 
 class Clip(Component):
