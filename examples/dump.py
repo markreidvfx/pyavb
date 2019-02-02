@@ -37,6 +37,12 @@ import sys
 if bytes is not str:
     unicode = str
 
+def pretty_value(value):
+    if isinstance(value, bytearray):
+        return "bytearray(%d)" % len(value)
+        # return ''.join(format(x, '02x') for x in value)
+    return value
+
 def dump_obj(obj):
 
     for pdef in obj.propertydefs:
@@ -75,7 +81,7 @@ def dump(obj, space=""):
                     dump(item, space + " ")
             else:
                 if value is not None:
-                    print("%s%s:" % (space, key), value)
+                    print("%s%s:" % (space, key), pretty_value(value))
         return
 
     if not isinstance(obj, avb.core.AVBObject):
@@ -100,7 +106,7 @@ def dump(obj, space=""):
             dump(value, space + " ")
         else:
             if value is not None:
-                print("%s%s:" % (space, key), value)
+                print("%s%s:" % (space, key), pretty_value(value))
 
 
 def main(path):
