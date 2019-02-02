@@ -33,20 +33,6 @@ class TestRead(unittest.TestCase):
                     item = f.read_object(i)
                     # print(item)
 
-    def test_walk(self):
-        with avb.open(test_file_01) as f:
-            main_composition = next(f.content.toplevel())
-
-            for track in main_composition.tracks:
-                # print(track)
-
-                seg = track.segment
-                if seg.media_kind == 'picture':
-                    print(seg)
-                    for item in seg.components():
-                        print(" ",item)
-
-
 
 if __name__ == "__main__":
     unittest.main()
