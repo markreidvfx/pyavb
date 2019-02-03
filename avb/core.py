@@ -101,6 +101,9 @@ class AVBObject(object):
         if hasattr(self, 'name') and self.name:
             s += " " + self.name
 
+        if hasattr(self, 'mob_type') and self.mob_type:
+            s += " " + self.mob_type
+
         if hasattr(self, 'effect_id') and self.effect_id:
 
             s += " " + self.effect_id
