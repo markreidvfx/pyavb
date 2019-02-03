@@ -685,6 +685,41 @@ class Composition(TrackGroup):
         read_assert_tag(f, 0x03)
 
     @property
+    def usage(self):
+        # these usage codes seem to come from omf
+        if self.usage_code == 0:
+            return None
+        # master mob to a precompute
+        elif self.usage_code == 1:
+            return "precompute"
+        # mob is a subclip
+        elif self.usage_code == 2:
+            return "subclip"
+        # mob is an effect holder
+        elif self.usage_code == 3:
+            return "effect"
+        # comp of selectors
+        elif self.usage_code == 4:
+            return "group"
+        # mob that back up groups
+        elif self.usage_code == 5:
+            return "groupoofter"
+        # motion effect clip
+        elif self.usage_code == 6:
+            return "motion"
+        # group phys mobs
+        elif self.usage_code == 7:
+            return "mastermob"
+        # file mob with a precompute
+        elif self.usage_code == 9:
+            return "precompute_file"
+        else:
+            return "unknown"
+
+        #TODO: find out what code  8,10 -> 14 are
+        # 14 essencegroup?
+
+    @property
     def mob_type(self):
         if self.mob_type_id == 1:
             return "CompositionMob"
