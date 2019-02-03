@@ -603,7 +603,7 @@ class RepSet(TrackGroup):
         assert tag == 0x03
 
 @utils.register_class
-class TransistionEffect(TrackGroup):
+class TransitionEffect(TrackGroup):
     class_id = b'TNFX'
     propertydefs = TrackGroup.propertydefs + [
         AVBPropertyDef('cutpoint',            'OMFI:TRAN:CutPoint',                   'int32'),
@@ -621,7 +621,7 @@ class TransistionEffect(TrackGroup):
         AVBPropertyDef('trackman',            'OMFI:TNFX:MC:TrackMan',           'reference'),
     ]
     def read(self, f):
-        super(TransistionEffect, self).read(f)
+        super(TransitionEffect, self).read(f)
 
         tag = read_byte(f)
         version = read_byte(f)
