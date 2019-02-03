@@ -69,34 +69,28 @@ def dump_obj(obj):
 
 def dump(obj, space=""):
 
-    if isinstance(obj, dict):
-        for key, value in obj.items():
-            if isinstance(value, avb.core.AVBObject):
-                print("%s%s:" % (space, key))
-                dump(value, space + " ")
-            elif isinstance(value, dict):
-                print("%s%s:" % (space, key))
-                dump(value, space + " ")
+    propertie_keys = []
+    property_data = None
+    if isinstance(obj, avb.core.AVBObject):
+        print(space, unicode(obj))
+        space += "  "
+        property_data = obj.property_data
+        for pdef in obj.propertydefs:
+            key = pdef.name
+            if key not in obj.property_data:
+                continue
+            propertie_keys.append(key)
 
-            elif isinstance(value, list):
-                print("%s%s:" % (space, key))
-                for item in value:
-                    dump(item, space + " ")
-            else:
-                if value is not None:
-                    print("%s%s:" % (space, key), pretty_value(value))
-        return
-
-    if not isinstance(obj, avb.core.AVBObject):
+    elif isinstance(obj, dict):
+        propertie_keys = obj.keys()
+        propertie_keys.sort()
+        property_data = obj
+    else:
         print(space, obj)
         return
-    print(space, unicode(obj))
-    space += "  "
-    for pdef in obj.propertydefs:
-        key = pdef.name
-        if key not in obj.property_data:
-            continue
-        value = obj.property_data[key]
+
+    for key in propertie_keys:
+        value = property_data[key]
         if isinstance(value, avb.core.AVBObject):
             print("%s%s:" % (space, key))
             dump(value, space + " ")
@@ -115,6 +109,8 @@ def dump(obj, space=""):
 def main(path):
     with avb.open(path) as f:
         dump(f.content)
+        # for mob in f.content.mobs:
+        #     dump(mob)
 
 
 if __name__ == "__main__":
