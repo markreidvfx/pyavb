@@ -102,7 +102,7 @@ class BinViewSetting(Setting):
 class BinItem(core.AVBObject):
 
     propertydefs = [
-        AVBPropertyDef('ref',         'Composition',  'reference'),
+        AVBPropertyDef('mob',         'Composition',  'reference'),
         AVBPropertyDef('x',           'Xpos',         'int16'),
         AVBPropertyDef('y',           'Ypos',         'int16'),
         AVBPropertyDef('keyframe',    'Keyframe',     'int32'),
@@ -110,7 +110,7 @@ class BinItem(core.AVBObject):
     ]
 
     def read(self, f):
-        self.ref = read_object_ref(self.root, f)
+        self.mob = read_object_ref(self.root, f)
         self.x = read_s16le(f)
         self.y = read_s16le(f)
         self.keyframe = read_s32le(f)
@@ -223,9 +223,9 @@ class Bin(core.AVBObject):
             self.mob_dict[comp.mob_id] = comp
 
     @property
-    def components(self):
+    def mobs(self):
         for item in self.items:
-            yield item.ref
+            yield item.mob
 
     def toplevel(self):
         for item in self.components:

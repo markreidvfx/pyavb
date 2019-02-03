@@ -17,7 +17,7 @@ class TestRead(unittest.TestCase):
     def test_basic(self):
         with avb.open(test_file_01) as f:
 
-            for item in f.content.components:
+            for item in f.content.mobs:
                 pass
                 # print(item)
 
