@@ -40,16 +40,13 @@ def dump(obj, space=""):
 
     for key in propertie_keys:
         value = property_data[key]
-        if isinstance(value, avb.core.AVBObject):
+        if isinstance(value, (avb.core.AVBObject, dict)):
             print("%s%s:" % (space, key))
             dump(value, space + " ")
         elif isinstance(value, list):
             print("%s%s:" % (space, key))
             for item in value:
                 dump(item, space + " ")
-        elif isinstance(value, dict):
-            print("%s%s:" % (space, key))
-            dump(value, space + " ")
         else:
             if value is not None:
                 print("%s%s:" % (space, key), pretty_value(value))
@@ -58,9 +55,6 @@ def dump(obj, space=""):
 def main(path):
     with avb.open(path) as f:
         dump(f.content)
-        # for mob in f.content.mobs:
-        #     dump(mob)
-
 
 if __name__ == "__main__":
 
