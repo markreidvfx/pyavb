@@ -101,7 +101,7 @@ class Component(core.AVBObject):
 class Sequence(Component):
     class_id = b"SEQU"
     propertydefs = Component.propertydefs + [
-        AVBPropertyDef('components_refs', 'OMFI:SEQU:Sequence', 'ref_list'),
+        AVBPropertyDef('components', 'OMFI:SEQU:Sequence', 'ref_list'),
     ]
 
     def read(self, f):
@@ -113,18 +113,14 @@ class Sequence(Component):
         assert version == 0x03
 
         count = read_u32le(f)
-        self.components_refs = AVBRefList(self.root)
+        self.components = AVBRefList(self.root)
         for i in range(count):
             ref = read_object_ref(self.root, f)
             # print ref
-            self.components_refs.append(ref)
+            self.components.append(ref)
 
         tag = read_byte(f)
         assert tag == 0x03
-
-    def components(self):
-        for ref in self.components_refs:
-            yield ref.value
 
 class Clip(Component):
     class_id = b'CLIP'
