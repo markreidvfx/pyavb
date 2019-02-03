@@ -64,11 +64,11 @@ def filter_track_refs(track, track_refs):
 
     # print(len(track_refs))
     for ref in track_refs:
-        if ref.class_id in ('ATTR',):
+        if ref.class_id in (b'ATTR',):
             attrs.append(ref)
-        elif ref.class_id in ('TRKR',):
+        elif ref.class_id in (b'TRKR',):
             trkr.append(ref)
-        elif ref.class_id in ('NULL', ):
+        elif ref.class_id in (b'NULL', ):
             null_refs.append(ref)
         else:
             refs.append(ref)

@@ -36,7 +36,7 @@ class AVBObjectRef(object):
     @property
     def class_id(self):
         if not self.root.check_refs:
-            return "NULL"
+            return b'NULL'
         if self.valid:
             chunk = self.root.chunks[self.index]
             return chunk.class_id
