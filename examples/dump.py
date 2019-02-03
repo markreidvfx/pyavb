@@ -74,6 +74,9 @@ def dump(obj, space=""):
             if isinstance(value, avb.core.AVBObject):
                 print("%s%s:" % (space, key))
                 dump(value, space + " ")
+            elif isinstance(value, dict):
+                print("%s%s:" % (space, key))
+                dump(value, space + " ")
 
             elif isinstance(value, list):
                 print("%s%s:" % (space, key))
@@ -111,15 +114,7 @@ def dump(obj, space=""):
 
 def main(path):
     with avb.open(path) as f:
-
-        for item in f.content.items:
-            # dump_obj(item.ref)
-            mob = item.ref
-            if mob.mob_type == "CompositionMob":
-                dump(mob)
-                print("")
-                # break
-
+        dump(f.content)
 
 
 if __name__ == "__main__":
