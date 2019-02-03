@@ -42,8 +42,6 @@ class Track(core.AVBObject):
         AVBPropertyDef('control_code',     'OMFI:TRAK:ControlCode',    'int16'),
         AVBPropertyDef('control_sub_code', 'OMFI:TRAK:ControlSubCode', 'int16'),
         AVBPropertyDef('lock_number',      'OMFI:TRAK:LockNubmer',     'int16'),
-        AVBPropertyDef('refs',             'OMFI:TRAK:Refs',           'list'), # custom
-
     ]
     def __init__(self, root):
         super(Track, self).__init__(root)
@@ -55,6 +53,47 @@ class Track(core.AVBObject):
             obj = item.value
             if isinstance(obj, Component):
                 return obj
+
+def filter_track_refs(track, track_refs):
+    attrs = []
+    trkr = []
+    refs = []
+
+    # for testing
+    null_refs = []
+
+    # print(len(track_refs))
+    for ref in track_refs:
+        if ref.class_id in ('ATTR',):
+            attrs.append(ref)
+        elif ref.class_id in ('TRKR',):
+            trkr.append(ref)
+        elif ref.class_id in ('NULL', ):
+            null_refs.append(ref)
+        else:
+            refs.append(ref)
+
+        # print("  ",ref.class_id)
+    assert len(attrs) <= 2
+    assert len(trkr) <= 1
+    assert len(refs) <= 2
+    # used in chunk test
+    assert len(null_refs) <= 5
+
+    if len(attrs) == 2:
+        track.attributes = attrs[0]
+        track.session_attr = attrs[1]
+    elif len(attrs) == 1:
+        track.session_attr = attrs[0]
+
+    if trkr:
+        track.filler_proxy = trkr[0]
+
+    if len(refs) == 2:
+        track.component = refs[0]
+        track.bob_data = refs[1]
+    elif len(refs) == 1:
+        track.component = refs[0]
 
 @utils.register_class
 class TrackGroup(Component):
@@ -89,6 +128,8 @@ class TrackGroup(Component):
             track = Track(self.root)
             track.flags = read_u16le(f)
 
+            track_refs = []
+
             # TNFX Strange TransistionEffect
             if track.flags == 0:
                 self.tracks.append(track)
@@ -98,11 +139,15 @@ class TrackGroup(Component):
             # contains ref to CTRL and might have 1 or 2 control vars
             if track.flags in (36, 100,):
                 ref = read_object_ref(self.root, f)
-                track.refs.append(ref)
+                track_refs.append(ref)
+                # track.refs.append(ref)
                 track.index = i + 1
                 track.control_code = read_s16le(f)
                 if track.flags in (100, ):
                     track.control_sub_code = read_s16le(f)
+
+
+                filter_track_refs(track, track_refs)
                 self.tracks.append(track)
                 continue
 
@@ -139,7 +184,9 @@ class TrackGroup(Component):
 
             for j in range(ref_count):
                 ref = read_object_ref(self.root, f)
-                track.refs.append(ref)
+                track_refs.append(ref)
+
+            filter_track_refs(track, track_refs)
 
             # if ref_count == 5:
             #     print(self.name)
