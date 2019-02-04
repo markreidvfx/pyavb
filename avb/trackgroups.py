@@ -688,7 +688,7 @@ class Selector(TrackGroup):
 
     def components(self):
         for track in self.tracks:
-            yield track.segment
+            yield track.component
 
 @utils.register_class
 class Composition(TrackGroup):

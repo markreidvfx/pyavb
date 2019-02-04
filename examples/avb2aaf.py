@@ -9,6 +9,40 @@ import avb
 import aaf2
 import sys
 
+def register_definitions(f):
+    op_def = f.create.OperationDef('89d9b67e-5584-302d-9abd-8bd330c46841', 'VideoDissolve_2', '')
+    f.dictionary.register_def(op_def)
+
+    op_def.media_kind = 'picture'
+    op_def['IsTimeWarp'].value = False
+    op_def['Bypass'].value = 1
+    op_def['NumberInputs'].value = 2
+    op_def['OperationCategory'].value = 'OperationCategory_Effect'
+
+    param_byteorder = f.create.ParameterDef("c0038672-a8cf-11d3-a05b-006094eb75cb", "AvidParameterByteOrder", "", 'AvidBagOfBits')
+    f.dictionary.register_def(param_byteorder)
+
+    param_effect_id = f.create.ParameterDef("93994bd6-a81d-11d3-a05b-006094eb75cb", "AvidEffectID", "", 'aafUInt16')
+    f.dictionary.register_def(param_effect_id)
+
+    op_def.parameters.extend([param_byteorder, param_effect_id])
+
+    # note not part of VideoDissolve_2 op_def but still used...
+    opacity_param = f.create.ParameterDef('8d56813d-847e-11d5-935a-50f857c10000', 'AFX_FG_KEY_OPACITY_U', '', 'Rational')
+    f.dictionary.register_def(opacity_param)
+
+    linear = f.create.InterpolationDef('5b6c85a4-0ede-11d3-80a9-006008143e6f', 'LinearInterp', '')
+    f.dictionary.register_def(linear)
+
+    op_def = f.create.OperationDef('0c3bea41-fc05-11d2-8a29-0050040ef7d2', 'Audio Dissolve', '')
+    f.dictionary.register_def(op_def)
+
+    op_def.media_kind = 'sound'
+    op_def['IsTimeWarp'].value = False
+    op_def['Bypass'].value = 1
+    op_def['NumberInputs'].value = 2
+    op_def['OperationCategory'].value = 'OperationCategory_Effect'
+    op_def.parameters.extend([param_byteorder, param_effect_id])
 
 def nice_edit_rate(rate):
     if rate == 24:
@@ -80,116 +114,134 @@ def check_source_clip(clip):
         assert clip.track_id == 0
 
 
-def convert_component(aaf_file, segment):
+def convert_sequence(aaf_file, avb_sequence):
+    aaf_sequence = aaf_file.create.Sequence()
+    for avb_component in avb_sequence.components:
+        # avb puts 0 length filler on head and tail of sequence
+        if avb_component.length <= 0:
+            continue
 
-    if type(segment) is avb.components.SourceClip:
-        component = aaf_file.create.SourceClip()
-        check_source_clip(segment)
-        component['SourceID'].value = segment.mob_id
-        component['StartTime'].value = segment.start_time
-        component['SourceMobSlotID'].value = segment.track_id
+        aaf_sequence.components.append(convert_component(aaf_file, avb_component))
 
-    elif type(segment) is avb.components.Sequence:
-        seq = aaf_file.create.Sequence()
-        for item in segment.components():
-            seq.components.append(convert_component(aaf_file, item))
+    return aaf_sequence
 
-        component = seq
+def convert_selector(f, avb_selector):
 
-    elif type(segment) is avb.components.Filler:
-        component = aaf_file.create.Filler()
+    selector = f.create.Selector()
+    selected = avb_selector.selected
+    selected_clip = None
+    for i, item in enumerate(avb_selector.components()):
+        clip =  convert_component(f, item)
+        if i == selected:
+            selected_clip =clip
+        else:
+            selector['Alternates'].append(clip)
+    assert selected_clip
+    selector['Selected'].value = selected_clip
 
-    elif type(segment) is avb.components.Timecode:
-        component = aaf_file.create.Timecode()
-        component['Start'].value = segment.start
-        component['FPS'].value = segment.fps
+    return selector
 
-    elif type(segment) is avb.trackgroups.Selector:
-        component = aaf_file.create.Selector()
-        selected = segment.selected
-        selected_clip = None
-        for i, item in enumerate(segment.components()):
-            clip =  convert_component(aaf_file, item)
-            if i == selected:
-                selected_clip =clip
-            else:
-                component['Alternates'].append(clip)
-        assert selected_clip
-        component['Selected'].value = selected_clip
+def convert_transistion(f, avb_transistion):
+    transition = f.create.Transition()
+
+    transition['CutPoint'].value = 0
+    if avb_transistion.media_kind == 'picture':
+        op_group = f.create.OperationGroup('VideoDissolve_2')
+    else:
+        op_group = f.create.OperationGroup('Audio Dissolve')
+
+    transition['OperationGroup'].value = op_group
+
+    return transition
+
+def convert_component(f, avb_component):
+
+    # print(avb_component)
+    #
+    if type(avb_component) is avb.components.SourceClip:
+        aaf_component = f.create.SourceClip()
+    #     check_source_clip(segment)
+        aaf_component['SourceID'].value = avb_component.mob_id
+        aaf_component['StartTime'].value = avb_component.start_time
+        aaf_component['SourceMobSlotID'].value = avb_component.track_id
+
+    elif type(avb_component) is avb.components.Sequence:
+        aaf_component = convert_sequence(f, avb_component)
+
+    elif type(avb_component) is avb.components.Filler:
+        aaf_component = f.create.Filler()
+    elif type(avb_component) is avb.trackgroups.TransitionEffect:
+        aaf_component = convert_transistion(f, avb_component)
+
+    elif type(avb_component) is avb.components.Timecode:
+        aaf_component = f.create.Timecode()
+        aaf_component['Start'].value = avb_component.start
+        aaf_component['FPS'].value = avb_component.fps
+
+    elif type(avb_component) is avb.trackgroups.Selector:
+        aaf_component = convert_selector(f, avb_component)
 
     else:
         # raise Exception(str(segment))
         # print("??", segment)
-        component = aaf_file.create.Filler()
+        aaf_component = f.create.Filler()
 
-    component.media_kind = segment.media_kind
-    component.length =  segment.length
+    aaf_component.media_kind = avb_component.media_kind
+    aaf_component.length =  avb_component.length
 
-    return component
+    return aaf_component
 
-def convert_slots(aaf_file, comp, mob):
+def convert_slots(aaf_file, comp, aaf_mob):
 
     slot_id = 1
     for track in comp.tracks:
-        print(" ",track.segment)
-        # if not track.segment.media_kind in ('picture', 'sound'):
-        #     continue
+        if not track.component.media_kind in ('picture', 'sound'):
+            continue
+
+        # if
+
+        # print(track, track.component)
         # print(track.segment.media_kind)
 
         slot = aaf_file.create.TimelineMobSlot()
-        slot.edit_rate = nice_edit_rate(track.segment.edit_rate)
+        slot.edit_rate = track.component.edit_rate
+        slot.segment = convert_component(aaf_file, track.component)
+        slot.slot_id = track.index
 
-        slot_id = track.index
-        slot.slot_id = slot_id
-        mob.slots.append(slot)
-
-        slot.segment = convert_component(aaf_file, track.segment)
+        aaf_mob.slots.append(slot)
         slot_id += 1
+
+def convert_composition(mob, aaf_file):
+    if mob.mob_type == 'MasterMob':
+        aaf_mob = aaf_file.create.MasterMob()
+    elif mob.mob_type == 'SourceMob':
+        aaf_mob = aaf_file.create.SourceMob()
+        aaf_mob.descriptor = convert_descriptor(mob.descriptor, aaf_file)
+    elif mob.mob_type == 'CompositionMob':
+        aaf_mob = aaf_file.create.CompositionMob()
+
+
+    aaf_mob.name = mob.name or ""
+    # aaf_mob.mob_id = mob.mob_id
+    aaf_file.content.mobs.append(aaf_mob)
+    convert_slots(aaf_file, mob, aaf_mob)
+    print(aaf_mob)
+
 
 def avb2aaf(avb_file, aaf_file):
 
-    # print(avb_file.content.view_setting_ref.value)
-    # return
-
-    for comp in avb_file.content.components:
-        if comp.mob_type == 'MasterMob':
-            aaf_mob = aaf_file.create.MasterMob()
-        elif comp.mob_type == 'SourceMob':
-            aaf_mob = aaf_file.create.SourceMob()
-            aaf_mob.descriptor = convert_descriptor(comp.descriptor.value, aaf_file)
-
-        elif comp.mob_type == 'CompositionMob':
-            aaf_mob = aaf_file.create.CompositionMob()
-
-        aaf_mob.name = comp.name
-        # if not aaf_mob.name:
-        #     print(comp.mob_id)
-            # raise Exception()
-
-        aaf_mob.mob_id = comp.mob_id
-
-        # attr_dict = comp.attribute_ref.value or {}
-        # print(attr_dict)
-        # user_attr_ref = attr_dict.get("_USER", None)
-        # if user_attr_ref:
-        #     print("  ", user_attr_ref.value)
-
-        # aaf_mob.usage = comp.usage_code
-
-        aaf_file.content.mobs.append(aaf_mob)
-        print(aaf_mob)
-        convert_slots(aaf_file, comp, aaf_mob)
-        # aaf_file.save()
+    for mob in avb_file.content.toplevel():
+        convert_composition(mob, aaf_file)
 
 def avb2aaf_main(path):
 
     with avb.open(path) as avb_file:
         with aaf2.open(path + ".aaf", 'w') as aaf_file:
-
+            register_definitions(aaf_file)
             avb_file.content.build_mob_dict()
             avb2aaf(avb_file, aaf_file)
 
-            # aaf_file.content.dump()
+            aaf_file.content.dump()
 
 
 

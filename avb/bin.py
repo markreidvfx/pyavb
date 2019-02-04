@@ -219,8 +219,8 @@ class Bin(core.AVBObject):
 
     def build_mob_dict(self):
         self.mob_dict = {}
-        for comp in self.components:
-            self.mob_dict[comp.mob_id] = comp
+        for mob in self.mobs:
+            self.mob_dict[mob.mob_id] = mob
 
     @property
     def mobs(self):
@@ -228,6 +228,6 @@ class Bin(core.AVBObject):
             yield item.mob
 
     def toplevel(self):
-        for item in self.components:
-            if  item.mob_type in ('CompositionMob', ) and item.usage_code == 0:
-                yield item
+        for mob in self.mobs:
+            if  mob.mob_type in ('CompositionMob', ) and mob.usage_code == 0:
+                yield mob
