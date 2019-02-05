@@ -577,13 +577,13 @@ class Repeat(TimeWarp):
         assert tag == 0x03
 
 @utils.register_class
-class RepSet(TrackGroup):
+class EssenceGroup(TrackGroup):
     class_id = b'RSET'
     propertydefs = TrackGroup.propertydefs + [
         AVBPropertyDef('rep_set_type', 'OMFI:RSET:repSetType', 'int32'),
     ]
     def read(self, f):
-        super(RepSet, self).read(f)
+        super(EssenceGroup, self).read(f)
 
         # print(peek_data(f).encode("hex"))
         tag = read_byte(f)
