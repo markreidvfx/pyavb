@@ -527,7 +527,7 @@ class CaptureMask(TimeWarp):
 class MotionEffect(TimeWarp):
     class_id = b'SPED'
     propertydefs = TimeWarp.propertydefs + [
-        AVBPropertyDef('rate',                   'OMFI:SPED:Rate',                 'rational'),
+        AVBPropertyDef('speed_ratio',            'OMFI:SPED:Rate',                 'rational'),
         AVBPropertyDef('offset_adjust',          'OMIF:SPED:OffsetAdjust',         'double'),
         AVBPropertyDef('source_param_list',      'OMFI:SPED:SourceParamList',      'reference'),
         AVBPropertyDef('new_source_calculation', 'OMIF:SPED:NewSourceCalculation', 'bool'),
@@ -544,7 +544,7 @@ class MotionEffect(TimeWarp):
 
         num = read_s32le(f)
         den = read_s32le(f)
-        self.rate = [num, den]
+        self.speed_ratio = [num, den]
 
         for tag in iter_ext(f):
 
