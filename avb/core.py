@@ -36,6 +36,9 @@ class AVBPropertyData(dict):
         for key, value in super(AVBPropertyData, self).items():
             yield key, self.deref(value)
 
+    def get(self, *args, **kwargs):
+        return self.deref(super(AVBPropertyData, self).get(*args, **kwargs))
+
 class AVBRefList(list):
 
     def __init__(self, root):

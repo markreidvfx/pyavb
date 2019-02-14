@@ -472,9 +472,9 @@ class Marker(MobRef):
         assert version == 1
 
         self.color = []
-        self.color.append(read_s16le(f))
-        self.color.append(read_s16le(f))
-        self.color.append(read_s16le(f))
+        self.color.append(read_u16le(f))
+        self.color.append(read_u16le(f))
+        self.color.append(read_u16le(f))
 
         for tag in iter_ext(f):
 

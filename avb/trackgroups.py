@@ -151,7 +151,7 @@ class TrackGroup(Component):
                 self.tracks.append(track)
                 continue
 
-            track.index = i + 1
+            # track.index = i + 1
 
             # these flags don't have track label
             # slct_01.chunk
