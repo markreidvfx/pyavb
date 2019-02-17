@@ -8,6 +8,7 @@ from __future__ import (
 import avb
 import aaf2
 from aaf2.rational import AAFRational
+from aaf2.mobid import MobID
 import sys
 from uuid import UUID
 
@@ -21,10 +22,10 @@ def register_definitions(f):
     op_def['NumberInputs'].value = 2
     op_def['OperationCategory'].value = 'OperationCategory_Effect'
 
-    param_byteorder = f.create.ParameterDef("c0038672-a8cf-11d3-a05b-006094eb75cb", "AvidParameterByteOrder", "", 'AvidBagOfBits')
+    param_byteorder = f.create.ParameterDef("c0038672-a8cf-11d3-a05b-006094eb75cb", "AvidParameterByteOrder", "", 'aafUInt16')
     f.dictionary.register_def(param_byteorder)
 
-    param_effect_id = f.create.ParameterDef("93994bd6-a81d-11d3-a05b-006094eb75cb", "AvidEffectID", "", 'aafUInt16')
+    param_effect_id = f.create.ParameterDef("93994bd6-a81d-11d3-a05b-006094eb75cb", "AvidEffectID", "", 'AvidBagOfBits')
     f.dictionary.register_def(param_effect_id)
 
     op_def.parameters.extend([param_byteorder, param_effect_id])
@@ -41,6 +42,12 @@ def register_definitions(f):
 
     constant = f.create.InterpolationDef('5b6c85a5-0ede-11d3-80a9-006008143e6f', 'ConstantInterp', '')
     f.dictionary.register_def(constant)
+
+    bezier = f.create.InterpolationDef('df394eda-6ac6-4566-8dbe-f28b0bdd781a', 'AvidBezierInterpolator', '')
+    f.dictionary.register_def(bezier)
+
+    nointerp = f.create.InterpolationDef('5b6c85a3-0ede-11d3-80a9-006008143e6f', 'NoInterp', '')
+    f.dictionary.register_def(nointerp)
 
     op_def = f.create.OperationDef('0c3bea41-fc05-11d2-8a29-0050040ef7d2', 'Audio Dissolve', '')
     f.dictionary.register_def(op_def)
@@ -104,6 +111,19 @@ def register_definitions(f):
     f.dictionary.register_def(param)
     param = f.create.ParameterDef('8d568313-847e-11d5-935a-50f857c10000', 'PP_BASE_FRAME_U',      '', 'Rational')
     f.dictionary.register_def(param)
+
+    op_def = f.create.OperationDef('2db619ef-7210-4e89-95d7-970336d72e8c', 'Title_2', "")
+    op_def.media_kind = 'picture'
+    op_def['NumberInputs'].value = 3
+    op_def['IsTimeWarp'].value = False
+    op_def['Bypass'].value = 0
+    op_def['OperationCategory'].value = "OperationCategory_Effect"
+    f.dictionary.register_def(op_def)
+
+    param = f.create.ParameterDef('1fdd2907-e48c-11d3-a078-006094eb75cb', 'AvidGraphicFXAttr', '', 'AvidBagOfBits')
+    f.dictionary.register_def(param)
+
+    op_def.parameters.extend([param, param_byteorder, param_effect_id])
 
 def nice_edit_rate(rate):
     if rate == 24:
@@ -199,35 +219,68 @@ def convert_descriptor(d, aaf_file):
     else:
         raise ValueError("unhandle descriptor")
 
-
     descriptor["Length"].value = d.length
-
     return descriptor
 
+def remap_track_id(track_id, media_kind,  avb_mob):
+    for i,track in enumerate(iter_tracks(avb_mob)):
+        if track_id == track.index and media_kind == track.component.media_kind:
+            return i+1
+
+    raise Exception()
+
+def iter_tracks(avb_mob):
+    track_types = ('picture', 'sound','edgecode', 'timecode', 'DescriptiveMetadata')
+    track_dict = {}
+    for track in avb_mob.tracks:
+        media_kind = track.component.media_kind
+        if media_kind not in track_dict:
+            track_dict[media_kind] = []
+        track_dict[media_kind].append(track)
+
+    for track_type in track_types:
+        tracks = track_dict.get(track_type, [])
+        for track in tracks:
+            yield track
+
+
 def check_source_clip(f, avb_source_clip):
-    mob_id = avb_source_clip.mob_id
+    mob_id = MobID(bytes_le=avb_source_clip.mob_id.bytes_le)
     if mob_id.int == 0:
-        return
+        return 0
+    avb_mob = avb_source_clip.root.content.mob_dict[avb_source_clip.mob_id]
     if mob_id in f.content.mobs:
         mob = f.content.mobs[mob_id]
     else:
-        avb_mob = avb_source_clip.root.content.mob_dict[mob_id]
-        # print("REF:  ", avb_mob)
         mob = convert_composition(f, avb_mob)
 
-    source_slot = mob.slot_at(avb_source_clip.track_id)
-    assert source_slot
-    # print("!!", source_slot)
+    try:
+        slot_id = remap_track_id(avb_source_clip.track_id, avb_source_clip.media_kind, avb_mob)
+        source_slot = mob.slot_at(slot_id)
+    except:
+        avb_dump(avb_mob)
+        avb_dump(avb_source_clip)
+        for i, track in enumerate(avb_mob.tracks):
+            print(i+1, track.index, track.component.media_kind)
+
+        for slot in mob.slots:
+            print(slot)
+
+        print(avb_source_clip.track_id, avb_source_clip.media_kind)
+        raise
+
+    return slot_id
 
 def convert_source_clip(f, avb_source_clip):
-    check_source_clip(f, avb_source_clip)
+    slot_id = check_source_clip(f, avb_source_clip)
+
+    mob_id = MobID(bytes_le= avb_source_clip.mob_id.bytes_le)
     aaf_component = f.create.SourceClip()
-    aaf_component['SourceID'].value = avb_source_clip.mob_id
+    aaf_component['SourceID'].value = mob_id
     aaf_component['StartTime'].value = avb_source_clip.start_time
-    aaf_component['SourceMobSlotID'].value = avb_source_clip.track_id
+    aaf_component['SourceMobSlotID'].value = slot_id
 
     return aaf_component
-
 
 def convert_sequence(aaf_file, avb_sequence):
     aaf_sequence = aaf_file.create.Sequence()
@@ -291,6 +344,31 @@ def sequ_first_item(avb_component):
 
     raise Exception()
 
+def convert_title(f, avb_title):
+    # avb_dump(avb_title)
+
+    fx_attr = avb_title.attributes.get('AGraphicFXAttr', None)
+    if not fx_attr:
+        return f.create.Filler()
+
+    pict_data = fx_attr.pict_data
+    if not pict_data:
+        return f.create.Filler()
+
+    op = f.create.OperationGroup('Title_2')
+
+    param = f.create.ConstantValue('AvidGraphicFXAttr', bytearray(pict_data))
+    op.parameters.append(param)
+
+    param = f.create.ConstantValue('AvidEffectID', bytearray(b'EFF2_BLEND_GRAPHIC\x00'))
+    op.parameters.append(param)
+
+    for track in avb_title.tracks:
+        comp = convert_component(f, track.component)
+        op.segments.append(comp)
+
+    return op
+
 
 def convert_track_effect(f, avb_effect):
     # print(avb_effect.effect_id)
@@ -300,6 +378,9 @@ def convert_track_effect(f, avb_effect):
         # avb_dump(avb_effect)
         track = avb_effect.tracks[0]
         return convert_component(f, sequ_first_item(track.component))
+
+    elif avb_effect.effect_id  == b'EFF2_BLEND_GRAPHIC':
+        return convert_title(f, avb_effect)
 
     # print('------')
     elif avb_effect.effect_id == b'Audio Pan Volume':
@@ -337,6 +418,7 @@ def convert_essence_group(f, avb_essence_group):
 interp_kinds = {
 2: 'ConstantInterp',
 3: 'LinearInterp',
+5: 'AvidBezierInterpolator',
 6: 'AvidCubicInterpolator',
 }
 
@@ -354,7 +436,13 @@ pp_codes = {
 }
 
 def convert_parameter(f, name, param):
-    interpdef = interp_kinds[param.control_track.interp_kind]
+    try:
+        interpdef = interp_kinds[param.control_track.interp_kind]
+    except:
+        avb_dump(param)
+        print(param.control_track.interp_kind)
+        raise
+
     if interpdef in ('ConstantInterp', ):
         assert len(param.control_track.control_points) == 1
         p = param.control_track.control_points[0]
@@ -422,8 +510,8 @@ def convert_motion_effect(f, avb_effect):
 
 def convert_component(f, avb_component):
 
-    # print(avb_component)
-    #
+    # avb_dump(avb_component)
+
     if type(avb_component) is avb.components.SourceClip:
         aaf_component = convert_source_clip(f, avb_component)
 
@@ -455,22 +543,83 @@ def convert_component(f, avb_component):
     elif isinstance(avb_component, avb.trackgroups.EssenceGroup):
         aaf_component = convert_essence_group(f, avb_component)
     else:
-        avb_dump(avb_component)
+        # avb_dump(avb_component)
         # raise Exception(str(segment))
         # print("??", segment)
         aaf_component = f.create.Filler()
 
     aaf_component.media_kind = avb_component.media_kind
     aaf_component.length =  avb_component.length
-
+    # print(aaf_component)
     return aaf_component
+
+def convert_marker(f, avb_marker):
+    # avb_dump(avb_marker)
+
+    attrs = avb_marker.attributes or {}
+    marker = f.create.DescriptiveMarker()
+
+    marker['CommentMarkerTime'].value = attrs.get('_ATN_CRM_TIME', None)
+    marker['CommentMarkerDate'].value = attrs.get('_ATN_CRM_DATE', None)
+    marker['CommentMarkerUser'].value = attrs.get('_ATN_CRM_USER', None)
+
+    marker['Comment'].value = attrs.get('_ATN_CRM_COM', None)
+
+    c = avb_marker.color
+    marker['CommentMarkerColor'].value = {'red': c[0], 'green': c[1], 'blue': c[2]}
+
+    for key, value in attrs.items():
+        tag = f.create.TaggedValue(key, value)
+        marker['CommentMarkerAttributeList'].append(tag)
+
+    database_id = attrs.get('_ATN_CRM_ID', None)
+    if database_id:
+        tag = f.create.TaggedValue('DatabaseID', database_id)
+        marker['UserComments'].append(tag)
+
+    # marker.dump()
+    # raise Exception()
+    return marker
+
+def convert_markers(f, avb_component, described_slots):
+
+    components = []
+    if isinstance(avb_component, avb.components.Sequence):
+        components = avb_component.components
+    else:
+        components = [avb_component]
+
+    pos = 0
+    marker_list = []
+    for item in components:
+
+        if isinstance(item, avb.trackgroups.TransitionEffect):
+            pos -= item.length
+
+        attributes = item.attributes or {}
+        markers = attributes.get('_TMP_CRM',  [])
+        for marker in markers:
+            # avb_dump(marker)
+            aaf_marker = convert_marker(f, marker)
+            aaf_marker['Position'].value = pos + marker.comp_offset
+            aaf_marker['DescribedSlots'].value = described_slots
+            # aaf_marker.dump()
+            # raise Exception()
+            marker_list.append(aaf_marker)
+        if not isinstance(item, avb.trackgroups.TransitionEffect):
+            pos += item.length
+
+    return marker_list
 
 def convert_slots(aaf_file, comp, aaf_mob):
 
-    slot_id = 1
-    for track in comp.tracks:
-        print(track)
-        if track.component.media_kind in ('picture', 'sound', 'timecode', 'edgecode'):
+    marker_slot_id = 1000
+
+    slot_list = set()
+    for i, track in enumerate(iter_tracks(comp)):
+
+
+        if track.component.media_kind in ('picture', 'sound','edgecode', 'timecode'):
             slot = aaf_file.create.TimelineMobSlot()
 
             # raise Exception()
@@ -479,46 +628,62 @@ def convert_slots(aaf_file, comp, aaf_mob):
         else:
             raise Exception("Unknown media_kind: %s" % track.component.media_kind)
 
-
+        # print(track.index, track.component.media_kind)
+        # slot_list.add(track.index)
+        slot_id = i + 1
         slot.edit_rate = track.component.edit_rate
+        slot.slot_id = slot_id
         slot.segment = convert_component(aaf_file, track.component)
-        slot.slot_id = track.index
-
         aaf_mob.slots.append(slot)
-        slot_id += 1
+
+        markers = convert_markers(aaf_file, track.component, described_slots=[slot.slot_id])
+        if markers:
+            event_slot = aaf_file.create.EventMobSlot()
+            event_slot.edit_rate = track.component.edit_rate
+            event_slot.slot_id = marker_slot_id
+            event_slot.segment = aaf_file.create.Sequence()
+            event_slot.segment.media_kind = 'DescriptiveMetadata'
+            event_slot.segment.components.extend(markers)
+            marker_slot_id += 1
+            # print(markers)
+            # raise Exception()
+            aaf_mob.slots.append(event_slot)
 
 def convert_composition(f, avb_mob):
-    mob_id = avb_mob.mob_id
+    mob_id = MobID(bytes_le=avb_mob.mob_id.bytes_le)
     if mob_id in f.content.mobs:
         return f.content.mobs.get(mob_id)
 
     if avb_mob.mob_type == 'MasterMob':
+        if avb_mob.name:
+            print(mob_id, avb_mob.name)
         aaf_mob = f.create.MasterMob()
-        aaf_mob.mob_id = avb_mob.mob_id
+        aaf_mob.mob_id = mob_id
     elif avb_mob.mob_type == 'SourceMob':
         aaf_mob = f.create.SourceMob()
         aaf_mob.descriptor = convert_descriptor(avb_mob.descriptor, f)
-        aaf_mob.mob_id = avb_mob.mob_id
+        aaf_mob.mob_id = mob_id
     elif avb_mob.mob_type == 'CompositionMob':
         aaf_mob = f.create.CompositionMob()
 
         # use exsiting mob_id for non toplevel comps
         if avb_mob.usage is not None:
-            aaf_mob.mob_id = avb_mob.mob_id
+            aaf_mob.mob_id = mob_id
             aaf_mob['AppCode'].value = 1
 
-
+    # avb_dump(avb_mob)
     aaf_mob.name = avb_mob.name or ""
 
     f.content.mobs.append(aaf_mob)
     convert_slots(f, avb_mob, aaf_mob)
-    print(aaf_mob)
+    # print(aaf_mob)
     return aaf_mob
 
 
 def avb2aaf(aaf_file, avb_file):
 
     for mob in avb_file.content.toplevel():
+        print(mob.name)
         convert_composition(aaf_file, mob)
 
 def avb2aaf_main(path):
@@ -529,7 +694,8 @@ def avb2aaf_main(path):
             avb_file.content.build_mob_dict()
             avb2aaf(aaf_file, avb_file)
 
-            aaf_file.content.dump()
+    with aaf2.open(path + ".aaf", 'r') as aaf_file:
+        aaf_file.dump()
 
 
 
