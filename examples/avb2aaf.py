@@ -671,6 +671,9 @@ def convert_composition(f, avb_mob):
             aaf_mob.mob_id = mob_id
             aaf_mob['AppCode'].value = 1
 
+        if avb_mob.usage_code == 0:
+            aaf_mob.usage = "Usage_TopLevel"
+
     # avb_dump(avb_mob)
     aaf_mob.name = avb_mob.name or ""
 
