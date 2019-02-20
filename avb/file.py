@@ -48,7 +48,7 @@ def read_chunk(root, f):
     return AVBChunk(root, class_id, pos, size)
 
 class AVBFile(object):
-    def __init__(self, path, mode='r'):
+    def __init__(self, path, mode='r', buffering=io.DEFAULT_BUFFER_SIZE):
         if mode in ('r', 'rb'):
             mode = 'rb'
         else:
@@ -56,7 +56,7 @@ class AVBFile(object):
 
         self.mode = mode
         self.check_refs = True
-        self.f = io.open(path, self.mode)
+        self.f = io.open(path, self.mode, buffering=buffering)
 
         f = self.f
         file_bytes = f.read(2)
