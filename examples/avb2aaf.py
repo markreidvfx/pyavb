@@ -397,7 +397,7 @@ def convert_track_effect(f, avb_effect):
 
     else:
         # avb_dump(avb_effect)
-        print(avb_effect.effect_id)
+        # print(avb_effect.effect_id)
         track = avb_effect.tracks[0]
         return convert_component(f, sequ_first_item(track.component))
 
@@ -577,9 +577,32 @@ def convert_marker(f, avb_marker):
         tag = f.create.TaggedValue('DatabaseID', database_id)
         marker['UserComments'].append(tag)
 
+
     # marker.dump()
     # raise Exception()
     return marker
+
+
+def get_avb_component_markers(c):
+    attributes = c.attributes or {}
+    markers = attributes.get('_TMP_CRM',  [])
+    if isinstance(c, avb.components.Sequence):
+        for item in c.components:
+            more_markers = get_avb_component_markers(item)
+            markers.extend(more_markers)
+
+    elif isinstance(c, avb.trackgroups.TrackGroup):
+        for track in c.tracks:
+            if not hasattr(track, 'component'):
+                continue
+
+            more_markers = get_avb_component_markers(track.component)
+            markers.extend(more_markers)
+
+        # if more_markers:
+        #     avb_dump(c)
+
+    return markers
 
 def convert_markers(f, avb_component, described_slots):
 
@@ -596,8 +619,8 @@ def convert_markers(f, avb_component, described_slots):
         if isinstance(item, avb.trackgroups.TransitionEffect):
             pos -= item.length
 
-        attributes = item.attributes or {}
-        markers = attributes.get('_TMP_CRM',  [])
+        markers = get_avb_component_markers(item)
+
         for marker in markers:
             # avb_dump(marker)
             aaf_marker = convert_marker(f, marker)
@@ -618,12 +641,12 @@ def convert_slots(aaf_file, comp, aaf_mob):
     slot_list = set()
     for i, track in enumerate(iter_tracks(comp)):
 
-
-        if track.component.media_kind in ('picture', 'sound','edgecode', 'timecode'):
+        media_kind = track.component.media_kind
+        if media_kind in ('picture', 'sound','edgecode', 'timecode'):
             slot = aaf_file.create.TimelineMobSlot()
 
             # raise Exception()
-        elif track.component.media_kind in ('DescriptiveMetadata', ):
+        elif media_kind in ('DescriptiveMetadata', ):
             slot = aaf_file.create.EventMobSlot()
         else:
             raise Exception("Unknown media_kind: %s" % track.component.media_kind)
@@ -638,6 +661,7 @@ def convert_slots(aaf_file, comp, aaf_mob):
 
         markers = convert_markers(aaf_file, track.component, described_slots=[slot.slot_id])
         if markers:
+            # print_markers(track, markers)
             event_slot = aaf_file.create.EventMobSlot()
             event_slot.edit_rate = track.component.edit_rate
             event_slot.slot_id = marker_slot_id
@@ -649,6 +673,31 @@ def convert_slots(aaf_file, comp, aaf_mob):
             # raise Exception()
             aaf_mob.slots.append(event_slot)
 
+def print_markers(track, markers):
+    media_kind = track.component.media_kind
+
+    for aaf_marker in markers:
+
+        if media_kind == 'picture':
+            track_name = "V%d" % track.index
+        elif media_kind == 'sound':
+            track_name = 'A%d' % track.index
+        else:
+            track_name = "%d" % track.index
+
+        marker_color = ""
+        for item in aaf_marker['CommentMarkerAttributeList'].value:
+            if item['Name'].value == '_ATN_CRM_COLOR':
+                marker_color = item['Value'].value or ""
+                break
+
+        marker_values  = (aaf_marker['CommentMarkerUser'].value,
+                          aaf_marker['Position'].value,
+                          track_name, marker_color,
+                          aaf_marker['Comment'].value or "")
+        marker_string = "\t".join([str(item) for item in (marker_values)])
+        print(marker_string)
+
 def convert_composition(f, avb_mob):
     mob_id = MobID(bytes_le=avb_mob.mob_id.bytes_le)
     if mob_id in f.content.mobs:
@@ -656,7 +705,8 @@ def convert_composition(f, avb_mob):
 
     if avb_mob.mob_type == 'MasterMob':
         if avb_mob.name:
-            print(mob_id, avb_mob.name)
+            pass
+            # print(mob_id, avb_mob.name)
         aaf_mob = f.create.MasterMob()
         aaf_mob.mob_id = mob_id
     elif avb_mob.mob_type == 'SourceMob':
@@ -688,6 +738,7 @@ def avb2aaf(aaf_file, avb_file):
     for mob in avb_file.content.toplevel():
         print(mob.name)
         convert_composition(aaf_file, mob)
+        # break
 
 def avb2aaf_main(path):
 
@@ -697,8 +748,8 @@ def avb2aaf_main(path):
             avb_file.content.build_mob_dict()
             avb2aaf(aaf_file, avb_file)
 
-    with aaf2.open(path + ".aaf", 'r') as aaf_file:
-        aaf_file.dump()
+    # with aaf2.open(path + ".aaf", 'r') as aaf_file:
+    #     aaf_file.dump()
 
 
 
