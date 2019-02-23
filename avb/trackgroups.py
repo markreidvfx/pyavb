@@ -53,6 +53,10 @@ class Track(core.AVBObject):
             obj = item.value
             if isinstance(obj, Component):
                 return obj
+    @property
+    def media_kind(self):
+        if hasattr(self, 'component'):
+            return self.component.media_kind
 
 def filter_track_refs(track, track_refs):
     attrs = []
