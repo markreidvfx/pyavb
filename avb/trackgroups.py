@@ -35,6 +35,7 @@ class Track(core.AVBObject):
         AVBPropertyDef('flags',            'OMFI:TRAK:OptFlags',       'int16'),
         AVBPropertyDef('index',            'OMFI:TRAK:LabelNumber',    'int16'),
         AVBPropertyDef('read_only',        '__OMFI:TRAK:ReadOnly',     'bool'),
+        AVBPropertyDef('start_pos',        'OMFI:TRAK:StartPos',       'int32'),
         AVBPropertyDef('attributes',       'OMFI:TRAK:Attributes',     'reference'),
         AVBPropertyDef('session_attr',     'OMFI:TRAK:SessionAttrs',   'reference'),
         AVBPropertyDef('component',        'OMFI:TRAK:TrackComponent', 'reference'),
@@ -174,15 +175,15 @@ class TrackGroup(Component):
 
             if track.flags in (4, 5, 16):
                 ref_count = 1
-            elif track.flags in (12, 13, 21, 517,):
+            elif track.flags in (12, 13, 21, 141, 517,):
                 ref_count = 2
-            elif track.flags in (29, 519, 525, 533, 775,):
+            elif track.flags in (29, 519, 525, 533, 645, 775,):
                 ref_count = 3
-            elif track.flags in (541, 527):
+            elif track.flags in (541, 527, 669):
                 ref_count = 4
 
             # has Attributes and SessionAttrs?? DIDP
-            elif track.flags in (543,):
+            elif track.flags in (543, ):
                 ref_count = 5
             else:
                 raise ValueError("%s: unknown track flag %d" % (str(self.class_id), track.flags))
@@ -196,6 +197,9 @@ class TrackGroup(Component):
             # cmpo_03.chunk
             if track.flags in (775, ):
                 track.read_only = read_bool(f)
+
+            if track.flags in (669, 141):
+                track.start_pos = read_s32le(f)
 
             # if ref_count == 5:
             #     print(self.name)
