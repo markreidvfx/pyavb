@@ -170,12 +170,13 @@ class TrackGroup(Component):
                 break
 
             # print "{0:016b}".format(track.flags)
-            # print( i, str(self.class_id), "index: %04d" % track.index, "flags 0x%04X" % track.flags, track.flags)
+            # if hasattr(track, 'index'):
+            #     print( i, str(self.class_id), "index: %04d" % track.index, "flags 0x%04X" % track.flags, track.flags)
             ref_count = 1
 
             if track.flags in (4, 5, 16):
                 ref_count = 1
-            elif track.flags in (12, 13, 21, 141, 517,):
+            elif track.flags in (7, 12, 13, 21, 141, 517,):
                 ref_count = 2
             elif track.flags in (29, 519, 525, 533, 645, 775,):
                 ref_count = 3
