@@ -34,6 +34,7 @@ class Track(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('flags',            'OMFI:TRAK:OptFlags',       'int16'),
         AVBPropertyDef('index',            'OMFI:TRAK:LabelNumber',    'int16'),
+        AVBPropertyDef('read_only',        '__OMFI:TRAK:ReadOnly',     'bool'),
         AVBPropertyDef('attributes',       'OMFI:TRAK:Attributes',     'reference'),
         AVBPropertyDef('session_attr',     'OMFI:TRAK:SessionAttrs',   'reference'),
         AVBPropertyDef('component',        'OMFI:TRAK:TrackComponent', 'reference'),
@@ -175,7 +176,7 @@ class TrackGroup(Component):
                 ref_count = 1
             elif track.flags in (12, 13, 21, 517,):
                 ref_count = 2
-            elif track.flags in (29, 519, 525, 533,  ):
+            elif track.flags in (29, 519, 525, 533, 775,):
                 ref_count = 3
             elif track.flags in (541, 527):
                 ref_count = 4
@@ -191,6 +192,10 @@ class TrackGroup(Component):
                 track_refs.append(ref)
 
             filter_track_refs(track, track_refs)
+
+            # cmpo_03.chunk
+            if track.flags in (775, ):
+                track.read_only = read_bool(f)
 
             # if ref_count == 5:
             #     print(self.name)
