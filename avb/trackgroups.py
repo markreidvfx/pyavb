@@ -178,7 +178,7 @@ class TrackGroup(Component):
                 ref_count = 1
             elif track.flags in (7, 12, 13, 21, 141, 517,):
                 ref_count = 2
-            elif track.flags in (29, 519, 525, 533, 645, 775,):
+            elif track.flags in (15, 29, 519, 525, 533, 645, 775,):
                 ref_count = 3
             elif track.flags in (541, 527, 669):
                 ref_count = 4
