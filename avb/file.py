@@ -9,6 +9,7 @@ import struct
 import io
 import os
 import binascii
+import traceback
 
 from weakref import WeakValueDictionary
 
@@ -132,6 +133,7 @@ class AVBFile(object):
             except:
                 print(chunk.class_id)
                 print(chunk.hex())
+                print(traceback.format_exc())
                 raise
 
         else:

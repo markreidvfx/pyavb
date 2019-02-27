@@ -364,27 +364,30 @@ class AudioSuitePluginEffect(TrackEffect):
         plugin.manufacturer_id = read_u32le(f)
         plugin.product_id = read_u32le(f)
         plugin.plugin_id = read_u32le(f)
-
+        # print(peek_data(f).encode("hex"))
         num_of_chunks = read_s32le(f)
 
         #TODO: find sample with multiple chunks
-        assert num_of_chunks == 1
+        # print('chunks', num_of_chunks)
+        assert num_of_chunks >= 0
+        for i in range(num_of_chunks):
 
-        chunk_size = read_s32le(f)
-        assert chunk_size >= 0
+            chunk_size = read_s32le(f)
+            assert chunk_size >= 0
 
-        chunk = ASPIPluginChunk(self.root)
-        chunk.version = read_s32le(f)
-        chunk.manufacturer_id = read_u32le(f)
-        chunk.roduct_id = read_u32le(f)
-        chunk.plugin_id = read_u32le(f)
+            chunk = ASPIPluginChunk(self.root)
+            chunk.version = read_s32le(f)
+            chunk.manufacturer_id = read_u32le(f)
+            chunk.roduct_id = read_u32le(f)
+            chunk.plugin_id = read_u32le(f)
 
-        chunk.chunk_id = read_u32le(f)
-        chunk.name = read_string(f)
+            chunk.chunk_id = read_u32le(f)
+            chunk.name = read_string(f)
 
-        chunk.data = bytearray(f.read(chunk_size))
+            chunk.data = bytearray(f.read(chunk_size))
 
-        plugin.chunks.append(chunk)
+            plugin.chunks.append(chunk)
+
         self.plugins.append(plugin)
 
         # print(peek_data(f).encode("hex"))
