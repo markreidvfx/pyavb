@@ -176,9 +176,9 @@ class TrackGroup(Component):
 
             if track.flags in (4, 5, 16):
                 ref_count = 1
-            elif track.flags in (7, 12, 13, 21, 141, 517,):
+            elif track.flags in (7, 12, 13, 21, 141, 517, 645):
                 ref_count = 2
-            elif track.flags in (15, 29, 519, 525, 533, 645, 775,):
+            elif track.flags in (15, 29, 519, 525, 533, 647, 775,):
                 ref_count = 3
             elif track.flags in (541, 527, 669):
                 ref_count = 4
@@ -199,12 +199,12 @@ class TrackGroup(Component):
             if track.flags in (775, ):
                 track.read_only = read_bool(f)
 
-            if track.flags in (669, 141):
+            if track.flags in (141, 645, 647, 669):
                 track.start_pos = read_s32le(f)
 
-            # if ref_count == 5:
+            # if track.flags == 647:
             #     print(self.name)
-            #     print(track.refs)
+            #     print(track_refs)
             #     raise Exception()
 
             self.tracks.append(track)
