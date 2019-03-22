@@ -23,11 +23,7 @@ class TestRead(unittest.TestCase):
 
     def test_read_all_known_classes(self):
         with avb.open(test_file_01) as f:
-            for i, chunk in enumerate(f.chunks):
-
-                if chunk.class_id in ('ATTR',):
-                    pass
-                    # print(f.read_object(i))
+            for i, chunk in enumerate(f.chunks()):
                 if chunk.class_id in  avb.utils.AVBClaseID_dict:
 
                     item = f.read_object(i)

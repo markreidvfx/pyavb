@@ -10,7 +10,7 @@ import io
 import os
 import binascii
 import traceback
-
+import array
 from weakref import WeakValueDictionary
 
 # from . attributes import read_attributes
@@ -95,34 +95,45 @@ class AVBFile(object):
         # Reserved data
         f.read(16)
 
-        self.chunks = [AVBChunk(self, b'OBJD', pos, f.tell() - pos)]
+        self.root_chunk = AVBChunk(self, b'OBJD', pos, f.tell() - pos)
 
         self.object_cache = WeakValueDictionary()
+        self.object_positions = array.array(str('I'), [0 for i in range(num_objects+1)])
 
         for i in range(num_objects):
+            self.object_positions[i+1] = f.tell()
             class_id = read_fourcc(f)
             size = read_u32le(f)
-            pos = f.tell()
 
-            self.chunks.append(AVBChunk(self, class_id, pos, size))
-
-            # self.object_refs.append([object_id, object_pos, object_size])
             f.seek(size, os.SEEK_CUR)
 
         self.content = self.read_object(self.root_index)
+
+    def read_chunk(self, index):
+        if index == 0:
+            return self.root_chunk
+
+        object_pos = self.object_positions[index]
+
+        f = self.f
+        f.seek(object_pos)
+        class_id = read_fourcc(f)
+        size = read_u32le(f)
+        pos = f.tell()
+
+        chunk = AVBChunk(self, class_id, pos, size)
+        return chunk
 
     def read_object(self, index):
         if index == 0:
             return None
 
-        if index in self.object_cache:
-            return self.object_cache[index]
+        object_instance = self.object_cache.get(index, None)
+        if object_instance is not None:
+            return object_instance
 
-        chunk = self.chunks[index]
+        chunk = self.read_chunk(index)
         data = chunk.read()
-
-        # if chunk.class_id == b"ATTR":
-        #     return read_attributes(self, io.BytesIO(data))
 
         obj_class = utils.AVBClaseID_dict.get(chunk.class_id, None)
         if obj_class:
@@ -142,11 +153,14 @@ class AVBFile(object):
             print(chunk.hex())
             raise NotImplementedError(chunk.class_id)
 
+    def chunks(self):
+        for i in range(len(self.object_positions)):
+            yield self.read_chunk(i)
+
     def iter_class_ids(self, class_id_list):
-        for i, chunk in enumerate(self.chunks):
+        for i, chunk in enumerate(self.chunks()):
             if chunk.class_id in class_id_list:
                 yield self.read_object(i)
-
 
     def close(self):
         self.f.close()

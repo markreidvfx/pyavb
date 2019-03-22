@@ -38,12 +38,12 @@ class AVBObjectRef(object):
         if not self.root.check_refs:
             return b'NULL'
         if self.valid:
-            chunk = self.root.chunks[self.index]
+            chunk = self.root.read_chunk(self.index)
             return chunk.class_id
 
     @property
     def valid(self):
-        if self.index >= len(self.root.chunks):
+        if self.index >= len(self.root.object_positions):
             return False
         return True
 
@@ -51,7 +51,7 @@ class AVBObjectRef(object):
         s = "%s.%s"  % (self.__class__.__module__,
                                 self.__class__.__name__)
         if self.index and self.valid:
-            chunk = self.root.chunks[self.index]
+            chunk = self.root.read_chunk(self.index)
             s += " %s idx: %d pos: %d" % (chunk.class_id, self.index, chunk.pos)
         return '<%s at 0x%x>' % (s, id(self))
 
