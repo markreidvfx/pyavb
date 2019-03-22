@@ -25,6 +25,7 @@ from .utils import (
 
 
 class AVBChunk(object):
+    __slots__ = ('root', 'class_id', 'pos', 'size')
     def __init__(self, root, class_id, pos, size):
         self.root = root
         self.class_id = class_id
