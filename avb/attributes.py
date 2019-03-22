@@ -27,6 +27,7 @@ BOB_ATTR  = 4
 @utils.register_class
 class Attributes(AVBPropertyData):
     class_id = b'ATTR'
+    __slots__ = ('root', '__weakref__')
 
     def __init__(self, root):
         super(Attributes, self).__init__()
@@ -61,7 +62,7 @@ class Attributes(AVBPropertyData):
 @utils.register_class
 class ParameterList(AVBRefList):
     class_id = b'PRLS'
-
+    __slots__ = ()
     def read(self, f):
         assert read_byte(f) == 0x02
         assert read_byte(f) == 0x01
@@ -76,6 +77,7 @@ class ParameterList(AVBRefList):
 @utils.register_class
 class TimeCrumbList(AVBRefList):
     class_id = b'TMCS'
+    __slots__ = ()
 
     def read(self, f):
         assert read_byte(f) == 0x02

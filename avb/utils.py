@@ -22,6 +22,7 @@ MODE_PC  = 1
 MODE_MAC = 0
 
 class AVBObjectRef(object):
+    __slots__ = ('root', 'index')
     def __init__(self, root, index):
         self.root = root
         self.index = index

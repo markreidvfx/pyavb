@@ -58,6 +58,8 @@ class Track(core.AVBObject):
         AVBPropertyDef('read_only',        '__OMFI:TRAK:ReadOnly',     'bool'),
         AVBPropertyDef('lock_number',      'OMFI:TRAK:LockNubmer',     'int16'),
     ]
+    __slots__ = ()
+
     def __init__(self, root):
         super(Track, self).__init__(root)
 
@@ -75,6 +77,7 @@ class TrackGroup(Component):
         AVBPropertyDef('num_scalars', 'OMFI:TRKG:NumScalars',  'int32'),
         AVBPropertyDef('tracks',      'OMFI:TRKG:Tracks',      'list')
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(TrackGroup, self).read(f)
@@ -160,10 +163,13 @@ class TrackEffect(TrackGroup):
         AVBPropertyDef('info_quality',        'OMFI:TNFX:MC:GlobalInfo.quality',    'int16'),
         AVBPropertyDef('info_is_reversed',    'OMFI:TNFX:MC:GlobalInfo.isReversed', 'int8'),
         AVBPropertyDef('info_aspect_on',      'OMFI:TNFX:MC:GlobalInfo.aspectOn',   'bool'),
+        AVBPropertyDef('keyframes',           'OMFI:TKFX:MC:KeyFrameList',     'reference'),
         AVBPropertyDef('info_force_software', 'OMFI:TNFX:MC:ForceSoftware',         'bool'),
         AVBPropertyDef('info_never_hardware', 'OMFI:TKFX:MC:NeverHardware',         'bool'),
         AVBPropertyDef('trackman',            'OMFI:TKFX:MC:TrackMan',         'reference'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(TrackEffect, self).read(f)
         tag = read_byte(f)
@@ -210,6 +216,8 @@ class PanVolumeEffect(TrackEffect):
         AVBPropertyDef('supports_seperate_gain', 'OMFI:PVOL:MC:DoesSuprtSeprtClipG', 'int32'),
         AVBPropertyDef('is_trim_gain_effect',    'OMFI:PVOL:MC:IsTrimGainEffect',    'int32'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(PanVolumeEffect, self).read(f)
 
@@ -247,6 +255,7 @@ class ASPIPlugin(core.AVBObject):
         AVBPropertyDef('plugin_id',        'OMFI:ASPI:plugInfPlugInID',        'uint32'),
         AVBPropertyDef('chunks',           'OMFI:ASPI:plugInChunks',           'list'),
     ]
+    __slots__ = ()
 
     def __init__(self, root):
         super(ASPIPlugin, self).__init__(root)
@@ -262,6 +271,7 @@ class ASPIPluginChunk(core.AVBObject):
         AVBPropertyDef('name',            'OMFI:ASPI:chunkfChunkName',       'string'),
         AVBPropertyDef('data',            'OMFI:ASPI:chunkfData',            'bytes'),
     ]
+    __slots__ = ()
 
 @utils.register_class
 class AudioSuitePluginEffect(TrackEffect):
@@ -276,6 +286,8 @@ class AudioSuitePluginEffect(TrackEffect):
         AVBPropertyDef('padding_secs',     'OMFI:ASPI:paddingSecs',                     'int32'),
         AVBPropertyDef('preset_path',      'OMFI:ASPI:presetPath',                      'bytes'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(AudioSuitePluginEffect, self).read(f)
 
@@ -308,7 +320,7 @@ class AudioSuitePluginEffect(TrackEffect):
             chunk = ASPIPluginChunk(self.root)
             chunk.version = read_s32le(f)
             chunk.manufacturer_id = read_u32le(f)
-            chunk.roduct_id = read_u32le(f)
+            chunk.product_id = read_u32le(f)
             chunk.plugin_id = read_u32le(f)
 
             chunk.chunk_id = read_u32le(f)
@@ -391,6 +403,7 @@ class EqualizerBand(core.AVBObject):
         AVBPropertyDef('q',      'OMFI:EQBD:AV:BandQ',      'int32'),
         AVBPropertyDef('enable', 'OMFI:EQBD:AV:BandEnable', 'bool'),
     ]
+    __slots__ = ()
 
 @utils.register_class
 class EqualizerMultiBand(TrackEffect):
@@ -400,6 +413,7 @@ class EqualizerMultiBand(TrackEffect):
         AVBPropertyDef('effect_enable', 'OMFI:EQMB:AV:EffectEnable', 'bool'),
         AVBPropertyDef('filter_name',   'OMFI:EQMB:AV:FilterName',   'string'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(EqualizerMultiBand, self).read(f)
@@ -431,6 +445,7 @@ class TimeWarp(TrackGroup):
     propertydefs = TrackGroup.propertydefs + [
         AVBPropertyDef('phase_offset', 'OMFI:WARP:PhaseOffset', 'int32'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(TimeWarp, self).read(f)
@@ -449,6 +464,8 @@ class CaptureMask(TimeWarp):
         AVBPropertyDef('is_double', 'OMFI:MASK:IsDouble', 'bool'),
         AVBPropertyDef('mask_bits', 'OMFI:MASK:MaskBits', 'int32'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(CaptureMask, self).read(f)
         # print(peek_data(f).encode("hex"))
@@ -474,6 +491,8 @@ class MotionEffect(TimeWarp):
         AVBPropertyDef('source_param_list',      'OMFI:SPED:SourceParamList',      'reference'),
         AVBPropertyDef('new_source_calculation', 'OMIF:SPED:NewSourceCalculation', 'bool'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(MotionEffect, self).read(f)
         # print(peek_data(f).encode("hex"))
@@ -508,6 +527,8 @@ class MotionEffect(TimeWarp):
 @utils.register_class
 class Repeat(TimeWarp):
     class_id = b'REPT'
+    __slots__ = ()
+
     def read(self, f):
         super(Repeat, self).read(f)
         tag = read_byte(f)
@@ -524,6 +545,8 @@ class EssenceGroup(TrackGroup):
     propertydefs = TrackGroup.propertydefs + [
         AVBPropertyDef('rep_set_type', 'OMFI:RSET:repSetType', 'int32'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(EssenceGroup, self).read(f)
 
@@ -558,10 +581,13 @@ class TransitionEffect(TrackGroup):
         AVBPropertyDef('info_quality',        'OMFI:TNFX:MC:GlobalInfo.quality',      'int16'),
         AVBPropertyDef('info_is_reversed',    'OMFI:TNFX:MC:GlobalInfo.isReversed',   'int8'),
         AVBPropertyDef('info_aspect_on',      'OMFI:TNTNFXFX:MC:GlobalInfo.aspectOn', 'bool'),
+        AVBPropertyDef('keyframes',           'OMFI:TNFX:MC:KeyFrameList',       'reference'),
         AVBPropertyDef('info_force_software', 'OMFI:TNFX:MC:ForceSoftware',           'bool'),
         AVBPropertyDef('info_never_hardware', 'OMFI:TNFX:MC:NeverHardware',           'bool'),
         AVBPropertyDef('trackman',            'OMFI:TNFX:MC:TrackMan',           'reference'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(TransitionEffect, self).read(f)
 
@@ -611,6 +637,7 @@ class Selector(TrackGroup):
         AVBPropertyDef('is_ganged', 'OMFI:SLCT:IsGanged',      'bool'),
         AVBPropertyDef('selected',  'OMFI:SLCT:SelectedTrack', 'int16'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(Selector, self).read(f)
@@ -643,7 +670,8 @@ class Composition(TrackGroup):
         AVBPropertyDef('creation_time', 'OMFI:MOBJ:_CreationTime', 'int32'),
         AVBPropertyDef('mob_id',        'MobID',                   'MobID'),
     ]
-
+    __slots__ = ()
+    
     def read(self, f):
         super(Composition, self).read(f)
         tag = read_byte(f)

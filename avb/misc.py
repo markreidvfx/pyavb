@@ -37,6 +37,7 @@ class FileLocator(core.AVBObject):
         AVBPropertyDef('path_name', 'OMFI:FL:PathName', 'string'),
         AVBPropertyDef('paths',     'OMFI:FL:Paths',     'list'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(FileLocator, self).read(f)
@@ -76,6 +77,8 @@ class GraphicEffect(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('pict_data', 'OMFI:MC:GRFX:PictData', 'bytes'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(GraphicEffect, self).read(f)
         read_assert_tag(f, 0x02)
@@ -121,6 +124,7 @@ class EffectParam(core.AVBObject):
         AVBPropertyDef('user_param',       'OMFI:FXPS:userParam',           'bytes'),
         AVBPropertyDef('selected',         'OMFI:FXPS:selected',            'bool'),
     ]
+    __slots__ = ()
 
 @utils.register_class
 class EffectParamList(core.AVBObject):
@@ -130,6 +134,8 @@ class EffectParamList(core.AVBObject):
         AVBPropertyDef('window_offset', 'OMFI:FXPS:omFXwindowOffset', 'int32'),
         AVBPropertyDef('keyframe_size', 'OMFI:FXPS:keyFrameSize',     'int32'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(EffectParamList, self).read(f)
         read_assert_tag(f, 0x02)
@@ -208,6 +214,7 @@ class CFUserParam(core.AVBObject):
         AVBPropertyDef('uuid',       'OMFI:AVUP:TypeID',    'UUID'),
         AVBPropertyDef('data',       'OMFI:AVUP:ValueData', 'bytes'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(CFUserParam, self).read(f)
@@ -238,6 +245,7 @@ class ParameterItems(core.AVBObject):
         AVBPropertyDef('control_track',   'OMFI:PRIT:ControlTrack',           'reference'),
         AVBPropertyDef('contribs_to_sig', 'OMFI:PRIT:ContributesToSignature', 'bool'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(ParameterItems, self).read(f)
@@ -277,6 +285,8 @@ class MSMLocator(core.AVBObject):
         AVBPropertyDef('domain_type',       'OMFI:MSML:DomainType',      'int32'),
         AVBPropertyDef('mob_id',            'MobID',                     'MobID'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(MSMLocator, self).read(f)
         # print(peek_data(f).encode('hex'))
@@ -334,6 +344,7 @@ class Position(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('mob_id', "MobID", 'MobID'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(Position, self).read(f)
@@ -358,6 +369,8 @@ class BOBPosition(Position):
         AVBPropertyDef('track_type',  "OMFI:trkt:Track.trkType", 'int32'),
         AVBPropertyDef('track_index', "OMFI:trkt:Track.trkLNum", 'int32'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(BOBPosition, self).read(f)
 
@@ -381,6 +394,7 @@ class DIDPosition(BOBPosition):
         AVBPropertyDef('byte_length',  "_ByteLength",  'uint64'),
         AVBPropertyDef('spos_invalid', "_SPosInvalid", 'bool'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(DIDPosition, self).read(f)
@@ -403,6 +417,8 @@ class BinRef(core.AVBObject):
         AVBPropertyDef('uid_low',  'OMFI:MCBR:MC:binID.low',  'int32'),
         AVBPropertyDef('name',     'OMFI:MCBR:MC:binName',    'string'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(BinRef, self).read(f)
 
@@ -433,6 +449,8 @@ class MobRef(core.AVBObject):
             AVBPropertyDef('position',      'OMFI:MCMR:MC:Position', 'int32'),
             AVBPropertyDef('mob_id',        'MobID', 'MobID'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(MobRef, self).read(f)
         read_assert_tag(f, 0x02)
@@ -457,6 +475,7 @@ class Marker(MobRef):
         AVBPropertyDef('color',         'OMFI:TMBC:MC:CarbonAPI::RGBColor',    'list'),
         AVBPropertyDef('handled_codes', 'OMFI:TMBC:MC:handledBadControlCodes', 'bool'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(Marker, self).read(f)
@@ -493,6 +512,7 @@ class TrackerManager(core.AVBObject):
         AVBPropertyDef('data_slots',  'OMFI:TKMN:TrackerDataSlots',  'reference'),
         AVBPropertyDef('param_slots', 'OMFI:TKMN:TrackedParamSlots', 'reference'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(TrackerManager, self).read(f)
@@ -511,6 +531,7 @@ class TrackerDataSlot(core.AVBObject):
         AVBPropertyDef('tracker_data',  'OMFI:TKDS:TrackerData',      'ref_list'),
         AVBPropertyDef('track_fg',      'OMFI:TKDAS:TrackForeground', 'bool'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(TrackerDataSlot, self).read(f)
@@ -539,6 +560,8 @@ class TrackerParameterSlot(core.AVBObject):
         AVBPropertyDef('settings', 'OMFI:TKPS:EffectSettings', 'bytes'),
         AVBPropertyDef('params',   'OMFI:TKPS:TrackedParam',   'ref_list'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(TrackerParameterSlot, self).read(f)
         read_assert_tag(f, 0x02)
@@ -569,8 +592,9 @@ class TrackerData(core.AVBObject):
         AVBPropertyDef('filter_amount',  'name="OMFI:TKDA:TrackerFilterDataAmt',  'double'),
         AVBPropertyDef('clip5',           'OMFI:TKDA:TrackerClip',                'reference'),
         AVBPropertyDef('clip6',           'OMFI:TKDA:TrackerClip',                'reference'),
-
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(TrackerData, self).read(f)
         read_assert_tag(f, 0x02)
@@ -619,6 +643,8 @@ class TrackerParameter(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('settings', 'OMFI:TKPA:ParamSettings','bytes'),
     ]
+    __slots__ = ()
+    
     def read(self, f):
         super(TrackerParameter, self).read(f)
         read_assert_tag(f, 0x02)

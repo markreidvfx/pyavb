@@ -24,7 +24,7 @@ class AVBPropertyDef(object):
         return '<%s at 0x%x>' % (s, id(self))
 
 class AVBPropertyData(dict):
-
+    __slots__ = ()
     def deref(self, value):
         if isinstance(value, utils.AVBObjectRef):
             return value.value
@@ -41,7 +41,7 @@ class AVBPropertyData(dict):
         return self.deref(super(AVBPropertyData, self).get(*args, **kwargs))
 
 class AVBRefList(list):
-    __slots__ = ('root', )
+    __slots__ = ('root', '__weakref__')
     def __init__(self, root):
         super(AVBRefList, self).__init__()
         self.root = root

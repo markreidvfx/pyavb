@@ -44,6 +44,7 @@ class MediaDescriptor(core.AVBObject):
         AVBPropertyDef('uuid',           'OMFI:AMDL:acfUID',          'UUID'),
         AVBPropertyDef('attributes',     'OMFI:AMDL:Attributes',      'reference'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(MediaDescriptor, self).read(f)
@@ -84,6 +85,7 @@ class TapeDescriptor(MediaDescriptor):
     propertydefs = MediaDescriptor.propertydefs + [
         AVBPropertyDef('cframe', 'OMFI:MDTP:CFrame', "int16")
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(TapeDescriptor, self).read(f)
@@ -104,6 +106,7 @@ class MediaFileDescriptor(MediaDescriptor):
         AVBPropertyDef('is_omfi', 'OMFI:MDFL:IsOMFI', 'int16'),
         AVBPropertyDef('data_offset', 'OMFI:MDFL:dataOffset', 'int32'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(MediaFileDescriptor, self).read(f)
@@ -127,6 +130,8 @@ class MultiDescriptor(MediaFileDescriptor):
     propertydefs = MediaFileDescriptor.propertydefs + [
         AVBPropertyDef('descriptors', 'OMFI:MULD:Descriptors', "ref_list"),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(MultiDescriptor, self).read(f)
 
@@ -166,6 +171,7 @@ class PCMADescriptor(MediaFileDescriptor):
         AVBPropertyDef('peak_of_peaks_offset',        'OMFI:PCMA:PeakOfPeaksOffset',         'uint64'),
         AVBPropertyDef('peak_envelope_timestamp',     'OMFI:PCMA:PeakEnvelopeTimestamp',     'int32'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(PCMADescriptor, self).read(f)
@@ -224,6 +230,7 @@ class DIDDescriptor(MediaFileDescriptor):
         AVBPropertyDef('alpha_transparency',         'OMFI:DIDD:AlphaTransparency',                       'int32'),
         AVBPropertyDef('uniformness',                'OMFI:DIDD:Uniformness',                             'bool'),
         AVBPropertyDef('did_image_size',             'OMFI:DIDD:DIDImageSize',                            'int32'),
+        AVBPropertyDef('next_did_desc',              "OMFI:DIDD:NextDIDDesc",                         'reference'),
         AVBPropertyDef('compress_method',            'OMFI:DIDD:DIDCompressMethod',                       'bytes'),
         AVBPropertyDef('resolution_id',              'OMFI:DIDD:DIDResolutionID',                         'int32'),
         AVBPropertyDef('image_alignment_factor',     'OMFI:DIDD:ImageAlignmentFactor',                    'int32'),
@@ -243,6 +250,7 @@ class DIDDescriptor(MediaFileDescriptor):
         AVBPropertyDef('coding_equations',           'OMFI:DIDD:CodingEquations',                         'UUID'),
         AVBPropertyDef('frame_checked_with_mapper',  'OMFI:DIDD:FrameSampleSizeHasBeenCheckedWithMapper', 'bool'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(DIDDescriptor, self).read(f)
@@ -459,6 +467,7 @@ class CDCIDescriptor(DIDDescriptor):
         AVBPropertyDef('alpha_sampled_width',    'OMFI:CDCI:AlphaSamledWidth',              'uint32'),
         AVBPropertyDef('ignore_bw',              'OMFI:CDCI:IgnoreBWRefLevelAndColorRange', 'uint32'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(CDCIDescriptor, self).read(f)
@@ -520,6 +529,7 @@ class RGBADescriptor(DIDDescriptor):
         AVBPropertyDef('alpha_min_ref',      'OMFI:RGBA:AlphaMinRef',          'uint32'),
         AVBPropertyDef('alpha_max_ref',      'OMFI:RGBA:AlphaMaxRef',          'uint32'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(RGBADescriptor, self).read(f)

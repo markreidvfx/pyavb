@@ -127,6 +127,8 @@ class Clip(Component):
     propertydefs = Component.propertydefs + [
         AVBPropertyDef('length', 'OMFI:CLIP:Length', 'int32'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(Clip, self).read(f)
         tag = read_byte(f)
@@ -144,6 +146,7 @@ class SourceClip(Clip):
         AVBPropertyDef('start_time', 'OMFI:SCLP:SourcePosition',  'int32'),
         AVBPropertyDef('mob_id',     'MobID',                     'MobID'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(SourceClip, self).read(f)
@@ -175,6 +178,7 @@ class Timecode(Clip):
         AVBPropertyDef('fps',   'OMFI:TCCP:FPS',     'int32'),
         AVBPropertyDef('start', 'OMFI:TCCP:StartTC', 'int32'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(Timecode, self).read(f)
@@ -206,6 +210,8 @@ class Edgecode(Clip):
         AVBPropertyDef('base_perf',   'OMFI:ECCP:BasePerf',   'uint16'),
         AVBPropertyDef('start_ec',    'OMFI:ECCP:StartEC',    'int32'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(Edgecode, self).read(f)
         # print("??", peek_data(f).encode("hex"))s
@@ -232,6 +238,8 @@ class TrackRef(Clip):
         AVBPropertyDef('relative_scope', 'OMFI:TRKR:RelativeScope', 'int16'),
         AVBPropertyDef('relative_track', 'OMFI:TRKR:RelativeTrack', 'int16'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(TrackRef, self).read(f)
         # print(peek_data(f).encode("hex"))
@@ -257,6 +265,7 @@ class ParamControlPoint(core.AVBObject):
         AVBPropertyDef('value',     'OMFI:PRCL:Value',      'number'), # int or double
         AVBPropertyDef('pp',        'OMFI:PRCL:PP',         'list'),
     ]
+    __slots__ = ()
 
     def __init__(self, root):
         super(ParamControlPoint, self).__init__(root)
@@ -269,6 +278,7 @@ class ParamPerPoint(core.AVBObject):
         AVBPropertyDef('type',  'OMFI:PRCL:PPType',  'int16'),
         AVBPropertyDef('value', 'OMFI:PRCL:PPValue', 'number'), # int or double
     ]
+    __slots__ = ()
 
 @utils.register_class
 class ParamClip(Clip):
@@ -280,6 +290,7 @@ class ParamClip(Clip):
         AVBPropertyDef('control_points', 'OMFI:PRCL:ControlPoints', 'list'),
         AVBPropertyDef('fields',         'OMFI:PRCL:Fields',        'int32'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(ParamClip, self).read(f)
@@ -353,14 +364,15 @@ class ControlPoint(core.AVBObject):
         AVBPropertyDef('time_scale', 'OMFI:CTRL:TimeScale', 'int32'),
         AVBPropertyDef('value',      'OMFI:CTRL:Value',     'bool'),
         AVBPropertyDef('pp',         'OMFI:CTRL:PP',        'list'),
-
     ]
+    __slots__ = ()
 
 class PerPoint(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('code',    'OMFI:CTRL:PPCode',  'int16'),
         AVBPropertyDef('value',   'OMFI:CTRL:PP',      'rational'),
     ]
+    __slots__ = ()
 
 
 @utils.register_class
@@ -370,6 +382,8 @@ class ControlClip(Clip):
         AVBPropertyDef('interp_kind',    'OMFI:CTRL:InterpKin',    'int32'),
         AVBPropertyDef('control_points', 'OMFI:CTRL:ControlPoints', 'list'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(ControlClip, self).read(f)
 
@@ -416,6 +430,7 @@ class ControlClip(Clip):
 @utils.register_class
 class Filler(Clip):
     class_id = b'FILL'
+    __slots__ = ()
 
     def read(self, f):
         super(Filler, self).read(f)
