@@ -30,12 +30,23 @@ from . utils import (
     peek_data
 )
 
+TRACK_LABEL_FLAG            = 1 << 0
+TRACK_ATTRIBUTES_FLAG       = 1 << 1
+TRACK_COMPONENT_FLAG        = 1 << 2
+TRACK_FILLER_PROXY_FLAG     = 1 << 3
+TRACK_BOB_DATA_FLAG         = 1 << 4
+TRACK_CONTROL_CODE_FLAG     = 1 << 5
+TRACK_CONTROL_SUB_CODE_FLAG = 1 << 6
+TRACK_START_POS_FLAG        = 1 << 7
+TRACK_READ_ONLY_FLAG        = 1 << 8
+TRACK_SESSION_ATTR_FLAG     = 1 << 9
+
+TRACK_UNKNOWN_FLAGS         = 0xFC00
+
 class Track(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('flags',            'OMFI:TRAK:OptFlags',       'int16'),
         AVBPropertyDef('index',            'OMFI:TRAK:LabelNumber',    'int16'),
-        AVBPropertyDef('read_only',        '__OMFI:TRAK:ReadOnly',     'bool'),
-        AVBPropertyDef('start_pos',        'OMFI:TRAK:StartPos',       'int32'),
         AVBPropertyDef('attributes',       'OMFI:TRAK:Attributes',     'reference'),
         AVBPropertyDef('session_attr',     'OMFI:TRAK:SessionAttrs',   'reference'),
         AVBPropertyDef('component',        'OMFI:TRAK:TrackComponent', 'reference'),
@@ -43,63 +54,17 @@ class Track(core.AVBObject):
         AVBPropertyDef('bob_data',         '__OMFI:TRAK:Bob',          'reference'),
         AVBPropertyDef('control_code',     'OMFI:TRAK:ControlCode',    'int16'),
         AVBPropertyDef('control_sub_code', 'OMFI:TRAK:ControlSubCode', 'int16'),
+        AVBPropertyDef('start_pos',        'OMFI:TRAK:StartPos',       'int32'),
+        AVBPropertyDef('read_only',        '__OMFI:TRAK:ReadOnly',     'bool'),
         AVBPropertyDef('lock_number',      'OMFI:TRAK:LockNubmer',     'int16'),
     ]
     def __init__(self, root):
         super(Track, self).__init__(root)
-        self.refs = AVBRefList(self.root)
 
-    @property
-    def segment(self):
-        for item in self.refs:
-            obj = item.value
-            if isinstance(obj, Component):
-                return obj
     @property
     def media_kind(self):
         if hasattr(self, 'component'):
             return self.component.media_kind
-
-def filter_track_refs(track, track_refs):
-    attrs = []
-    trkr = []
-    refs = []
-
-    # for testing
-    null_refs = []
-
-    # print(len(track_refs))
-    for ref in track_refs:
-        if ref.class_id in (b'ATTR',):
-            attrs.append(ref)
-        elif ref.class_id in (b'TRKR',):
-            trkr.append(ref)
-        elif ref.class_id in (b'NULL', ):
-            null_refs.append(ref)
-        else:
-            refs.append(ref)
-
-        # print("  ",ref.class_id)
-    assert len(attrs) <= 2
-    assert len(trkr) <= 1
-    assert len(refs) <= 2
-    # used in chunk test
-    assert len(null_refs) <= 5
-
-    if len(attrs) == 2:
-        track.attributes = attrs[0]
-        track.session_attr = attrs[1]
-    elif len(attrs) == 1:
-        track.session_attr = attrs[0]
-
-    if trkr:
-        track.filler_proxy = trkr[0]
-
-    if len(refs) == 2:
-        track.component = refs[0]
-        track.bob_data = refs[1]
-    elif len(refs) == 1:
-        track.component = refs[0]
 
 @utils.register_class
 class TrackGroup(Component):
@@ -134,78 +99,38 @@ class TrackGroup(Component):
             track = Track(self.root)
             track.flags = read_u16le(f)
 
-            track_refs = []
-
-            # TNFX Strange TransistionEffect
-            if track.flags == 0:
-                self.tracks.append(track)
-                continue
-
-            # PVOL has a different track structure
-            # contains ref to CTRL and might have 1 or 2 control vars
-            if track.flags in (36, 100,):
-                ref = read_object_ref(self.root, f)
-                track_refs.append(ref)
-                # track.refs.append(ref)
-                track.index = i + 1
-                track.control_code = read_s16le(f)
-                if track.flags in (100, ):
-                    track.control_sub_code = read_s16le(f)
-
-
-                filter_track_refs(track, track_refs)
-                self.tracks.append(track)
-                continue
-
-            # track.index = i + 1
-
-            # these flags don't have track label
-            # slct_01.chunk
-            if track.flags not in (4, 12, 16):
+            if track.flags & TRACK_LABEL_FLAG:
                 track.index = read_s16le(f)
 
+            if track.flags & TRACK_ATTRIBUTES_FLAG:
+                track.attributes = read_object_ref(self.root, f)
 
-            if track.flags == 0 and track.index == 0:
-                has_tracks = False
-                break
+            if track.flags & TRACK_SESSION_ATTR_FLAG:
+                track.session_attr = read_object_ref(self.root, f)
 
-            # print "{0:016b}".format(track.flags)
-            # if hasattr(track, 'index'):
-            #     print( i, str(self.class_id), "index: %04d" % track.index, "flags 0x%04X" % track.flags, track.flags)
-            ref_count = 1
+            if track.flags & TRACK_COMPONENT_FLAG:
+                track.component = read_object_ref(self.root, f)
 
-            if track.flags in (4, 5, 16):
-                ref_count = 1
-            elif track.flags in (7, 12, 13, 21, 141, 517, 645):
-                ref_count = 2
-            elif track.flags in (15, 29, 519, 525, 533, 647, 775,):
-                ref_count = 3
-            elif track.flags in (541, 527, 669):
-                ref_count = 4
+            if track.flags & TRACK_FILLER_PROXY_FLAG:
+                track.filler_proxy = read_object_ref(self.root, f)
 
-            # has Attributes and SessionAttrs?? DIDP
-            elif track.flags in (543, ):
-                ref_count = 5
-            else:
-                raise ValueError("%s: unknown track flag %d" % (str(self.class_id), track.flags))
+            if track.flags & TRACK_BOB_DATA_FLAG:
+                track.bob_data = read_object_ref(self.root, f)
 
-            for j in range(ref_count):
-                ref = read_object_ref(self.root, f)
-                track_refs.append(ref)
+            if track.flags & TRACK_CONTROL_CODE_FLAG:
+                track.control_code = read_s16le(f)
 
-            filter_track_refs(track, track_refs)
+            if track.flags & TRACK_CONTROL_SUB_CODE_FLAG:
+                track.control_sub_code = read_s16le(f)
 
-            # cmpo_03.chunk
-            if track.flags in (775, ):
-                track.read_only = read_bool(f)
-
-            if track.flags in (141, 645, 647, 669):
+            if track.flags & TRACK_START_POS_FLAG:
                 track.start_pos = read_s32le(f)
 
-            # if track.flags == 647:
-            #     print(self.name)
-            #     print(track_refs)
-            #     raise Exception()
+            if track.flags & TRACK_READ_ONLY_FLAG:
+                track.read_only = read_bool(f)
+
+            if track.flags & TRACK_UNKNOWN_FLAGS:
+                raise ValueError("Unknown Track Flag: %d" % track.flags)
 
             self.tracks.append(track)
 
