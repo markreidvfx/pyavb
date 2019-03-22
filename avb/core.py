@@ -8,6 +8,7 @@ from __future__ import (
 from . import utils
 
 class AVBPropertyDef(object):
+    __slots__ = ('name', 'long_name', 'type')
     def __init__(self, name, long_name, data_type, tag=None):
         self.name = name
         self.long_name = name
@@ -40,7 +41,7 @@ class AVBPropertyData(dict):
         return self.deref(super(AVBPropertyData, self).get(*args, **kwargs))
 
 class AVBRefList(list):
-
+    __slots__ = ('root', )
     def __init__(self, root):
         super(AVBRefList, self).__init__()
         self.root = root
@@ -60,6 +61,7 @@ class AVBRefList(list):
 
 class AVBObject(object):
     propertydefs = []
+    __slots__ = ('root', 'property_data', '__weakref__')
 
     def __init__(self, root):
         self.root = root

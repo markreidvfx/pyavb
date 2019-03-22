@@ -44,6 +44,7 @@ class Component(core.AVBObject):
         AVBPropertyDef('precomputed',   'OMFI:CPNT:Precomputed',  'reference'),
         AVBPropertyDef('param_list',    'OMFI:CPNT:ParamList',    'reference'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         tag = read_byte(f)
@@ -74,8 +75,6 @@ class Component(core.AVBObject):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        self.length = 0
-
     @property
     def media_kind(self):
         if self.media_kind_id   == 0:
@@ -103,6 +102,7 @@ class Sequence(Component):
     propertydefs = Component.propertydefs + [
         AVBPropertyDef('components', 'OMFI:SEQU:Sequence', 'ref_list'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(Sequence, self).read(f)
