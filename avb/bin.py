@@ -33,6 +33,8 @@ class Setting(core.AVBObject):
         AVBPropertyDef('attr_type',  'type',       'int16'),
         AVBPropertyDef('attributes', 'attrList',   'reference'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(Setting, self).read(f)
         tag = read_byte(f)
@@ -54,6 +56,7 @@ class BinViewSetting(Setting):
         AVBPropertyDef('columns',  'Columns',  'list'),
         AVBPropertyDef('format_descriptor', 'FormatDescriptor', 'string'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(BinViewSetting, self).read(f)
@@ -108,6 +111,7 @@ class BinItem(core.AVBObject):
         AVBPropertyDef('keyframe',    'Keyframe',     'int32'),
         AVBPropertyDef('user_placed', 'userPlaced',   'bool'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         self.mob = read_object_ref(self.root, f)
@@ -126,6 +130,7 @@ class SiftItem(core.AVBObject):
         AVBPropertyDef('string', 'SiftString', 'string'),
         AVBPropertyDef('column', 'SiftColumn', 'string'),
     ]
+    __slots__ = ()
 
 @utils.register_class
 class Bin(core.AVBObject):
@@ -150,6 +155,7 @@ class Bin(core.AVBObject):
         AVBPropertyDef('was_iconic',       'WasIconic',      'bool'),
         AVBPropertyDef('attributes',       'BinAttr',        'reference'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(Bin, self).read(f)
@@ -159,7 +165,7 @@ class Bin(core.AVBObject):
         # print "0x%02X" % version
         assert version in (0x0e, 0x0f)
 
-        self.view_setting_ref = read_object_ref(self.root, f)
+        self.view_setting = read_object_ref(self.root, f)
 
         self.uid_high = read_u32le(f)
         self.uid_low  = read_u32le(f)
