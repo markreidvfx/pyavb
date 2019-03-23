@@ -98,7 +98,7 @@ class AVBFile(object):
         self.root_chunk = AVBChunk(self, b'OBJD', pos, f.tell() - pos)
 
         self.object_cache = WeakValueDictionary()
-        self.object_positions = array.array(str('I'), [0 for i in range(num_objects+1)])
+        self.object_positions = array.array(str('L'), [0 for i in range(num_objects+1)])
 
         for i in range(num_objects):
             self.object_positions[i+1] = f.tell()
