@@ -137,18 +137,18 @@ from __future__ import (
 
 import uuid
 import struct
-from .utils import (read_byte, int_from_bytes, bytes_from_int, read_s32le, read_uuid)
+from .utils import (int_from_bytes, bytes_from_int, read_byte, read_s32le, read_uuid, unpack_u16le_from, unpack_u32le_from)
 
 MOBID_STRUCT = struct.Struct(str(''.join(( '<',
-   '12B',  # UInt8Array12   SMPTELabel
-   'B',    # UInt8          length
-   'B',    # UInt8          instanceHigh
-   'B',    # UInt8          instanceMid
-   'B',    # UInt8          instanceLow
-   'I',    # UInt32         Data1
-   'H',    # UInt16         Data2
-   'H',    # UInt16         Data3
-   '8B',   # UInt8Array8    Data4
+   '12B',  # UInt8Array12   SMPTELabel      0
+   'B',    # UInt8          length         12
+   'B',    # UInt8          instanceHigh   13
+   'B',    # UInt8          instanceMid    14
+   'B',    # UInt8          instanceLow    15
+   'I',    # UInt32         Data1          16
+   'H',    # UInt16         Data2          20
+   'H',    # UInt16         Data3          22
+   '8B',   # UInt8Array8    Data4          24
  ))))
 
 def UniqueMobID():
@@ -174,26 +174,19 @@ def UniqueMobID():
     return m
 
 class MobID(object):
+    __slots__ = ('bytes_le')
     def __init__(self, mobid=None, bytes_le=None, int=None):
 
-        self.SMPTELabel = [0 for i in range(12)]
-        self.length = 0
-        self.instanceHigh = 0
-        self.instanceMid = 0
-        self.instanceLow = 0
-        self.Data1 = 0
-        self.Data2 = 0
-        self.Data3 = 0
-        self.Data4 = [0 for i in range(8)]
+        if bytes_le:
+            self.bytes_le = bytearray(bytes_le)
+        else:
+            self.bytes_le = bytearray(32)
 
-        if not mobid is None:
-            self.urn = mobid
+            if mobid is not None:
+                self.urn = mobid
 
-        if not bytes_le is None:
-            self.bytes_le = bytes_le
-
-        if not int is None:
-            self.int = int
+            if int is not None:
+                self.int = int
 
     @staticmethod
     def new():
@@ -211,77 +204,79 @@ class MobID(object):
 
     @material.setter
     def material(self, value):
-        self.Data1 = value.time_low
-        self.Data2 = value.time_mid
-        self.Data3 = value.time_hi_version
-        self.Data4 = list(struct.unpack(b"8B", value.bytes[8:]))
+        self.bytes_le[16:] = value.bytes_le
 
     @property
-    def bytes_le(self):
-        """
-        MobID representation as bytes little endian
-        """
-        return MOBID_STRUCT.pack(
-        self.SMPTELabel[0],
-        self.SMPTELabel[1],
-        self.SMPTELabel[2],
-        self.SMPTELabel[3],
-        self.SMPTELabel[4],
-        self.SMPTELabel[5],
-        self.SMPTELabel[6],
-        self.SMPTELabel[7],
-        self.SMPTELabel[8],
-        self.SMPTELabel[9],
-        self.SMPTELabel[10],
-        self.SMPTELabel[11],
-        self.length,
-        self.instanceHigh,
-        self.instanceMid,
-        self.instanceLow,
-        self.Data1,
-        self.Data2,
-        self.Data3,
-        self.Data4[0],
-        self.Data4[1],
-        self.Data4[2],
-        self.Data4[3],
-        self.Data4[4],
-        self.Data4[5],
-        self.Data4[6],
-        self.Data4[7])
+    def SMPTELabel(self):
+        return self.bytes_le[0:12]
 
-    @bytes_le.setter
-    def bytes_le(self, data):
+    @SMPTELabel.setter
+    def SMPTELabel(self, value):
+        struct.pack_into(str('12B'), self.bytes_le, 0, *value)
 
-        (
-        self.SMPTELabel[0],
-        self.SMPTELabel[1],
-        self.SMPTELabel[2],
-        self.SMPTELabel[3],
-        self.SMPTELabel[4],
-        self.SMPTELabel[5],
-        self.SMPTELabel[6],
-        self.SMPTELabel[7],
-        self.SMPTELabel[8],
-        self.SMPTELabel[9],
-        self.SMPTELabel[10],
-        self.SMPTELabel[11],
-        self.length,
-        self.instanceHigh,
-        self.instanceMid,
-        self.instanceLow,
-        self.Data1,
-        self.Data2,
-        self.Data3,
-        self.Data4[0],
-        self.Data4[1],
-        self.Data4[2],
-        self.Data4[3],
-        self.Data4[4],
-        self.Data4[5],
-        self.Data4[6],
-        self.Data4[7],
-        ) = MOBID_STRUCT.unpack(data)
+    @property
+    def length(self):
+        return self.bytes_le[12]
+
+    @length.setter
+    def length(self, value):
+        self.bytes_le[12] = value
+
+    @property
+    def instanceHigh(self):
+        return self.bytes_le[13]
+
+    @instanceHigh.setter
+    def instanceHigh(self, value):
+        self.bytes_le[13] = value
+
+    @property
+    def instanceMid(self):
+        return self.bytes_le[14]
+
+    @instanceMid.setter
+    def instanceMid(self, value):
+        self.bytes_le[14] = value
+
+    @property
+    def instanceLow(self):
+        return self.bytes_le[15]
+
+    @instanceLow.setter
+    def instanceLow(self, value):
+        self.bytes_le[15] = value
+
+    @property
+    def Data1(self):
+        return unpack_u32le_from(self.bytes_le, 16)
+
+    @Data1.setter
+    def Data1(self, value):
+        struct.pack_into(str('<I'), self.bytes_le, 16, value)
+
+    @property
+    def Data2(self):
+        return unpack_u16le_from(self.bytes_le, 20)
+
+    @Data2.setter
+    def Data2(self, value):
+        struct.pack_into(str('<H'), self.bytes_le, 20, value)
+
+    @property
+    def Data3(self):
+        return unpack_u16le_from(self.bytes_le, 22)
+
+    @Data3.setter
+    def Data3(self, value):
+        struct.pack_into(str('<H'), self.bytes_le, 22, value)
+
+    @property
+    def Data4(self):
+        return self.bytes_le[24:32]
+
+    @Data4.setter
+    def Data4(self, value):
+        struct.pack_into(str('8B'), self.bytes_le, 24, *value)
 
     def from_dict(self, d):
         """
@@ -292,24 +287,14 @@ class MobID(object):
         self.instanceMid = d.get("instanceMid", 0)
         self.instanceLow = d.get("instanceLow", 0)
 
-        material = d.get("material", {'Data1':0, 'Data2':0, 'Data3':0})
+        material = d.get("material", {'Data1':0, 'Data2':0, 'Data3':0, 'Data4': [0 for i in range(8)]})
 
         self.Data1 = material.get('Data1', 0)
         self.Data2 = material.get('Data2', 0)
         self.Data3 = material.get('Data3', 0)
 
-        Data4 = material.get("Data4", [0 for i in xrange(8)])
-
-        for i in xrange(8):
-            if i >= len(Data4):
-                break
-            self.Data4[i] = Data4[i]
-
-        SMPTELabel = d.get("SMPTELabel", [0 for i in xrange(12)])
-        for i in xrange(12):
-            if i >= len(SMPTELabel):
-                break
-            self.SMPTELabel[i] = SMPTELabel[i]
+        self.Data4 = material.get("Data4", [0 for i in range(8)])
+        self.SMPTELabel = d.get("SMPTELabel", [0 for i in range(12)])
 
     def to_dict(self):
         """
@@ -319,41 +304,58 @@ class MobID(object):
         material = {'Data1': self.Data1,
                     'Data2': self.Data2,
                     'Data3': self.Data3,
-                    'Data4': [self.Data4[i] for i in xrange(8)]
+                    'Data4': list(self.Data4)
                     }
-        SMPTELabel = [self.SMPTELabel[i] for i in xrange(12)]
 
         return {'material':material,
                 'length': self.length,
                 'instanceHigh': self.instanceHigh,
                 'instanceMid': self.instanceMid,
                 'instanceLow': self.instanceLow,
-                'SMPTELabel': SMPTELabel
+                'SMPTELabel': list(self.SMPTELabel)
                 }
     @property
     def int(self):
         """
         MobID representation as a int
         """
-        data = bytearray(self.bytes_le)
-        return int_from_bytes(data, byte_order='big')
+        return int_from_bytes(self.bytes_le, byte_order='big')
 
     @int.setter
     def int(self, value):
         # NOTE: interpreted as big endian
-        self.bytes_le = bytes_from_int(value, 32, byte_order='big')
+        self.bytes_le = bytearray(bytes_from_int(value, 32, byte_order='big'))
 
     def __int__(self):
         return self.int
 
     def __eq__(self, other):
         if isinstance(other, MobID):
-            return self.int == other.int
+            return self.bytes_le == other.bytes_le
+        return NotImplemented
+
+    def __lt__(self, other):
+        if isinstance(other, MobID):
+            return self.int < other.int
+        return NotImplemented
+
+    def __le__(self, other):
+        if isinstance(other, MobID):
+            return self.int <= other.int
+        return NotImplemented
+
+    def __gt__(self, other):
+        if isinstance(other, MobID):
+            return self.int > other.int
+        return NotImplemented
+
+    def __ge__(self, other):
+        if isinstance(other, MobID):
+            return self.int >= other.int
         return NotImplemented
 
     def __hash__(self):
-        return hash(self.int)
-
+        return hash(bytes(self.bytes_le))
 
     @property
     def urn(self):
@@ -362,11 +364,14 @@ class MobID(object):
         https://en.wikipedia.org/wiki/Uniform_Resource_Name
         """
 
+        SMPTELabel = self.SMPTELabel
+        Data4 = self.Data4
+
         # handle case UMIDs where the material number is half swapped
-        if (self.SMPTELabel[11] == 0x00 and
-                  self.Data4[0] == 0x06 and self.Data4[1] == 0x0E and
-                  self.Data4[2] == 0x2B and self.Data4[3] == 0x34 and
-                  self.Data4[4] == 0x7F and self.Data4[5] == 0x7F):
+        if (SMPTELabel[11] == 0x00 and
+            Data4[0] == 0x06 and Data4[1] == 0x0E and
+            Data4[2] == 0x2B and Data4[3] == 0x34 and
+            Data4[4] == 0x7F and Data4[5] == 0x7F):
 
             # print("case 1")
             f = "urn:smpte:umid:%02x%02x%02x%02x.%02x%02x%02x%02x.%02x%02x%02x%02x." + \
@@ -375,13 +380,13 @@ class MobID(object):
              "%02x%02x%02x%02x.%02x%02x%02x%02x.%08x.%04x%04x"
 
             return f % (
-                 self.SMPTELabel[0], self.SMPTELabel[1], self.SMPTELabel[2],  self.SMPTELabel[3],
-                 self.SMPTELabel[4], self.SMPTELabel[5], self.SMPTELabel[6],  self.SMPTELabel[7],
-                 self.SMPTELabel[8], self.SMPTELabel[9], self.SMPTELabel[10], self.SMPTELabel[11],
+                 SMPTELabel[0], SMPTELabel[1], SMPTELabel[2],  SMPTELabel[3],
+                 SMPTELabel[4], SMPTELabel[5], SMPTELabel[6],  SMPTELabel[7],
+                 SMPTELabel[8], SMPTELabel[9], SMPTELabel[10], SMPTELabel[11],
                  self.length,
                  self.instanceHigh, self.instanceMid, self.instanceLow,
-                 self.Data4[0], self.Data4[1], self.Data4[2], self.Data4[3],
-                 self.Data4[4], self.Data4[5], self.Data4[6], self.Data4[7],
+                 Data4[0], Data4[1], Data4[2], Data4[3],
+                 Data4[4], Data4[5], Data4[6], Data4[7],
                  self.Data1, self.Data2, self.Data3)
         else:
             # print("case 2")
@@ -391,14 +396,14 @@ class MobID(object):
              "%08x.%04x%04x.%02x%02x%02x%02x.%02x%02x%02x%02x"
 
             return f % (
-                 self.SMPTELabel[0], self.SMPTELabel[1], self.SMPTELabel[2],  self.SMPTELabel[3],
-                 self.SMPTELabel[4], self.SMPTELabel[5], self.SMPTELabel[6],  self.SMPTELabel[7],
-                 self.SMPTELabel[8], self.SMPTELabel[9], self.SMPTELabel[10], self.SMPTELabel[11],
+                 SMPTELabel[0], SMPTELabel[1], SMPTELabel[2],  SMPTELabel[3],
+                 SMPTELabel[4], SMPTELabel[5], SMPTELabel[6],  SMPTELabel[7],
+                 SMPTELabel[8], SMPTELabel[9], SMPTELabel[10], SMPTELabel[11],
                  self.length,
                  self.instanceHigh, self.instanceMid, self.instanceLow,
                  self.Data1, self.Data2, self.Data3,
-                 self.Data4[0], self.Data4[1], self.Data4[2], self.Data4[3],
-                 self.Data4[4], self.Data4[5], self.Data4[6], self.Data4[7])
+                 Data4[0], Data4[1], Data4[2], Data4[3],
+                 Data4[4], Data4[5], Data4[6], Data4[7])
 
     @urn.setter
     def urn(self, value):

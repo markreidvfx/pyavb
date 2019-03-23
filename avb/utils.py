@@ -222,6 +222,18 @@ def peek_data(f, size=None):
     f.seek(pos)
     return data
 
+def unpack_u16le_from(buffer, offset):
+    value  = buffer[offset]
+    value += buffer[offset+1] << 8
+    return value
+
+def unpack_u32le_from(buffer, offset):
+    value  = buffer[offset]
+    value += buffer[offset+1] << 8
+    value += buffer[offset+2] << 16
+    value += buffer[offset+3] << 24
+    return value
+
 AVBClaseID_dict = {}
 AVBClassName_dict = {}
 def register_class(classobj):
