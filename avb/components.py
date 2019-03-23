@@ -122,6 +122,16 @@ class Sequence(Component):
         tag = read_byte(f)
         assert tag == 0x03
 
+    @property
+    def length(self):
+        l = 0
+        for c in self.components:
+            if c.class_id == b'TNFX':
+                l -= c.length
+            else:
+                l += c.length
+        return l
+
 class Clip(Component):
     class_id = b'CLIP'
     propertydefs = Component.propertydefs + [
