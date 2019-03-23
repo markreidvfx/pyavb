@@ -155,7 +155,7 @@ class Bin(core.AVBObject):
         AVBPropertyDef('was_iconic',       'WasIconic',      'bool'),
         AVBPropertyDef('attributes',       'BinAttr',        'reference'),
     ]
-    __slots__ = ()
+    __slots__ = ('mob_dict')
 
     def read(self, f):
         super(Bin, self).read(f)
