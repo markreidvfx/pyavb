@@ -331,7 +331,7 @@ class MSMLocator(core.AVBObject):
                 self.mob_id = mob_id
             elif tag == 0x03:
                 read_assert_tag(f, 76)
-                self.last_known_volume_utf8 = read_string(length, 'utf-8')
+                self.last_known_volume_utf8 = read_string(f, 'utf-8')
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
