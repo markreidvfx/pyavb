@@ -447,7 +447,7 @@ class MobRef(core.AVBObject):
     ]
     __slots__ = ()
 
-    def read(self, f
+    def read(self, f):
         super(MobRef, self).read(f)
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x01)
