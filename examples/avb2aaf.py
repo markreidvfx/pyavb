@@ -207,6 +207,7 @@ def convert_descriptor(d, aaf_file):
             descriptor = aaf_file.create.RGBADescriptor()
             descriptor['PixelLayout'].value = d.pixel_layout
         else:
+            avb_dump(d)
             raise ValueError("unhandled digtial image descriptor")
 
         descriptor['StoredHeight'].value = d.stored_height
@@ -216,7 +217,13 @@ def convert_descriptor(d, aaf_file):
         descriptor['VideoLineMap'].value = d.line_map
         descriptor['SampleRate'].value = 0
 
+    elif isinstance(d, avb.essence.MultiDescriptor):
+        descriptor = aaf_file.create.MultipleDescriptor()
+        descriptor['SampleRate'].value = 0
+        for item in d.descriptors:
+            descriptor['FileDescriptors'].append(convert_descriptor(item, aaf_file))
     else:
+        avb_dump(d)
         raise ValueError("unhandle descriptor")
 
     descriptor["Length"].value = d.length
@@ -455,7 +462,12 @@ def convert_parameter(f, name, param):
 
     for p in param.control_track.control_points:
         t = AAFRational(p.offset[0], p.offset[1])
-        point = var.add_keyframe(t, p.value, 'RelativeFixed')
+        try:
+            point = var.add_keyframe(t, p.value, 'RelativeFixed')
+        except:
+            print(p.value)
+            avb_dump(param)
+            raise
         bezier_controls = []
         for pp in p.pp:
             pp_control = f.create.ConstantValue(pp_codes[pp.code], pp.value)
@@ -729,7 +741,11 @@ def convert_composition(f, avb_mob):
 
     f.content.mobs.append(aaf_mob)
     convert_slots(f, avb_mob, aaf_mob)
-    # print(aaf_mob)
+
+    for key, value in avb_mob.attributes.get('_USER', {}).items():
+        tag  = f.create.TaggedValue(key, value)
+        aaf_mob.comments.append(tag)
+
     return aaf_mob
 
 
