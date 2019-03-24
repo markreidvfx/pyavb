@@ -11,6 +11,7 @@ from aaf2.rational import AAFRational
 from aaf2.mobid import MobID
 import sys
 from uuid import UUID
+import urllib
 
 def register_definitions(f):
     op_def = f.create.OperationDef('89d9b67e-5584-302d-9abd-8bd330c46841', 'VideoDissolve_2', '')
@@ -227,6 +228,15 @@ def convert_descriptor(d, aaf_file):
         raise ValueError("unhandle descriptor")
 
     descriptor["Length"].value = d.length
+
+    if d.physical_media:
+        loc = d.physical_media.locator
+        path = loc.path
+        url = "file:///"+ urllib.pathname2url(path)
+        n = aaf_file.create.NetworkLocator()
+        n['URLString'].value = url
+        descriptor['Locator'].append(n)
+
     return descriptor
 
 def remap_track_id(track_id, media_kind,  avb_mob):

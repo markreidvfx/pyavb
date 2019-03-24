@@ -34,8 +34,9 @@ from . utils import (
 class FileLocator(core.AVBObject):
     class_id = b'FILE'
     propertydefs = [
-        AVBPropertyDef('path_name', 'OMFI:FL:PathName', 'string'),
-        AVBPropertyDef('paths',     'OMFI:FL:Paths',     'list'),
+        AVBPropertyDef('path',       'OMFI:FL:PathName',       'string'),
+        AVBPropertyDef('path_posix', 'OMFI:FL:POSIXPathName',  'string'),
+        AVBPropertyDef('path_utf8',  'OMFI:FL:PathNameUTF8',   'string')
     ]
     __slots__ = ()
 
@@ -47,24 +48,23 @@ class FileLocator(core.AVBObject):
 
         assert tag == 0x02
         assert version == 2
-        self.paths = []
+
         path = read_string(f)
         if path:
-            self.path_name= path
+            self.path = path
 
         for tag in iter_ext(f):
             if tag == 0x01:
                 read_assert_tag(f, 76)
                 path = read_string(f)
                 if path:
-                    self.paths.append(path)
+                    self.path_posix = path
 
             elif tag == 0x02:
                 read_assert_tag(f, 76)
-                # utf-8?
-                path = read_string(f)
+                path = read_string(f, 'utf-8')
                 if path:
-                    self.paths.append(path)
+                    self.path_utf8 = path
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
@@ -281,9 +281,10 @@ class ParameterItems(core.AVBObject):
 class MSMLocator(core.AVBObject):
     class_id = b'MSML'
     propertydefs = [
-        AVBPropertyDef('last_known_volume', 'OMFI:MSML:LastKnownVolume', 'string'),
-        AVBPropertyDef('domain_type',       'OMFI:MSML:DomainType',      'int32'),
-        AVBPropertyDef('mob_id',            'MobID',                     'MobID'),
+        AVBPropertyDef('last_known_volume',        'OMFI:MSML:LastKnownVolume',      'string'),
+        AVBPropertyDef('domain_type',              'OMFI:MSML:DomainType',           'int32'),
+        AVBPropertyDef('mob_id',                   'MobID',                          'MobID'),
+        AVBPropertyDef('last_known_volume_utf8',   'OMFI:MSML:LastKnownVolumeUTF8', 'string'),
     ]
     __slots__ = ()
 
@@ -330,9 +331,7 @@ class MSMLocator(core.AVBObject):
                 self.mob_id = mob_id
             elif tag == 0x03:
                 read_assert_tag(f, 76)
-                length = read_s16le(f)
-                assert length >= 0
-                last_known_volume_utf8 = f.read(length)
+                self.last_known_volume_utf8 = read_string(length, 'utf-8')
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
@@ -644,7 +643,7 @@ class TrackerParameter(core.AVBObject):
         AVBPropertyDef('settings', 'OMFI:TKPA:ParamSettings','bytes'),
     ]
     __slots__ = ()
-    
+
     def read(self, f):
         super(TrackerParameter, self).read(f)
         read_assert_tag(f, 0x02)

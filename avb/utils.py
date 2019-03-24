@@ -103,7 +103,9 @@ def read_string(f, encoding = 'macroman'):
     if size >= 65535:
         return ""
 
-    return f.read(size).decode(encoding)
+    s = f.read(size)
+    s = s.strip(b'\x00\x00')
+    return s.decode(encoding)
 
 def read_datetime(f):
     return datetime.utcfromtimestamp(read_u32le(f))
