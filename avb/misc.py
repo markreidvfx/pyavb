@@ -431,10 +431,7 @@ class BinRef(core.AVBObject):
         for tag in iter_ext(f):
             if tag == 0x01:
                 read_assert_tag(f, 76)
-                length = read_s16le(f)
-                assert length >= 0
-                # always starts with '\x00\x00' ??
-                name_utf8 = f.read(length)
+                name_utf8 = read_string(f,'utf-8')
 
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
@@ -450,7 +447,7 @@ class MobRef(core.AVBObject):
     ]
     __slots__ = ()
 
-    def read(self, f):
+    def read(self, f
         super(MobRef, self).read(f)
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x01)
