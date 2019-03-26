@@ -421,9 +421,10 @@ class DIDPosition(BOBPosition):
 class BinRef(core.AVBObject):
     class_id = b'MCBR'
     propertydefs = [
-        AVBPropertyDef('uid_high', 'OMFI:MCBR:MC:binID.high', 'int32'),
-        AVBPropertyDef('uid_low',  'OMFI:MCBR:MC:binID.low',  'int32'),
-        AVBPropertyDef('name',     'OMFI:MCBR:MC:binName',    'string'),
+        AVBPropertyDef('uid_high',  'OMFI:MCBR:MC:binID.high',  'int32'),
+        AVBPropertyDef('uid_low',   'OMFI:MCBR:MC:binID.low',   'int32'),
+        AVBPropertyDef('name',      'OMFI:MCBR:MC:binName',     'string'),
+        AVBPropertyDef('name_utf8', 'OMFI:MCBR:MC:binNameUTF8', 'string'),
     ]
     __slots__ = ()
 
@@ -440,8 +441,7 @@ class BinRef(core.AVBObject):
         for tag in iter_ext(f):
             if tag == 0x01:
                 read_assert_tag(f, 76)
-                name_utf8 = read_string(f,'utf-8')
-
+                self.name_utf8 = read_string(f,'utf-8')
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
