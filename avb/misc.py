@@ -30,7 +30,6 @@ from . utils import (
     peek_data
 )
 
-@utils.register_class
 class FileLocator(core.AVBObject):
     class_id = b'FILE'
     propertydefs = [
@@ -70,6 +69,16 @@ class FileLocator(core.AVBObject):
 
         tag = read_byte(f)
         assert tag == 0x03
+
+@utils.register_class
+class MacFileLocator(FileLocator):
+    class_id = b'FILE'
+    __slots__ = ()
+
+@utils.register_class
+class WinFileLocator(FileLocator):
+    class_id = b'WINF'
+    __slots__ = ()
 
 @utils.register_class
 class GraphicEffect(core.AVBObject):
