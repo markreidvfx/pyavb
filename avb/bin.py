@@ -53,8 +53,8 @@ class Setting(core.AVBObject):
 class BinViewSetting(Setting):
     class_id = b'BVst'
     propertydefs = Setting.propertydefs + [
-        AVBPropertyDef('columns',  'Columns',  'list'),
-        AVBPropertyDef('format_descriptor', 'FormatDescriptor', 'string'),
+        AVBPropertyDef('columns',              'Columns',          'list'),
+        AVBPropertyDef('format_descriptors',   'FormatDescriptor', 'list'),
     ]
     __slots__ = ()
 
@@ -80,22 +80,29 @@ class BinViewSetting(Setting):
         for tag in iter_ext(f):
             if tag == 0x01:
                 read_assert_tag(f, 69)
-                # TODO: can there be multiple?
-                # not sure what this is
                 num_vcid_free_columns = read_s16le(f)
-                assert num_vcid_free_columns == 1
-                read_assert_tag(f, 69)
-                vcid_free_column_id = read_s16le(f)
 
-                read_assert_tag(f, 71)
-                fd_size = read_s32le(f)
+                if num_vcid_free_columns > 0:
+                    # TODO: find sample with mutiliple
+                    assert num_vcid_free_columns == 1
 
-                read_assert_tag(f, 76)
-                # wrong?
-                read_s32le(f)
-                self.format_descriptor = f.read(fd_size).decode('utf8')
-                # print(self.format_descriptor)
+                    self.format_descriptors = []
+                    d = {}
 
+                    read_assert_tag(f, 69)
+
+                    # vcid == Video Codec ID?
+                    d['vcid_free_column_id'] = read_s16le(f)
+
+                    read_assert_tag(f, 71)
+                    format_descriptor_size = read_s32le(f)
+
+                    read_assert_tag(f, 76)
+
+                    # utf-8 seems to start with 4 null bytes
+                    read_s32le(f)
+                    d['format_descriptor'] = f.read(format_descriptor_size).decode('utf8')
+                    self.format_descriptors.append(d)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
