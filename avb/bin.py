@@ -81,12 +81,9 @@ class BinViewSetting(Setting):
             if tag == 0x01:
                 read_assert_tag(f, 69)
                 num_vcid_free_columns = read_s16le(f)
-
-                if num_vcid_free_columns > 0:
-                    # TODO: find sample with mutiliple
-                    assert num_vcid_free_columns == 1
-
-                    self.format_descriptors = []
+                assert num_vcid_free_columns >= 0
+                self.format_descriptors = []
+                for i in range(num_vcid_free_columns):
                     d = {}
 
                     read_assert_tag(f, 69)
