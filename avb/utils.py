@@ -155,21 +155,22 @@ def read_raw_uuid(f):
     data =  Data1 + Data2 + Data3 + Data4
     return UUID(bytes=unhexlify(data))
 
+def read_assert_tag(f, version):
+    version_mark = read_u8(f)
+    if version_mark != version:
+        raise AssertionError("%d != %d" % (version_mark, version))
+
 def read_uuid(f):
-    tag = read_u8(f)
-    assert tag == 72
+    read_assert_tag(f, 72)
     Data1 = hexlify(reverse_str(f.read(4)))
 
-    tag = read_u8(f)
-    assert tag == 70
+    read_assert_tag(f, 70)
     Data2 = hexlify(reverse_str(f.read(2)))
 
-    tag = read_u8(f)
-    assert tag == 70
+    read_assert_tag(f, 70)
     Data3 = hexlify(reverse_str(f.read(2)))
 
-    tag = read_u8(f)
-    assert tag == 65
+    read_assert_tag(f, 65)
     data4len = read_s32le(f)
     assert data4len == 8
     Data4 = b""
@@ -235,11 +236,6 @@ def read_rgb_color(f):
     b = read_u16le(f)
 
     return [r,g,b]
-
-def read_assert_tag(f, version):
-    version_mark = read_u8(f)
-    if version_mark != version:
-        raise AssertionError("%d != %d" % (version_mark, version))
 
 def iter_ext(f):
     while True:
