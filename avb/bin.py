@@ -37,10 +37,8 @@ class Setting(core.AVBObject):
 
     def read(self, f):
         super(Setting, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-        assert tag == 0x02
-        assert version == 0x06
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x06)
 
         self.name = read_string(f)
         self.kind = read_string(f)
@@ -60,10 +58,8 @@ class BinViewSetting(Setting):
 
     def read(self, f):
         super(BinViewSetting, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-        assert tag == 0x02
-        assert version == 10
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 10)
 
         self.columns = []
 
@@ -163,10 +159,9 @@ class Bin(core.AVBObject):
 
     def read(self, f):
         super(Bin, self).read(f)
-        tag = read_u8(f)
+        read_assert_tag(f, 0x02)
+
         version = read_u8(f)
-        assert tag == 0x02
-        # print "0x%02X" % version
         assert version in (0x0e, 0x0f)
 
         self.view_setting = read_object_ref(self.root, f)

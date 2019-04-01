@@ -81,12 +81,8 @@ class TrackGroup(Component):
 
     def read(self, f):
         super(TrackGroup, self).read(f)
-
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x08
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x08)
 
         self.mc_mode = read_u8(f)
         self.length = read_s32le(f)
@@ -137,16 +133,12 @@ class TrackGroup(Component):
 
             self.tracks.append(track)
 
-        tag = read_u8(f)
-        version = read_u8(f)
-        # print self.tracks, "%02X" % tag
-        assert tag == 0x01
-        assert version == 0x01
+        read_assert_tag(f, 0x01)
+        read_assert_tag(f, 0x01)
 
         for i in range(track_count):
-            tag = read_u8(f)
-            assert tag == 69
-            lock =  read_s16le(f)
+            read_assert_tag(f, 69)
+            lock = read_s16le(f)
             if has_tracks:
                 self.tracks[i].lock_number = lock
 
@@ -172,11 +164,8 @@ class TrackEffect(TrackGroup):
 
     def read(self, f):
         super(TrackEffect, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x06
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x06)
 
         self.left_length = read_s32le(f)
         self.right_length = read_s32le(f)
@@ -201,8 +190,7 @@ class TrackEffect(TrackGroup):
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         if self.class_id is b'TKFX':
-            tag = read_u8(f)
-            assert tag == 0x03
+            read_assert_tag(f, 0x03)
 
 @utils.register_class
 class PanVolumeEffect(TrackEffect):
@@ -220,12 +208,8 @@ class PanVolumeEffect(TrackEffect):
 
     def read(self, f):
         super(PanVolumeEffect, self).read(f)
-
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x05
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x05)
 
         self.level = read_s32le(f)
         self.pan = read_s32le(f)
@@ -244,8 +228,7 @@ class PanVolumeEffect(TrackEffect):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        tag = read_u8(f)
-        assert tag == 0x03
+        read_assert_tag(f, 0x03)
 
 class ASPIPlugin(core.AVBObject):
     propertydefs = [
@@ -290,7 +273,6 @@ class AudioSuitePluginEffect(TrackEffect):
 
     def read(self, f):
         super(AudioSuitePluginEffect, self).read(f)
-
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x01)
 
@@ -417,8 +399,6 @@ class EqualizerMultiBand(TrackEffect):
 
     def read(self, f):
         super(EqualizerMultiBand, self).read(f)
-        # print(peek_data(f).encode("hex"))
-
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x05)
 
@@ -449,12 +429,8 @@ class TimeWarp(TrackGroup):
 
     def read(self, f):
         super(TimeWarp, self).read(f)
-
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x02
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x02)
         self.phase_offset = read_s32le(f)
 
 @utils.register_class
@@ -468,19 +444,13 @@ class CaptureMask(TimeWarp):
 
     def read(self, f):
         super(CaptureMask, self).read(f)
-        # print(peek_data(f).encode("hex"))
-
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x01
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
 
         self.is_double = read_bool(f)
         self.mask_bits = read_u32le(f)
 
-        tag = read_u8(f)
-        assert tag == 0x03
+        read_assert_tag(f, 0x03)
 
 @utils.register_class
 class MotionEffect(TimeWarp):
@@ -495,13 +465,8 @@ class MotionEffect(TimeWarp):
 
     def read(self, f):
         super(MotionEffect, self).read(f)
-        # print(peek_data(f).encode("hex"))
-
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x03
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x03)
 
         num = read_s32le(f)
         den = read_s32le(f)
@@ -521,8 +486,7 @@ class MotionEffect(TimeWarp):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        tag = read_u8(f)
-        assert tag == 0x03
+        read_assert_tag(f, 0x03)
 
 @utils.register_class
 class Repeat(TimeWarp):
@@ -531,13 +495,10 @@ class Repeat(TimeWarp):
 
     def read(self, f):
         super(Repeat, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-        assert tag == 0x02
-        assert version == 0x01
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
 
-        tag = read_u8(f)
-        assert tag == 0x03
+        read_assert_tag(f, 0x03)
 
 @utils.register_class
 class EssenceGroup(TrackGroup):
@@ -549,13 +510,8 @@ class EssenceGroup(TrackGroup):
 
     def read(self, f):
         super(EssenceGroup, self).read(f)
-
-        # print(peek_data(f).encode("hex"))
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x01
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
 
         for tag in iter_ext(f):
             if tag == 0x01:
@@ -564,8 +520,7 @@ class EssenceGroup(TrackGroup):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        tag = read_u8(f)
-        assert tag == 0x03
+        read_assert_tag(f, 0x03)
 
 @utils.register_class
 class TransitionEffect(TrackGroup):
@@ -590,20 +545,14 @@ class TransitionEffect(TrackGroup):
 
     def read(self, f):
         super(TransitionEffect, self).read(f)
-
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x01
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
 
         self.cutpoint = read_s32le(f)
 
         # the rest is the same as TKFX
-        tag = read_u8(f)
-        version = read_u8(f)
-        assert tag == 0x02
-        assert version == 0x05
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x05)
 
         self.left_length = read_s32le(f)
         self.right_length = read_s32le(f)
@@ -627,8 +576,7 @@ class TransitionEffect(TrackGroup):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        tag = read_u8(f)
-        assert tag == 0x03
+        read_assert_tag(f, 0x03)
 
 @utils.register_class
 class Selector(TrackGroup):
@@ -641,19 +589,15 @@ class Selector(TrackGroup):
 
     def read(self, f):
         super(Selector, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x01
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
 
         self.is_ganged = read_bool(f)
         self.selected = read_u16le(f)
 
         assert self.selected < len(self.tracks)
 
-        tag = read_u8(f)
-        assert tag == 0x03
+        read_assert_tag(f, 0x03)
 
     def components(self):
         for track in self.tracks:
@@ -674,10 +618,8 @@ class Composition(TrackGroup):
 
     def read(self, f):
         super(Composition, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-        assert tag == 0x02
-        assert version == 0x02
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x02)
 
         mob_id_hi = read_s32le(f)
         mob_id_lo = read_s32le(f)

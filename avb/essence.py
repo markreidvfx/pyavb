@@ -48,11 +48,8 @@ class MediaDescriptor(core.AVBObject):
 
     def read(self, f):
         super(MediaDescriptor, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x03
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x03)
 
         self.mob_kind = read_u8(f)
         self.locator = []
@@ -89,11 +86,8 @@ class TapeDescriptor(MediaDescriptor):
 
     def read(self, f):
         super(TapeDescriptor, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x02
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x02)
 
         self.cframe = read_s16le(f)
         read_assert_tag(f, 0x03)
@@ -110,13 +104,8 @@ class MediaFileDescriptor(MediaDescriptor):
 
     def read(self, f):
         super(MediaFileDescriptor, self).read(f)
-
-        tag = read_u8(f)
-
-        # print peek_data(f).encode('hex')
-        version = read_u8(f)
-        assert tag == 0x02
-        assert version == 0x03
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x03)
 
         self.edit_rate = read_exp10_encoded_float(f)
         self.length = read_s32le(f)
@@ -134,7 +123,6 @@ class MultiDescriptor(MediaFileDescriptor):
 
     def read(self, f):
         super(MultiDescriptor, self).read(f)
-
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x01)
 
@@ -175,12 +163,8 @@ class PCMADescriptor(MediaFileDescriptor):
 
     def read(self, f):
         super(PCMADescriptor, self).read(f)
-
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x01
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
 
         self.channels = read_u16le(f)
         self.quantization_bits = read_u16le(f)
@@ -207,8 +191,7 @@ class PCMADescriptor(MediaFileDescriptor):
         self.peak_of_peaks_offset = read_u64le(f)
         self.peak_envelope_timestamp = read_s32le(f)
 
-        tag = read_u8(f)
-        assert tag == 0x03
+        read_assert_tag(f, 0x03)
 
 @utils.register_class
 class DIDDescriptor(MediaFileDescriptor):
@@ -254,11 +237,8 @@ class DIDDescriptor(MediaFileDescriptor):
 
     def read(self, f):
         super(DIDDescriptor, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x02
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x02)
 
         self.stored_height = read_s32le(f)
         self.stored_width  = read_s32le(f)
@@ -471,11 +451,8 @@ class CDCIDescriptor(DIDDescriptor):
 
     def read(self, f):
         super(CDCIDescriptor, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x02
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x02)
 
         self.horizontal_subsampling = read_u32le(f)
         self.vertical_subsampling = read_u32le(f)
@@ -499,9 +476,7 @@ class CDCIDescriptor(DIDDescriptor):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        tag = read_u8(f)
-        assert tag == 0x03
-
+        read_assert_tag(f, 0x03)
 
 def decode_pixel_layout(pixel_layout, pixel_struct):
 
@@ -533,11 +508,8 @@ class RGBADescriptor(DIDDescriptor):
 
     def read(self, f):
         super(RGBADescriptor, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x01
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
 
         # this seems to be encode the same way as in AAF
         layout_size = read_u32le(f)
@@ -587,5 +559,4 @@ class RGBADescriptor(DIDDescriptor):
             else:
                 raise ValueError("unknown ext tag 0x%02X %d" % (tag,tag))
 
-        tag = read_u8(f)
-        assert tag == 0x03
+        read_assert_tag(f, 0x03)

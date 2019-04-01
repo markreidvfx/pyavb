@@ -47,11 +47,8 @@ class Component(core.AVBObject):
     __slots__ = ()
 
     def read(self, f):
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x03
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x03)
 
         # bob == bytes of binary or bag of bits?
         self.left_bob =  read_object_ref(self.root, f)
@@ -106,11 +103,8 @@ class Sequence(Component):
 
     def read(self, f):
         super(Sequence, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x03
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x03)
 
         count = read_u32le(f)
         self.components = AVBRefList(self.root)
@@ -141,11 +135,8 @@ class Clip(Component):
 
     def read(self, f):
         super(Clip, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-        # print self, "0x%02X" % tag, "0x%02X" % version
-        assert tag == 0x02
-        assert version == 0x01
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
         self.length = read_u32le(f)
 
 @utils.register_class
@@ -160,11 +151,8 @@ class SourceClip(Clip):
 
     def read(self, f):
         super(SourceClip, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x03
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x03)
 
         mob_id_hi = read_s32le(f)
         mob_id_lo = read_s32le(f)
@@ -177,8 +165,7 @@ class SourceClip(Clip):
         if mob_id_hi == 0 and mob_id_lo == 0:
             self.mob_id = mobid.MobID()
 
-        tag = read_u8(f)
-        assert tag == 0x03
+        read_assert_tag(f, 0x03)
 
 @utils.register_class
 class Timecode(Clip):
@@ -192,11 +179,8 @@ class Timecode(Clip):
 
     def read(self, f):
         super(Timecode, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x01
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
 
         # drop ??
         self.flags = read_u32le(f)
@@ -206,9 +190,7 @@ class Timecode(Clip):
         f.read(6)
 
         self.start = read_u32le(f)
-        tag = read_u8(f)
-
-        assert tag == 0x03
+        read_assert_tag(f, 0x03)
 
 @utils.register_class
 class Edgecode(Clip):
@@ -224,12 +206,8 @@ class Edgecode(Clip):
 
     def read(self, f):
         super(Edgecode, self).read(f)
-        # print("??", peek_data(f).encode("hex"))s
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x01
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
 
         self.header = bytearray(f.read(8))
         self.film_kind = read_u8(f)
@@ -238,8 +216,7 @@ class Edgecode(Clip):
         unused_a  = read_u32le(f)
         self.start_ec = read_s32le(f)
 
-        tag = read_u8(f)
-        assert tag == 0x03
+        read_assert_tag(f, 0x03)
 
 @utils.register_class
 class TrackRef(Clip):
@@ -252,18 +229,13 @@ class TrackRef(Clip):
 
     def read(self, f):
         super(TrackRef, self).read(f)
-        # print(peek_data(f).encode("hex"))
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x01
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
 
         self.relative_scope = read_s16le(f)
         self.relative_track = read_s16le(f)
 
-        tag = read_u8(f)
-        assert tag == 0x03
+        read_assert_tag(f, 0x03)
 
 CP_TYPE_INT = 1
 CP_TYPE_DOUBLE = 2
@@ -304,12 +276,8 @@ class ParamClip(Clip):
 
     def read(self, f):
         super(ParamClip, self).read(f)
-
-        tag = read_u8(f)
-        version = read_u8(f)
-
-        assert tag == 0x02
-        assert version == 0x01
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
 
         self.interp_kind = read_s32le(f)
         self.value_type = read_s16le(f)
@@ -396,7 +364,6 @@ class ControlClip(Clip):
 
     def read(self, f):
         super(ControlClip, self).read(f)
-
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x03)
 
@@ -444,10 +411,7 @@ class Filler(Clip):
 
     def read(self, f):
         super(Filler, self).read(f)
-        tag = read_u8(f)
-        version = read_u8(f)
-        end_tag = read_u8(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
 
-        assert tag == 0x02
-        assert version == 0x01
-        assert end_tag == 0x03
+        read_assert_tag(f, 0x03)

@@ -16,6 +16,7 @@ from . utils import (
     read_s32le,
     read_string,
     read_object_ref,
+    read_assert_tag,
     peek_data,
 )
 
@@ -34,8 +35,8 @@ class Attributes(AVBPropertyData):
         self.root = root
 
     def read(self, f):
-        assert read_u8(f) == 0x02
-        assert read_u8(f) == 0x01
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
 
         count = read_u32le(f)
         result = {}
@@ -58,21 +59,22 @@ class Attributes(AVBPropertyData):
 
         # print("read", result)
         self.update(result)
+        read_assert_tag(f, 0x03)
 
 @utils.register_class
 class ParameterList(AVBRefList):
     class_id = b'PRLS'
     __slots__ = ()
     def read(self, f):
-        assert read_u8(f) == 0x02
-        assert read_u8(f) == 0x01
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
 
         count = read_s32le(f)
         for i in range(count):
             ref = read_object_ref(self.root, f)
             self.append(ref)
 
-        assert read_u8(f) == 0x03
+        read_assert_tag(f, 0x03)
 
 @utils.register_class
 class TimeCrumbList(AVBRefList):
@@ -80,12 +82,12 @@ class TimeCrumbList(AVBRefList):
     __slots__ = ()
 
     def read(self, f):
-        assert read_u8(f) == 0x02
-        assert read_u8(f) == 0x01
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
 
         count = read_s16le(f)
         for i in range(count):
             ref = read_object_ref(self.root, f)
             self.append(ref)
 
-        assert read_u8(f) == 0x03
+        read_assert_tag(f, 0x03)
