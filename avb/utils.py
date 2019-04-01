@@ -69,58 +69,65 @@ def read_s32le(f):
     return struct.unpack(b"<i", f.read(4))[0]
 
 def write_s32le(f, value):
-    f.write(pack(b"<i", value))
+    f.write(struct.pack(b"<i", value))
 
 def read_u32le(f):
     return struct.unpack(b"<I", f.read(4))[0]
 
 def write_u32le(f, value):
-    f.write(pack(b"<H", value))
+    f.write(struct.pack(b"<H", value))
 
 def read_s16le(f):
     return struct.unpack(b"<h", f.read(2))[0]
 
 def write_s16le(f, value):
-    f.write(pack(b"<h", value))
+    f.write(struct.pack(b"<h", value))
 
 def read_u16le(f):
     return struct.unpack(b"<H", f.read(2))[0]
 
 def write_u16le(f, value):
-    f.write(pack(b"<H", value))
+    f.write(struct.pack(b"<H", value))
 
 def read_u8(f):
     return struct.unpack(b"<B", f.read(1))[0]
 
-def write_u8(f):
-    f.write(pack(b"<B", value))
+def write_u8(f, value):
+    f.write(struct.pack(b"<B", value))
 
 def read_s8(f):
     return struct.unpack(b"<b", f.read(1))[0]
 
-def write_s8(f):
-    f.write(pack(b"<b", value))
+def write_s8(f, value):
+    f.write(struct.pack(b"<b", value))
 
 def read_s64le(f):
     return struct.unpack(b"<q", f.read(8))[0]
 
-def write_s64le(f):
-    f.write(pack(b"<q", value))
+def write_s64le(f, value):
+    f.write(struct.pack(b"<q", value))
 
 def read_u64le(f):
     return struct.unpack(b"<Q", f.read(8))[0]
 
-def write_u64le(f):
-    f.write(pack(b"<Q", value))
+def write_u64le(f, value):
+    f.write(struct.pack(b"<Q", value))
 
 def read_doublele(f):
     return struct.unpack(b"<d", f.read(8))[0]
+
+def write_doublele(f, value):
+    f.write(struct.pack(b"<d", value))
 
 def read_bool(f):
     return read_u8(f) == 0x01
 
 def read_fourcc(f):
     return reverse_str(f.read(4))
+
+def write_fourcc(f, value):
+    assert len(value) == 4
+    f.write(reverse_str(value))
 
 def read_string(f, encoding = 'macroman'):
     size = read_u16le(f)
