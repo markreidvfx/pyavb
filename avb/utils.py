@@ -66,31 +66,31 @@ def reverse_str(s):
     return bytes(result)
 
 def read_s32le(f):
-    return struct.unpack("<i", f.read(4))[0]
+    return struct.unpack(b"<i", f.read(4))[0]
 
 def read_u32le(f):
-    return struct.unpack("<I", f.read(4))[0]
+    return struct.unpack(b"<I", f.read(4))[0]
 
 def read_s16le(f):
-    return struct.unpack("<h", f.read(2))[0]
+    return struct.unpack(b"<h", f.read(2))[0]
 
 def read_u16le(f):
-    return struct.unpack("<H", f.read(2))[0]
+    return struct.unpack(b"<H", f.read(2))[0]
 
 def read_byte(f):
-    return struct.unpack("<B", f.read(1))[0]
+    return struct.unpack(b"<B", f.read(1))[0]
 
 def read_s8(f):
-    return struct.unpack("<b", f.read(1))[0]
+    return struct.unpack(b"<b", f.read(1))[0]
 
 def read_s64le(f):
-    return struct.unpack("<q", f.read(8))[0]
+    return struct.unpack(b"<q", f.read(8))[0]
 
 def read_u64le(f):
-    return struct.unpack("<Q", f.read(8))[0]
+    return struct.unpack(b"<Q", f.read(8))[0]
 
 def read_doublele(f):
-    return struct.unpack("<d", f.read(8))[0]
+    return struct.unpack(b"<d", f.read(8))[0]
 
 def read_bool(f):
     return read_byte(f) == 0x01

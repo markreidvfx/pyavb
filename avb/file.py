@@ -38,7 +38,7 @@ class AVBChunk(object):
 
     def hex(self):
         header = reverse_str(self.class_id)
-        size =struct.pack("<I", self.size)
+        size =struct.pack(b"<I", self.size)
         data =  header + size + self.read()
         return binascii.hexlify(data)
 
