@@ -200,7 +200,7 @@ class MobID(object):
         """
         MobID material representation as a UUID
         """
-        return uuid.UUID(bytes_le=self.bytes_le[16:])
+        return uuid.UUID(bytes_le=bytes(self.bytes_le[16:]))
 
     @material.setter
     def material(self, value):
