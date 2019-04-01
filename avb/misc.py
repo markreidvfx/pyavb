@@ -11,7 +11,7 @@ from .core import AVBPropertyDef, AVBRefList
 from . import mobid
 
 from . utils import (
-    read_byte,
+    read_u8,
     read_s8,
     read_bool,
     read_s16le,
@@ -42,8 +42,8 @@ class FileLocator(core.AVBObject):
     def read(self, f):
         super(FileLocator, self).read(f)
 
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 2
@@ -67,7 +67,7 @@ class FileLocator(core.AVBObject):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         assert tag == 0x03
 
 @utils.register_class
@@ -318,15 +318,15 @@ class MSMLocator(core.AVBObject):
                 read_assert_tag(f, 65)
                 length = read_s32le(f)
                 assert length == 12
-                mob_id.SMPTELabel = [read_byte(f) for i in range(12)]
+                mob_id.SMPTELabel = [read_u8(f) for i in range(12)]
                 read_assert_tag(f, 68)
-                mob_id.length = read_byte(f)
+                mob_id.length = read_u8(f)
                 read_assert_tag(f, 68)
-                mob_id.instanceHigh = read_byte(f)
+                mob_id.instanceHigh = read_u8(f)
                 read_assert_tag(f, 68)
-                mob_id.instanceMid = read_byte(f)
+                mob_id.instanceMid = read_u8(f)
                 read_assert_tag(f, 68)
-                mob_id.instanceLow = read_byte(f)
+                mob_id.instanceLow = read_u8(f)
                 read_assert_tag(f, 72)
                 mob_id.Data1 = read_u32le(f)
                 read_assert_tag(f, 70)
@@ -336,7 +336,7 @@ class MSMLocator(core.AVBObject):
                 read_assert_tag(f, 65)
                 length = read_s32le(f)
                 assert length == 8
-                mob_id.Data4 = [read_byte(f) for i in range(8)]
+                mob_id.Data4 = [read_u8(f) for i in range(8)]
                 self.mob_id = mob_id
             elif tag == 0x03:
                 read_assert_tag(f, 76)

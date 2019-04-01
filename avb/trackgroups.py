@@ -12,7 +12,7 @@ from . import utils
 from . import mobid
 
 from . utils import (
-    read_byte,
+    read_u8,
     read_s8,
     read_bool,
     read_s16le,
@@ -82,13 +82,13 @@ class TrackGroup(Component):
     def read(self, f):
         super(TrackGroup, self).read(f)
 
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x08
 
-        self.mc_mode = read_byte(f)
+        self.mc_mode = read_u8(f)
         self.length = read_s32le(f)
         self.num_scalars = read_s32le(f)
 
@@ -137,14 +137,14 @@ class TrackGroup(Component):
 
             self.tracks.append(track)
 
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
         # print self.tracks, "%02X" % tag
         assert tag == 0x01
         assert version == 0x01
 
         for i in range(track_count):
-            tag = read_byte(f)
+            tag = read_u8(f)
             assert tag == 69
             lock =  read_s16le(f)
             if has_tracks:
@@ -172,8 +172,8 @@ class TrackEffect(TrackGroup):
 
     def read(self, f):
         super(TrackEffect, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x06
@@ -201,7 +201,7 @@ class TrackEffect(TrackGroup):
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         if self.class_id is b'TKFX':
-            tag = read_byte(f)
+            tag = read_u8(f)
             assert tag == 0x03
 
 @utils.register_class
@@ -221,8 +221,8 @@ class PanVolumeEffect(TrackEffect):
     def read(self, f):
         super(PanVolumeEffect, self).read(f)
 
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x05
@@ -244,7 +244,7 @@ class PanVolumeEffect(TrackEffect):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         assert tag == 0x03
 
 class ASPIPlugin(core.AVBObject):
@@ -362,15 +362,15 @@ class AudioSuitePluginEffect(TrackEffect):
                 read_assert_tag(f, 65)
                 length = read_s32le(f)
                 assert length == 12
-                mob_id.SMPTELabel = [read_byte(f) for i in range(12)]
+                mob_id.SMPTELabel = [read_u8(f) for i in range(12)]
                 read_assert_tag(f, 68)
-                mob_id.length = read_byte(f)
+                mob_id.length = read_u8(f)
                 read_assert_tag(f, 68)
-                mob_id.instanceHigh = read_byte(f)
+                mob_id.instanceHigh = read_u8(f)
                 read_assert_tag(f, 68)
-                mob_id.instanceMid = read_byte(f)
+                mob_id.instanceMid = read_u8(f)
                 read_assert_tag(f, 68)
-                mob_id.instanceLow = read_byte(f)
+                mob_id.instanceLow = read_u8(f)
                 read_assert_tag(f, 72)
                 mob_id.Data1 = read_u32le(f)
                 read_assert_tag(f, 70)
@@ -380,7 +380,7 @@ class AudioSuitePluginEffect(TrackEffect):
                 read_assert_tag(f, 65)
                 length = read_s32le(f)
                 assert length == 8
-                mob_id.Data4 = [read_byte(f) for i in range(8)]
+                mob_id.Data4 = [read_u8(f) for i in range(8)]
                 self.mob_id = mob_id
 
             elif tag == 0x09:
@@ -450,8 +450,8 @@ class TimeWarp(TrackGroup):
     def read(self, f):
         super(TimeWarp, self).read(f)
 
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x02
@@ -470,8 +470,8 @@ class CaptureMask(TimeWarp):
         super(CaptureMask, self).read(f)
         # print(peek_data(f).encode("hex"))
 
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x01
@@ -479,7 +479,7 @@ class CaptureMask(TimeWarp):
         self.is_double = read_bool(f)
         self.mask_bits = read_u32le(f)
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         assert tag == 0x03
 
 @utils.register_class
@@ -497,8 +497,8 @@ class MotionEffect(TimeWarp):
         super(MotionEffect, self).read(f)
         # print(peek_data(f).encode("hex"))
 
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x03
@@ -521,7 +521,7 @@ class MotionEffect(TimeWarp):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         assert tag == 0x03
 
 @utils.register_class
@@ -531,12 +531,12 @@ class Repeat(TimeWarp):
 
     def read(self, f):
         super(Repeat, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
         assert tag == 0x02
         assert version == 0x01
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         assert tag == 0x03
 
 @utils.register_class
@@ -551,8 +551,8 @@ class EssenceGroup(TrackGroup):
         super(EssenceGroup, self).read(f)
 
         # print(peek_data(f).encode("hex"))
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x01
@@ -564,7 +564,7 @@ class EssenceGroup(TrackGroup):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         assert tag == 0x03
 
 @utils.register_class
@@ -591,8 +591,8 @@ class TransitionEffect(TrackGroup):
     def read(self, f):
         super(TransitionEffect, self).read(f)
 
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x01
@@ -600,8 +600,8 @@ class TransitionEffect(TrackGroup):
         self.cutpoint = read_s32le(f)
 
         # the rest is the same as TKFX
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
         assert tag == 0x02
         assert version == 0x05
 
@@ -627,7 +627,7 @@ class TransitionEffect(TrackGroup):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         assert tag == 0x03
 
 @utils.register_class
@@ -641,8 +641,8 @@ class Selector(TrackGroup):
 
     def read(self, f):
         super(Selector, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x01
@@ -652,7 +652,7 @@ class Selector(TrackGroup):
 
         assert self.selected < len(self.tracks)
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         assert tag == 0x03
 
     def components(self):
@@ -671,11 +671,11 @@ class Composition(TrackGroup):
         AVBPropertyDef('mob_id',        'MobID',                   'MobID'),
     ]
     __slots__ = ()
-    
+
     def read(self, f):
         super(Composition, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
         assert tag == 0x02
         assert version == 0x02
 
@@ -683,7 +683,7 @@ class Composition(TrackGroup):
         mob_id_lo = read_s32le(f)
         self.last_modified = read_s32le(f)
 
-        self.mob_type_id = read_byte(f)
+        self.mob_type_id = read_u8(f)
         self.usage_code =  read_s32le(f)
         self.descriptor = read_object_ref(self.root, f)
 

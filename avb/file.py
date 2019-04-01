@@ -19,7 +19,7 @@ from .utils import (
     read_string,
     read_u32le,
     read_fourcc,
-    read_byte,
+    read_u8,
     reverse_str,
 )
 
@@ -73,7 +73,7 @@ class AVBFile(object):
 
         assert read_fourcc(f) == b'OBJD'
         assert read_string(f) == u'AObjDoc'
-        assert read_byte(f) == 0x04
+        assert read_u8(f) == 0x04
 
         self.last_save = read_string(f)
         num_objects = read_u32le(f)

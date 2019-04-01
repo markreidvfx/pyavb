@@ -11,7 +11,7 @@ from . import utils
 from . core import AVBPropertyDef
 
 from . utils import (
-    read_byte,
+    read_u8,
     read_bool,
     read_s16le,
     read_u16le,
@@ -37,8 +37,8 @@ class Setting(core.AVBObject):
 
     def read(self, f):
         super(Setting, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
         assert tag == 0x02
         assert version == 0x06
 
@@ -60,8 +60,8 @@ class BinViewSetting(Setting):
 
     def read(self, f):
         super(BinViewSetting, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
         assert tag == 0x02
         assert version == 10
 
@@ -122,7 +122,7 @@ class BinItem(core.AVBObject):
         self.x = read_s16le(f)
         self.y = read_s16le(f)
         self.keyframe = read_s32le(f)
-        self.user_placed = read_byte(f)
+        self.user_placed = read_u8(f)
 
     # @property
     # def ref(self):
@@ -163,8 +163,8 @@ class Bin(core.AVBObject):
 
     def read(self, f):
         super(Bin, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
         assert tag == 0x02
         # print "0x%02X" % version
         assert version in (0x0e, 0x0f)
@@ -207,7 +207,7 @@ class Bin(core.AVBObject):
         sort_column_count =  read_s16le(f)
         self.sort_columns = []
         for i in range(sort_column_count):
-            direction = read_byte(f)
+            direction = read_u8(f)
             col = read_string(f)
             self.sort_columns.append([direction, col])
 

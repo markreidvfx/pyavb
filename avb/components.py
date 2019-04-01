@@ -11,7 +11,7 @@ from . import utils
 from . import mobid
 
 from . utils import (
-    read_byte,
+    read_u8,
     read_s8,
     read_bool,
     read_s16le,
@@ -47,8 +47,8 @@ class Component(core.AVBObject):
     __slots__ = ()
 
     def read(self, f):
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x03
@@ -106,8 +106,8 @@ class Sequence(Component):
 
     def read(self, f):
         super(Sequence, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x03
@@ -119,7 +119,7 @@ class Sequence(Component):
             # print ref
             self.components.append(ref)
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         assert tag == 0x03
 
     @property
@@ -141,8 +141,8 @@ class Clip(Component):
 
     def read(self, f):
         super(Clip, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
         # print self, "0x%02X" % tag, "0x%02X" % version
         assert tag == 0x02
         assert version == 0x01
@@ -160,8 +160,8 @@ class SourceClip(Clip):
 
     def read(self, f):
         super(SourceClip, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x03
@@ -177,7 +177,7 @@ class SourceClip(Clip):
         if mob_id_hi == 0 and mob_id_lo == 0:
             self.mob_id = mobid.MobID()
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         assert tag == 0x03
 
 @utils.register_class
@@ -192,8 +192,8 @@ class Timecode(Clip):
 
     def read(self, f):
         super(Timecode, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x01
@@ -206,7 +206,7 @@ class Timecode(Clip):
         f.read(6)
 
         self.start = read_u32le(f)
-        tag = read_byte(f)
+        tag = read_u8(f)
 
         assert tag == 0x03
 
@@ -225,20 +225,20 @@ class Edgecode(Clip):
     def read(self, f):
         super(Edgecode, self).read(f)
         # print("??", peek_data(f).encode("hex"))s
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x01
 
         self.header = bytearray(f.read(8))
-        self.film_kind = read_byte(f)
-        self.code_format =  read_byte(f)
+        self.film_kind = read_u8(f)
+        self.code_format =  read_u8(f)
         self.base_perf = read_u16le(f)
         unused_a  = read_u32le(f)
         self.start_ec = read_s32le(f)
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         assert tag == 0x03
 
 @utils.register_class
@@ -253,8 +253,8 @@ class TrackRef(Clip):
     def read(self, f):
         super(TrackRef, self).read(f)
         # print(peek_data(f).encode("hex"))
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x01
@@ -262,7 +262,7 @@ class TrackRef(Clip):
         self.relative_scope = read_s16le(f)
         self.relative_track = read_s16le(f)
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         assert tag == 0x03
 
 CP_TYPE_INT = 1
@@ -305,8 +305,8 @@ class ParamClip(Clip):
     def read(self, f):
         super(ParamClip, self).read(f)
 
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x01
@@ -444,9 +444,9 @@ class Filler(Clip):
 
     def read(self, f):
         super(Filler, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
-        end_tag = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
+        end_tag = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x01

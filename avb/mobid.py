@@ -137,7 +137,7 @@ from __future__ import (
 
 import uuid
 import struct
-from .utils import (int_from_bytes, bytes_from_int, read_byte, read_s32le, read_uuid, unpack_u16le_from, unpack_u32le_from)
+from .utils import (int_from_bytes, bytes_from_int, read_u8, read_s32le, read_uuid, unpack_u16le_from, unpack_u32le_from)
 
 MOBID_STRUCT = struct.Struct(str(''.join(( '<',
    '12B',  # UInt8Array12   SMPTELabel      0
@@ -471,32 +471,32 @@ class MobID(object):
 def read_mob_id(f):
     m = MobID()
 
-    tag = read_byte(f)
+    tag = read_u8(f)
     assert tag == 0x01
-    version = read_byte(f)
+    version = read_u8(f)
     assert version in (0x02, 0x01)
-    tag = read_byte(f)
+    tag = read_u8(f)
     assert tag == 65
     smpte_label_len = read_s32le(f)
     assert smpte_label_len == 12
 
-    m.SMPTELabel = [read_byte(f) for i in range(12)]
+    m.SMPTELabel = [read_u8(f) for i in range(12)]
 
-    tag = read_byte(f)
+    tag = read_u8(f)
     assert tag == 68
-    m.length = read_byte(f)
+    m.length = read_u8(f)
 
-    tag = read_byte(f)
+    tag = read_u8(f)
     assert tag == 68
-    m.instanceHigh = read_byte(f)
+    m.instanceHigh = read_u8(f)
 
-    tag = read_byte(f)
+    tag = read_u8(f)
     assert tag == 68
-    m.instanceMid = read_byte(f)
+    m.instanceMid = read_u8(f)
 
-    tag = read_byte(f)
+    tag = read_u8(f)
     assert tag == 68
-    m.instanceLow = read_byte(f)
+    m.instanceLow = read_u8(f)
 
     m.material = read_uuid(f)
     return m

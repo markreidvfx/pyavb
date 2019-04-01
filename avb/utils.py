@@ -68,32 +68,56 @@ def reverse_str(s):
 def read_s32le(f):
     return struct.unpack(b"<i", f.read(4))[0]
 
+def write_s32le(f, value):
+    f.write(pack(b"<i", value))
+
 def read_u32le(f):
     return struct.unpack(b"<I", f.read(4))[0]
+
+def write_u32le(f, value):
+    f.write(pack(b"<H", value))
 
 def read_s16le(f):
     return struct.unpack(b"<h", f.read(2))[0]
 
+def write_s16le(f, value):
+    f.write(pack(b"<h", value))
+
 def read_u16le(f):
     return struct.unpack(b"<H", f.read(2))[0]
 
-def read_byte(f):
+def write_u16le(f, value):
+    f.write(pack(b"<H", value))
+
+def read_u8(f):
     return struct.unpack(b"<B", f.read(1))[0]
+
+def write_u8(f):
+    f.write(pack(b"<B", value))
 
 def read_s8(f):
     return struct.unpack(b"<b", f.read(1))[0]
 
+def write_s8(f):
+    f.write(pack(b"<b", value))
+
 def read_s64le(f):
     return struct.unpack(b"<q", f.read(8))[0]
 
+def write_s64le(f):
+    f.write(pack(b"<q", value))
+
 def read_u64le(f):
     return struct.unpack(b"<Q", f.read(8))[0]
+
+def write_u64le(f):
+    f.write(pack(b"<Q", value))
 
 def read_doublele(f):
     return struct.unpack(b"<d", f.read(8))[0]
 
 def read_bool(f):
-    return read_byte(f) == 0x01
+    return read_u8(f) == 0x01
 
 def read_fourcc(f):
     return reverse_str(f.read(4))
@@ -107,6 +131,12 @@ def read_string(f, encoding = 'macroman'):
     s = s.strip(b'\x00\x00')
     return s.decode(encoding)
 
+def write_string(f, s, encoding = 'macroman'):
+    data = s.encode(encoding)
+    size = len(data)
+    write_u16le(f, size)
+    f.write(data)
+
 def read_datetime(f):
     return datetime.utcfromtimestamp(read_u32le(f))
 
@@ -119,25 +149,25 @@ def read_raw_uuid(f):
     return UUID(bytes=unhexlify(data))
 
 def read_uuid(f):
-    tag = read_byte(f)
+    tag = read_u8(f)
     assert tag == 72
     Data1 = hexlify(reverse_str(f.read(4)))
 
-    tag = read_byte(f)
+    tag = read_u8(f)
     assert tag == 70
     Data2 = hexlify(reverse_str(f.read(2)))
 
-    tag = read_byte(f)
+    tag = read_u8(f)
     assert tag == 70
     Data3 = hexlify(reverse_str(f.read(2)))
 
-    tag = read_byte(f)
+    tag = read_u8(f)
     assert tag == 65
     data4len = read_s32le(f)
     assert data4len == 8
     Data4 = b""
     for i in range(8):
-        Data4 += b"%02X" % read_byte(f)
+        Data4 += b"%02X" % read_u8(f)
 
     data =  Data1 + Data2 + Data3 + Data4
     return UUID(bytes=unhexlify(data))
@@ -200,19 +230,19 @@ def read_rgb_color(f):
     return [r,g,b]
 
 def read_assert_tag(f, version):
-    version_mark = read_byte(f)
+    version_mark = read_u8(f)
     if version_mark != version:
         raise AssertionError("%d != %d" % (version_mark, version))
 
 def iter_ext(f):
     while True:
         pos = f.tell()
-        tag = read_byte(f)
+        tag = read_u8(f)
         if tag != 0x01:
             f.seek(pos)
             break
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         yield tag
 
 def peek_data(f, size=None):

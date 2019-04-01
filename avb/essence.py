@@ -12,7 +12,7 @@ from . import utils
 from .core import AVBPropertyDef, AVBRefList
 
 from . utils import (
-    read_byte,
+    read_u8,
     read_bool,
     read_s8,
     read_s16le,
@@ -48,13 +48,13 @@ class MediaDescriptor(core.AVBObject):
 
     def read(self, f):
         super(MediaDescriptor, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x03
 
-        self.mob_kind = read_byte(f)
+        self.mob_kind = read_u8(f)
         self.locator = []
         self.locator = read_object_ref(self.root, f)
         self.intermediate = read_bool(f)
@@ -89,8 +89,8 @@ class TapeDescriptor(MediaDescriptor):
 
     def read(self, f):
         super(TapeDescriptor, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x02
@@ -111,10 +111,10 @@ class MediaFileDescriptor(MediaDescriptor):
     def read(self, f):
         super(MediaFileDescriptor, self).read(f)
 
-        tag = read_byte(f)
+        tag = read_u8(f)
 
         # print peek_data(f).encode('hex')
-        version = read_byte(f)
+        version = read_u8(f)
         assert tag == 0x02
         assert version == 0x03
 
@@ -176,8 +176,8 @@ class PCMADescriptor(MediaFileDescriptor):
     def read(self, f):
         super(PCMADescriptor, self).read(f)
 
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x01
@@ -207,7 +207,7 @@ class PCMADescriptor(MediaFileDescriptor):
         self.peak_of_peaks_offset = read_u64le(f)
         self.peak_envelope_timestamp = read_s32le(f)
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         assert tag == 0x03
 
 @utils.register_class
@@ -254,8 +254,8 @@ class DIDDescriptor(MediaFileDescriptor):
 
     def read(self, f):
         super(DIDDescriptor, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x02
@@ -471,8 +471,8 @@ class CDCIDescriptor(DIDDescriptor):
 
     def read(self, f):
         super(CDCIDescriptor, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x02
@@ -499,7 +499,7 @@ class CDCIDescriptor(DIDDescriptor):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         assert tag == 0x03
 
 
@@ -507,8 +507,8 @@ def decode_pixel_layout(pixel_layout, pixel_struct):
 
     layout = []
     for i in range(8):
-        code = read_byte(pixel_layout)
-        depth = read_byte(pixel_struct)
+        code = read_u8(pixel_layout)
+        depth = read_u8(pixel_struct)
         if not code:
             break
         layout.append({'Code':code, 'Size':depth})
@@ -533,8 +533,8 @@ class RGBADescriptor(DIDDescriptor):
 
     def read(self, f):
         super(RGBADescriptor, self).read(f)
-        tag = read_byte(f)
-        version = read_byte(f)
+        tag = read_u8(f)
+        version = read_u8(f)
 
         assert tag == 0x02
         assert version == 0x01
@@ -587,5 +587,5 @@ class RGBADescriptor(DIDDescriptor):
             else:
                 raise ValueError("unknown ext tag 0x%02X %d" % (tag,tag))
 
-        tag = read_byte(f)
+        tag = read_u8(f)
         assert tag == 0x03
