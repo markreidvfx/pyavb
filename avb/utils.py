@@ -139,6 +139,7 @@ def read_string(f, encoding = 'macroman'):
     return s.decode(encoding)
 
 def write_string(f, s, encoding = 'macroman'):
+    s = s or ""
     data = s.encode(encoding)
     size = len(data)
     write_u16le(f, size)
