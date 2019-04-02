@@ -14,18 +14,18 @@ from .core import AVBPropertyDef, AVBRefList
 from . utils import (
     read_u8,     write_u8,
     read_bool,   write_bool,
-    read_s8,
-    read_s16le,
-    read_u16le,
-    read_u32le,
-    read_s32le,
-    read_s64le,
-    read_u64le,
-    read_string,
+    read_s8,     write_s8,
+    read_s16le,  write_s16le,
+    read_u16le,  write_u16le,
+    read_u32le,  write_u32le,
+    read_s32le,  write_s32le,
+    read_s64le,  write_s64le,
+    read_u64le,  write_u64le,
+    read_string, write_string,
     read_raw_uuid, write_raw_uuid,
-    read_uuid,
+    read_uuid,   write_uuid,
     reverse_str,
-    read_exp10_encoded_float,
+    read_exp10_encoded_float, write_exp10_encoded_float,
     read_object_ref, write_object_ref,
     read_datetime,
     iter_ext,
@@ -118,6 +118,14 @@ class TapeDescriptor(MediaDescriptor):
         self.cframe = read_s16le(f)
         read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        super(TapeDescriptor, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x02)
+
+        write_s16le(f, self.cframe)
+        write_u8(f, 0x03)
+
 class MediaFileDescriptor(MediaDescriptor):
     class_id = b'MDFL'
     propertydefs = MediaDescriptor.propertydefs + [
@@ -138,6 +146,15 @@ class MediaFileDescriptor(MediaDescriptor):
         self.is_omfi = read_s16le(f)
         self.data_offset = read_s32le(f)
 
+    def write(self, f):
+        super(MediaFileDescriptor, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x03)
+
+        write_exp10_encoded_float(f, self.edit_rate)
+        write_s32le(f, self.length)
+        write_s16le(f, self.is_omfi)
+        write_s32le(f, self.data_offset)
 
 @utils.register_class
 class MultiDescriptor(MediaFileDescriptor):
@@ -159,6 +176,18 @@ class MultiDescriptor(MediaFileDescriptor):
             self.descriptors.append(ref)
 
         read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(MultiDescriptor, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_s32le(f, len(self.descriptors))
+
+        for descriptor in self.descriptors:
+            write_object_ref(self.root, f, descriptor)
+
+        write_u8(f, 0x03)
 
 @utils.register_class
 class PCMADescriptor(MediaFileDescriptor):
@@ -218,6 +247,38 @@ class PCMADescriptor(MediaFileDescriptor):
         self.peak_envelope_timestamp = read_s32le(f)
 
         read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(PCMADescriptor, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_u16le(f, self.channels)
+        write_u16le(f, self.quantization_bits)
+        write_exp10_encoded_float(f, self.sample_rate)
+
+        write_bool(f, self.locked)
+        write_s16le(f, self.audio_ref_level)
+        write_s32le(f, self.electro_spatial_formulation)
+        write_u16le(f, self.dial_norm)
+
+        write_u32le(f, self.coding_format)
+        write_u32le(f, self.block_align)
+
+        write_u16le(f, self.sequence_offset)
+        write_u32le(f, self.average_bps)
+        write_bool(f, self.has_peak_envelope_data)
+
+        write_s32le(f, self.peak_envelope_version)
+        write_s32le(f, self.peak_envelope_format)
+        write_s32le(f, self.points_per_peak_value)
+        write_s32le(f, self.peak_envelope_block_size)
+        write_s32le(f, self.peak_channel_count)
+        write_s32le(f, self.peak_frame_count)
+        write_u64le(f, self.peak_of_peaks_offset)
+        write_s32le(f, self.peak_envelope_timestamp)
+
+        write_u8(f, 0x03)
 
 @utils.register_class
 class DIDDescriptor(MediaFileDescriptor):
@@ -458,6 +519,201 @@ class DIDDescriptor(MediaFileDescriptor):
         if self.class_id == b'DIDD':
             read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        super(DIDDescriptor, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x02)
+
+        write_s32le(f, self.stored_height)
+        write_s32le(f, self.stored_width)
+
+        write_s32le(f, self.sampled_height)
+        write_s32le(f, self.sampled_width)
+
+        write_s32le(f, self.sampled_x_offset)
+        write_s32le(f, self.sampled_y_offset)
+
+        write_s32le(f, self.display_height)
+        write_s32le(f, self.display_width)
+
+        write_s32le(f, self.display_x_offset)
+        write_s32le(f, self.display_y_offset)
+
+        write_s16le(f, self.frame_layout)
+
+        write_s32le(f, self.aspect_ratio[0])
+        write_s32le(f, self.aspect_ratio[1])
+
+        write_s32le(f, len(self.line_map) * 4)
+        for i in self.line_map:
+            write_s32le(f, i)
+
+
+        write_s32le(f, self.alpha_transparency)
+        write_bool(f, self.uniformness)
+
+        write_s32le(f, self.did_image_size)
+
+        write_object_ref(self.root, f, self.next_did_desc)
+
+        compress_method =  reverse_str(self.compress_method)
+        assert len(compress_method) == 4
+        f.write(compress_method)
+
+        write_s32le(f, self.resolution_id)
+        write_s32le(f, self.image_alignment_factor)
+
+        if hasattr(self, 'frame_index_byte_order'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            write_u8(f, 69)
+            write_s16le(f, self.frame_index_byte_order)
+
+        if hasattr(self, 'frame_sample_size'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x02)
+            write_u8(f, 71)
+            write_s32le(f, self.frame_sample_size)
+
+        if hasattr(self, 'first_frame_offset'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x03)
+            write_u8(f, 71)
+            write_s32le(f, self.first_frame_offset)
+
+        if hasattr(self, 'client_fill_start'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x04)
+            write_u8(f, 71)
+            write_s32le(f, self.client_fill_start)
+
+            write_u8(f, 71)
+            write_s32le(f, self.client_fill_end)
+
+        if hasattr(self, 'offset_to_rle_frame_index'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x05)
+            write_u8(f, 71)
+            write_s32le(f, self.offset_to_rle_frame_index)
+
+        if hasattr(self, 'valid_box') and hasattr(self, 'essence_box') and hasattr(self, 'source_box'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x08)
+
+            write_u8(f, 71)
+            write_s32le(f, self.valid_box[0][0])
+            write_u8(f, 71)
+            write_s32le(f, self.valid_box[0][1])
+
+            write_u8(f, 71)
+            write_s32le(f, self.valid_box[1][0])
+            write_u8(f, 71)
+            write_s32le(f, self.valid_box[1][1])
+
+            write_u8(f, 71)
+            write_s32le(f, self.valid_box[2][0])
+            write_u8(f, 71)
+            write_s32le(f, self.valid_box[2][1])
+
+            write_u8(f, 71)
+            write_s32le(f, self.valid_box[3][0])
+            write_u8(f, 71)
+            write_s32le(f, self.valid_box[3][1])
+
+            # essence
+            write_u8(f, 71)
+            write_s32le(f, self.essence_box[0][0])
+            write_u8(f, 71)
+            write_s32le(f, self.essence_box[0][1])
+
+
+            write_u8(f, 71)
+            write_s32le(f, self.essence_box[1][0])
+            write_u8(f, 71)
+            write_s32le(f, self.essence_box[1][1])
+
+            write_u8(f, 71)
+            write_s32le(f, self.essence_box[2][0])
+            write_u8(f, 71)
+            write_s32le(f, self.essence_box[2][1])
+
+            write_u8(f, 71)
+            write_s32le(f, self.essence_box[3][0])
+            write_u8(f, 71)
+            write_s32le(f, self.essence_box[3][1])
+
+            # source
+            write_u8(f, 71)
+            write_s32le(f, self.source_box[0][0])
+            write_u8(f, 71)
+            write_s32le(f, self.source_box[0][1])
+
+            write_u8(f, 71)
+            write_s32le(f, self.source_box[1][0])
+            write_u8(f, 71)
+            write_s32le(f, self.source_box[1][1])
+
+            write_u8(f, 71)
+            write_s32le(f, self.source_box[2][0])
+            write_u8(f, 71)
+            write_s32le(f, self.source_box[2][1])
+
+            write_u8(f, 71)
+            write_s32le(f, self.source_box[3][0])
+            write_u8(f, 71)
+            write_s32le(f, self.source_box[3][1])
+
+        if hasattr(self, 'framing_box') and hasattr(self, 'reformatting_option'):
+            write_u8(f, 0x01)
+            write_u8(f, 9)
+
+            # print("\n??!", peek_data(f).encode('hex'), '\n')
+            write_u8(f, 71)
+            write_s32le(f, self.framing_box[0][0])
+            write_u8(f, 71)
+            write_s32le(f, self.framing_box[0][1])
+
+            write_u8(f, 71)
+            write_s32le(f, self.framing_box[1][0])
+            write_u8(f, 71)
+            write_s32le(f, self.framing_box[1][1])
+
+            write_u8(f, 71)
+            write_s32le(f, self.framing_box[2][0])
+            write_u8(f, 71)
+            write_s32le(f, self.framing_box[2][1])
+
+            write_u8(f, 71)
+            write_s32le(f, self.framing_box[3][0])
+            write_u8(f, 71)
+            write_s32le(f, self.framing_box[3][1])
+
+            write_u8(f, 71)
+            write_s32le(f, self.reformatting_option)
+
+        if hasattr(self, 'transfer_characteristic'):
+            write_u8(f, 0x01)
+            write_u8(f, 10)
+            write_u8(f, 80)
+            write_raw_uuid(f, self.transfer_characteristic)
+
+        if hasattr(self, 'color_primaries') and hasattr(self, 'coding_equations'):
+            write_u8(f, 0x01)
+            write_u8(f, 11)
+            write_u8(f, 80)
+            write_raw_uuid(f, self.color_primaries)
+            write_u8(f, 80)
+            write_raw_uuid(f, self.coding_equations)
+
+        if hasattr(self, 'frame_checked_with_mapper'):
+            write_u8(f, 0x01)
+            write_u8(f, 15)
+            write_u8(f, 66)
+            write_bool(f, self.frame_checked_with_mapper)
+
+        if self.class_id == b'DIDD':
+            write_u8(f, 0x03)
+
 @utils.register_class
 class CDCIDescriptor(DIDDescriptor):
     class_id = b'CDCI'
@@ -504,6 +760,36 @@ class CDCIDescriptor(DIDDescriptor):
 
         read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        super(CDCIDescriptor, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x02)
+
+        write_u32le(f, self.horizontal_subsampling)
+        write_u32le(f, self.vertical_subsampling)
+        write_s32le(f, self.component_width)
+
+        write_s16le(f, self.color_sitting)
+        write_u32le(f, self.black_ref_level)
+        write_u32le(f, self.white_ref_level)
+        write_u32le(f, self.color_range)
+
+        write_s64le(f, self.frame_index_offset)
+
+        if hasattr(self, 'alpha_sampled_width'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            write_u8(f, 72)
+            write_u32le(f, self.alpha_sampled_width)
+
+        if hasattr(self, 'ignore_bw'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x02)
+            write_u8(f, 72)
+            write_u32le(f, self.ignore_bw)
+
+        write_u8(f, 0x03)
+
 def decode_pixel_layout(pixel_layout, pixel_struct):
 
     layout = []
@@ -515,6 +801,19 @@ def decode_pixel_layout(pixel_layout, pixel_struct):
         layout.append({'Code':code, 'Size':depth})
 
     return layout
+
+def encode_pixel_layout(layout):
+    pixel_layout = BytesIO()
+    pixel_struct = BytesIO()
+    for i in range(8):
+        if i < len(layout):
+            write_u8(pixel_layout, layout[i]['Code'])
+            write_u8(pixel_struct, layout[i]['Size'])
+        else:
+            write_u8(pixel_layout, 0)
+            write_u8(pixel_struct, 0)
+
+    return pixel_layout.getvalue(), pixel_struct.getvalue()
 
 @utils.register_class
 class RGBADescriptor(DIDDescriptor):
@@ -586,3 +885,57 @@ class RGBADescriptor(DIDDescriptor):
                 raise ValueError("unknown ext tag 0x%02X %d" % (tag,tag))
 
         read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(RGBADescriptor, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        pixel_layout, pixel_struct = encode_pixel_layout(self.pixel_layout)
+
+        # this seems to be encode the same way as in AAF
+        write_u32le(f, len(pixel_layout))
+        f.write(pixel_layout)
+
+        write_u32le(f, len(pixel_struct))
+        f.write(pixel_struct)
+
+        # palette_layout_size
+        write_u32le(f, 0)
+        # palette_struct_size
+        write_u32le(f, 0)
+        # palette_size
+        write_u32le(f, 0)
+
+
+        if hasattr(self, 'frame_index_offset'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            write_u8(f, 77)
+            write_u64le(f, self.frame_index_offset)
+
+        if hasattr(self, 'has_comp_min_ref'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x02)
+            write_u8(f, 66)
+            write_bool(f, self.has_comp_min_ref)
+
+            write_u8(f, 72)
+            write_u32le(f, self.comp_min_ref)
+
+            write_u8(f, 66)
+            write_bool(f, self.has_comp_max_ref)
+
+            write_u8(f, 72)
+            write_u32le(f, self.comp_max_ref)
+
+        if hasattr(self, 'alpha_min_ref'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x03)
+            write_u8(f, 72)
+            write_u32le(f, self.alpha_min_ref)
+
+            write_u8(f, 72)
+            write_u32le(f, self.alpha_max_ref)
+
+        write_u8(f, 0x03)
