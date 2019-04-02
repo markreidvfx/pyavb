@@ -149,12 +149,7 @@ def read_datetime(f):
     return datetime.utcfromtimestamp(read_u32le(f))
 
 def read_raw_uuid(f):
-    Data1 =  hexlify(reverse_str(f.read(4)))
-    Data2 =  hexlify(reverse_str(f.read(2)))
-    Data3 =  hexlify(reverse_str(f.read(2)))
-    Data4 =  hexlify(f.read(8))
-    data =  Data1 + Data2 + Data3 + Data4
-    return UUID(bytes=unhexlify(data))
+    return UUID(bytes_le=f.read(16))
 
 def read_assert_tag(f, version):
     version_mark = read_u8(f)
@@ -162,24 +157,37 @@ def read_assert_tag(f, version):
         raise AssertionError("%d != %d" % (version_mark, version))
 
 def read_uuid(f):
+
+    data = b''
     read_assert_tag(f, 72)
-    Data1 = hexlify(reverse_str(f.read(4)))
+    data += f.read(4)
 
     read_assert_tag(f, 70)
-    Data2 = hexlify(reverse_str(f.read(2)))
+    data += f.read(2)
 
     read_assert_tag(f, 70)
-    Data3 = hexlify(reverse_str(f.read(2)))
+    data += f.read(2)
 
     read_assert_tag(f, 65)
     data4len = read_s32le(f)
     assert data4len == 8
-    Data4 = b""
-    for i in range(8):
-        Data4 += b"%02X" % read_u8(f)
+    data += f.read(8)
 
-    data =  Data1 + Data2 + Data3 + Data4
-    return UUID(bytes=unhexlify(data))
+    return UUID(bytes_le=data)
+
+def write_uuid(f, value):
+
+    write_u8(f, 72)
+    write_u32le(f, value.time_low)
+    write_u8(f, 70)
+    write_u16le(f, value.time_mid)
+    write_u8(f, 70)
+    write_u16le(f, value.time_hi_version)
+
+    write_u8(f, 65)
+    write_s32le(f, 8)
+    f.write(value.bytes_le[8:])
+
 
 def int_from_bytes(data, byte_order='big'):
     num = 0

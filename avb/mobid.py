@@ -137,7 +137,11 @@ from __future__ import (
 
 import uuid
 import struct
-from .utils import (int_from_bytes, bytes_from_int, read_u8, read_s32le, read_assert_tag, read_uuid, unpack_u16le_from, unpack_u32le_from)
+from .utils import (int_from_bytes, bytes_from_int,
+                    read_u8, write_u8,
+                    read_s32le, write_s32le,
+                    read_uuid, write_uuid,
+                    read_assert_tag, unpack_u16le_from, unpack_u32le_from)
 
 MOBID_STRUCT = struct.Struct(str(''.join(( '<',
    '12B',  # UInt8Array12   SMPTELabel      0
@@ -495,6 +499,30 @@ def read_mob_id(f):
 
     m.material = read_uuid(f)
     return m
+
+def write_mob_id(f, m):
+
+    write_u8(f, 0x01)
+    write_u8(f, 0x02)
+
+    write_u8(f, 65)
+    write_s32le(f, 12)
+    for i in m.SMPTELabel:
+        write_u8(f, i)
+
+    write_u8(f, 68)
+    write_u8(f, m.length)
+
+    write_u8(f, 68)
+    write_u8(f, m.instanceHigh)
+
+    write_u8(f, 68)
+    write_u8(f, m.instanceMid)
+
+    write_u8(f, 68)
+    write_u8(f, m.instanceLow)
+
+    write_uuid(f, m.material)
 
 if __name__ == "__main__":
 
