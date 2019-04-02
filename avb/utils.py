@@ -8,7 +8,7 @@ from __future__ import (
 import struct
 from io import BytesIO
 import os
-
+import decimal
 from uuid import UUID
 from datetime import datetime
 from binascii import hexlify, unhexlify
@@ -121,6 +121,12 @@ def write_doublele(f, value):
 
 def read_bool(f):
     return read_u8(f) == 0x01
+
+def write_bool(f, value):
+    if value:
+        write_u8(f, 0x01)
+    else:
+        write_u8(f, 0x00)
 
 def read_fourcc(f):
     return reverse_str(f.read(4))
@@ -240,8 +246,18 @@ def read_exp10_encoded_float(f):
     return float(mantissa) * pow(10, exp10)
 
 def write_exp10_encoded_float(f, value):
-    write_s32le(f, 0)
-    write_s16le(f, 0)
+
+    # this is really hacky need to limit exponent to s16 min/max
+    # and limit mantissa s32 min/max
+    d = decimal.Decimal(str(value))
+    (sign, digits, exponent) = decimal.Decimal(str(value)).as_tuple()
+    mantissa = int("".join([str(i) for i in digits]))
+    if sign:
+        mantissa *= -1
+
+    # print(mantissa, exponent)
+    write_s32le(f, mantissa)
+    write_s16le(f, exponent)
 
 def read_rect(f):
     version = read_s16le(f)

@@ -12,18 +12,18 @@ from . import utils
 from . import mobid
 
 from . utils import (
-    read_u8,
+    read_u8, write_u8,
     read_s8,
-    read_bool,
-    read_s16le,
-    read_u16le,
-    read_u32le,
-    read_s32le,
+    read_bool,  write_bool,
+    read_s16le, write_s16le,
+    read_u16le, write_u16le,
+    read_u32le, write_u32le,
+    read_s32le, write_s32le,
     read_s64le,
     read_string,
     read_doublele,
     read_exp10_encoded_float,
-    read_object_ref,
+    read_object_ref, write_object_ref,
     read_datetime,
     iter_ext,
     read_assert_tag,
@@ -144,6 +144,61 @@ class TrackGroup(Component):
 
     def write(self, f):
         super(TrackGroup, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x08)
+
+        write_u8(f, self.mc_mode)
+        write_s32le(f, self.length)
+        write_s32le(f, self.num_scalars)
+
+        write_s32le(f, len(self.tracks))
+
+        # TODO: cacluate flags dynamically using hasattr
+        for track in self.tracks:
+            write_u16le(f, track.flags)
+            if track.flags & TRACK_LABEL_FLAG:
+                write_s16le(f, track.index)
+
+            if track.flags & TRACK_ATTRIBUTES_FLAG:
+                write_object_ref(self.root, f, track.attributes)
+
+            if track.flags & TRACK_SESSION_ATTR_FLAG:
+                write_object_ref(self.root, f, track.session_attr)
+
+            if track.flags & TRACK_COMPONENT_FLAG:
+                write_object_ref(self.root, f, track.component)
+
+            if track.flags & TRACK_FILLER_PROXY_FLAG:
+                write_object_ref(self.root, f, track.filler_proxy)
+
+            if track.flags & TRACK_BOB_DATA_FLAG:
+                write_object_ref(self.root, f, track.bob_data)
+
+            if track.flags & TRACK_CONTROL_CODE_FLAG:
+                write_s16le(f, track.control_code)
+
+            if track.flags & TRACK_CONTROL_SUB_CODE_FLAG:
+                write_s16le(f, track.control_sub_code)
+
+            if track.flags & TRACK_START_POS_FLAG:
+                write_s32le(f, track.start_pos)
+
+            if track.flags & TRACK_READ_ONLY_FLAG:
+                write_bool(f, track.read_only)
+
+            if track.flags & TRACK_UNKNOWN_FLAGS:
+                raise ValueError("Unknown Track Flag: %d" % track.flags)
+
+        write_u8(f, 0x01)
+        write_u8(f, 0x01)
+
+        for i in range(len(self.tracks)):
+            write_u8(f, 69)
+            if hasattr(self.tracks[i], 'lock_number'):
+                write_s16le(f, self.tracks[i].lock_number)
+            else:
+                write_s16le(f, 0)
+
 
 @utils.register_class
 class TrackEffect(TrackGroup):
@@ -645,6 +700,20 @@ class Composition(TrackGroup):
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        write_u8(f, 0x02)
+        write_u8(f, 0x02)
+
+        write_s32le(f, self.mob_id.material.time_low)
+        hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
+        write_s32le(f, hi)
+        write_s32le(f, self.last_modified)
+
+        write_u8(f, self.mob_type_id)
+        write_s32le(f, self.usage_code)
+        write_object_ref(self.root, f, self.descriptor)
+
 
     @property
     def usage(self):
