@@ -109,7 +109,14 @@ class ParameterList(AVBRefList):
         read_assert_tag(f, 0x03)
 
     def write(self, f):
-        pass
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_s32le(f, len(self))
+        for obj in self:
+            write_object_ref(self.root, f, obj)
+
+        write_u8(f, 0x03)
 
 @utils.register_class
 class TimeCrumbList(AVBRefList):
@@ -128,4 +135,11 @@ class TimeCrumbList(AVBRefList):
         read_assert_tag(f, 0x03)
 
     def write(self, f):
-        pass
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_s32le(f, len(self))
+        for obj in self:
+            write_object_ref(self.root, f, obj)
+
+        write_u8(f, 0x03)

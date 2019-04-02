@@ -13,13 +13,13 @@ from . import mobid
 from . utils import (
     read_u8, write_u8,
     read_s8,
-    read_bool,
-    read_s16le, write_s16le,
-    read_u16le,
-    read_u32le, write_u32le,
-    read_s32le, write_s32le,
+    read_bool,   write_bool,
+    read_s16le,  write_s16le,
+    read_u16le,  write_u16le,
+    read_u32le,  write_u32le,
+    read_s32le,  write_s32le,
     read_string, write_string,
-    read_doublele,
+    read_doublele, write_doublele,
     read_exp10_encoded_float, write_exp10_encoded_float,
     read_object_ref, write_object_ref,
     read_datetime,
@@ -248,6 +248,19 @@ class Timecode(Clip):
         self.start = read_u32le(f)
         read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        super(Timecode, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_u32le(f, self.flags)
+        write_u16le(f, self.fps)
+        f.write(bytearray(6))
+        write_u32le(f, self.start)
+
+        write_u8(f, 0x03)
+
+
 @utils.register_class
 class Edgecode(Clip):
     class_id = b'ECCP'
@@ -274,6 +287,22 @@ class Edgecode(Clip):
 
         read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        super(Edgecode, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        assert len(self.header) == 8
+        f.write(self.header)
+        write_u8(f, self.film_kind)
+        write_u8(f, self.code_format)
+        write_u16le(f, self.base_perf)
+        #unused
+        write_u32le(f, 0)
+        write_s32le(f, self.start_ec)
+
+        write_u8(f, 0x03)
+
 @utils.register_class
 class TrackRef(Clip):
     class_id = b'TRKR'
@@ -292,6 +321,18 @@ class TrackRef(Clip):
         self.relative_track = read_s16le(f)
 
         read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(TrackRef, self).write(f)
+
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_s16le(f, self.relative_scope)
+        write_s16le(f, self.relative_track)
+
+        write_u8(f, 0x03)
+
 
 CP_TYPE_INT = 1
 CP_TYPE_DOUBLE = 2
@@ -391,6 +432,54 @@ class ParamClip(Clip):
 
         read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        super(ParamClip, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_s32le(f, self.interp_kind)
+        write_s16le(f, self.value_type)
+
+        write_s32le(f, len(control_points))
+
+        for cp in self.control_points:
+            write_s32le(f, cp.offset[0])
+            write_s32le(f, cp.offset[1])
+            write_s32le(f, cp.timescale)
+
+            if self.value_type == CP_TYPE_INT:
+                write_s32le(f, cp.value)
+            elif self.value_type == CP_TYPE_DOUBLE:
+                write_doublele(f, cp.value)
+            else:
+                raise ValueError("unknown value type: %d" % cp.type)
+
+            write_s16le(f, len(cp.pp))
+            for pp in cp.pp:
+
+                write_s16le(pp.code)
+                write_s16le(pp.type)
+
+                if pp.type == CP_TYPE_DOUBLE:
+                    write_doublele(f, pp.value)
+                elif pp.type == CP_TYPE_INT:
+                    write_s32le(f, pp.value)
+                else:
+                    raise ValueError("unknown PP type: %d" % pp.type)
+
+        if hasattr(self, 'extrap_kind'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            write_u8(f, 71)
+            write_s32le(f, self.extrap_kind)
+
+        if hasattr(self, 'fields'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x02)
+            write_u8(f, 71)
+            write_s32le(f, self.fields)
+
+        write_u8(f, 0x03)
 
 class ControlPoint(core.AVBObject):
     propertydefs = [
@@ -458,7 +547,30 @@ class ControlClip(Clip):
             self.control_points.append(cp)
 
         read_assert_tag(f, 0x03)
-        # raise Exception()
+
+    def write(self, f):
+        super(ControlClip, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x03)
+
+        write_s32le(f, self.interp_kind)
+
+        write_s32le(f, len(self.control_points))
+        for cp in self.control_points:
+            write_s32le(f, cp.offset[0])
+            write_s32le(f, cp.offset[1])
+
+            write_bool(f ,True)
+            write_s32le(f, cp.value[0])
+            write_s32le(f, cp.value[1])
+
+            write_s16le(f, len(cp.pp))
+            for pp in cp.pp:
+                write_s16le(f, pp.code)
+                write_s32le(f, pp.value[0])
+                write_s32le(f, pp.value[1])
+
+        write_u8(f, 0x03)
 
 @utils.register_class
 class Filler(Clip):
@@ -471,3 +583,10 @@ class Filler(Clip):
         read_assert_tag(f, 0x01)
 
         read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(Filler, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_u8(f, 0x03)
