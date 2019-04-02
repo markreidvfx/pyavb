@@ -88,7 +88,7 @@ class Component(core.AVBObject):
         write_object_ref(self.root, f, self.precomputed)
 
         if hasattr(self, 'param_list'):
-            wirte_u8(f, 0x01)
+            write_u8(f, 0x01)
             write_u8(f, 0x01)
             write_u8(f, 72)
             write_object_ref(self.root, f, self.param_list)

@@ -679,8 +679,8 @@ class Composition(TrackGroup):
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x02)
 
-        mob_id_hi = read_s32le(f)
         mob_id_lo = read_s32le(f)
+        mob_id_hi = read_s32le(f)
         self.last_modified = read_s32le(f)
 
         self.mob_type_id = read_u8(f)
@@ -694,7 +694,7 @@ class Composition(TrackGroup):
 
             if tag == 0x01:
                 read_assert_tag(f, 71)
-                self.creation_time = read_datetime(f)
+                self.creation_time = read_u32le(f)
                 self.mob_id = mobid.read_mob_id(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
@@ -702,11 +702,13 @@ class Composition(TrackGroup):
         read_assert_tag(f, 0x03)
 
     def write(self, f):
+        super(Composition, self).write(f)
         write_u8(f, 0x02)
         write_u8(f, 0x02)
 
-        write_s32le(f, self.mob_id.material.time_low)
+        lo = self.mob_id.material.time_low
         hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
+        write_s32le(f, lo)
         write_s32le(f, hi)
         write_s32le(f, self.last_modified)
 
@@ -718,8 +720,10 @@ class Composition(TrackGroup):
         write_u8(f, 0x01)
         write_u8(f, 71)
 
-        write_datetime(f, self.creation_time)
-        # mobid.write_mob_id(f, self.mob_id)
+        write_u32le(f, self.creation_time)
+        mobid.write_mob_id(f, self.mob_id)
+
+        write_u8(f, 0x03)
 
     @property
     def usage(self):
