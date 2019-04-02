@@ -11,6 +11,7 @@ import os
 import decimal
 from uuid import UUID
 from datetime import datetime
+import time
 from binascii import hexlify, unhexlify
 
 MAGIC=b'Domain'
@@ -153,6 +154,10 @@ def write_string(f, s, encoding = 'macroman'):
 
 def read_datetime(f):
     return datetime.utcfromtimestamp(read_u32le(f))
+
+def write_datetime(f, value):
+    unixtime = time.mktime(value.timetuple())
+    write_u32le(f, unixtime)
 
 def read_raw_uuid(f):
     return UUID(bytes_le=f.read(16))

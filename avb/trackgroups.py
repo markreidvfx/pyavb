@@ -24,7 +24,7 @@ from . utils import (
     read_doublele,
     read_exp10_encoded_float,
     read_object_ref, write_object_ref,
-    read_datetime,
+    read_datetime, write_datetime,
     iter_ext,
     read_assert_tag,
     peek_data
@@ -714,6 +714,12 @@ class Composition(TrackGroup):
         write_s32le(f, self.usage_code)
         write_object_ref(self.root, f, self.descriptor)
 
+        write_u8(f, 0x01)
+        write_u8(f, 0x01)
+        write_u8(f, 71)
+
+        write_datetime(f, self.creation_time)
+        # mobid.write_mob_id(f, self.mob_id)
 
     @property
     def usage(self):
