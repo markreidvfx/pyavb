@@ -4,7 +4,7 @@ from __future__ import (
     print_function,
     division,
     )
-
+import uuid
 from . import utils
 from . import core
 from .core import AVBPropertyDef, AVBPropertyData, AVBRefList
@@ -28,11 +28,12 @@ BOB_ATTR  = 4
 @utils.register_class
 class Attributes(AVBPropertyData):
     class_id = b'ATTR'
-    __slots__ = ('root', '__weakref__')
+    __slots__ = ('root', 'instance_id', '__weakref__')
 
     def __init__(self, root):
         super(Attributes, self).__init__()
         self.root = root
+        self.instance_id  = uuid.uuid4()
 
     def read(self, f):
         read_assert_tag(f, 0x02)
@@ -107,6 +108,9 @@ class ParameterList(AVBRefList):
 
         read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        pass
+
 @utils.register_class
 class TimeCrumbList(AVBRefList):
     class_id = b'TMCS'
@@ -122,3 +126,6 @@ class TimeCrumbList(AVBRefList):
             self.append(ref)
 
         read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        pass

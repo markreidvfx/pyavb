@@ -11,15 +11,15 @@ from .core import AVBPropertyDef, AVBRefList
 from . import mobid
 
 from . utils import (
-    read_u8,
+    read_u8,    write_u8,
     read_s8,
     read_bool,
     read_s16le,
     read_u16le,
     read_u32le,
-    read_s32le,
+    read_s32le,  write_s32le,
     read_u64le,
-    read_string,
+    read_string, write_string,
     read_doublele,
     read_exp10_encoded_float,
     read_object_ref,
@@ -447,6 +447,22 @@ class BinRef(core.AVBObject):
 
         read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        super(BinRef, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_s32le(f, self.uid_high)
+        write_s32le(f, self.uid_low)
+        write_string(f, self.name)
+
+        write_u8(f, 0x01)
+        write_u8(f, 0x01)
+        write_u8(f, 76)
+        write_string(f, self.name_utf8, 'utf-8')
+
+        write_u8(f, 0x03)
+
 @utils.register_class
 class MobRef(core.AVBObject):
     class_id = b'MCMR'
@@ -469,6 +485,23 @@ class MobRef(core.AVBObject):
 
         if self.class_id == b'MCMR':
             read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(MobRef, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        lo = self.mob_id.material.time_low
+        hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
+
+        write_s32le(f, lo)
+        write_s32le(f, hi)
+        write_s32le(f, self.position)
+
+        mobid.write_mob_id(f, self.mob_id)
+        
+        if self.class_id == b'MCMR':
+            write_u8(f, 0x03)
 
 # also called a TimeCrumb
 @utils.register_class

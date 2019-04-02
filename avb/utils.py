@@ -142,12 +142,16 @@ def read_string(f, encoding = 'macroman'):
         return ""
 
     s = f.read(size)
-    s = s.strip(b'\x00\x00')
+    s = s.strip()
     return s.decode(encoding)
 
 def write_string(f, s, encoding = 'macroman'):
     s = s or ""
     data = s.encode(encoding)
+
+    if encoding == 'utf-8':
+        data = b'\x00\x00' + data
+
     size = len(data)
     write_u16le(f, size)
     f.write(data)
@@ -161,6 +165,9 @@ def write_datetime(f, value):
 
 def read_raw_uuid(f):
     return UUID(bytes_le=f.read(16))
+
+def write_raw_uuid(f, value):
+    f.write(value.bytes_le)
 
 def read_assert_tag(f, version):
     version_mark = read_u8(f)
@@ -234,13 +241,13 @@ def read_object_ref(root, f):
 def write_object_ref(root, f, value):
     if value is None:
         index = 0
-    elif id(value) not in root.ref_mapping:
+    elif value.instance_id not in root.ref_mapping:
         root.next_chunk_id += 1
         index = root.next_chunk_id
-        root.ref_mapping[id(value)] = index
+        root.ref_mapping[value.instance_id] = index
         root.ref_stack.append(value)
     else:
-        index = root.ref_mapping[id(value)]
+        index = root.ref_mapping[value.instance_id]
 
     write_u32le(f, index)
 

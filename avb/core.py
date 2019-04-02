@@ -4,7 +4,7 @@ from __future__ import (
     print_function,
     division,
     )
-
+import uuid
 from . import utils
 
 class AVBPropertyDef(object):
@@ -41,10 +41,11 @@ class AVBPropertyData(dict):
         return self.deref(super(AVBPropertyData, self).get(*args, **kwargs))
 
 class AVBRefList(list):
-    __slots__ = ('root', '__weakref__')
+    __slots__ = ('root', 'instance_id', '__weakref__')
     def __init__(self, root):
         super(AVBRefList, self).__init__()
         self.root = root
+        self.instance_id = uuid.uuid4()
 
     def deref(self, value):
         if isinstance(value, utils.AVBObjectRef):
@@ -58,14 +59,14 @@ class AVBRefList(list):
         for value in super(AVBRefList, self).__iter__():
             yield self.deref(value)
 
-
 class AVBObject(object):
     propertydefs = []
-    __slots__ = ('root', 'property_data', '__weakref__')
+    __slots__ = ('root', 'property_data', 'instance_id', '__weakref__')
 
     def __init__(self, root):
         self.root = root
         self.property_data = AVBPropertyData()
+        self.instance_id = uuid.uuid4()
 
     def __setattr__(self, name, value):
         for item in self.propertydefs:

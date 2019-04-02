@@ -16,8 +16,8 @@ from . utils import (
     read_bool,
     read_s16le, write_s16le,
     read_u16le,
-    read_u32le,
-    read_s32le,
+    read_u32le, write_u32le,
+    read_s32le, write_s32le,
     read_string, write_string,
     read_doublele,
     read_exp10_encoded_float, write_exp10_encoded_float,
@@ -137,6 +137,17 @@ class Sequence(Component):
         tag = read_u8(f)
         assert tag == 0x03
 
+    def write(self, f):
+        super(Sequence, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x03)
+
+        write_u32le(f, len(self.components))
+        for c in self.components:
+            write_object_ref(self.root, f, c)
+
+        write_u8(f, 0x03)
+
     @property
     def length(self):
         l = 0
@@ -159,6 +170,12 @@ class Clip(Component):
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x01)
         self.length = read_u32le(f)
+
+    def write(self, f):
+        super(Clip, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+        write_u32le(f, self.length)
 
 @utils.register_class
 class SourceClip(Clip):
@@ -187,6 +204,24 @@ class SourceClip(Clip):
             self.mob_id = mobid.MobID()
 
         read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(SourceClip, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x03)
+
+        lo = self.mob_id.material.time_low
+        hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
+
+        write_s32le(f, lo)
+        write_s32le(f, hi)
+
+        write_s16le(f, self.track_id)
+        write_s32le(f, self.start_time)
+        mobid.write_mob_id(f, self.mob_id)
+
+        write_u8(f, 0x03)
+
 
 @utils.register_class
 class Timecode(Clip):

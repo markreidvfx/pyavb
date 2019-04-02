@@ -12,8 +12,8 @@ from . import utils
 from .core import AVBPropertyDef, AVBRefList
 
 from . utils import (
-    read_u8,
-    read_bool,
+    read_u8,     write_u8,
+    read_bool,   write_bool,
     read_s8,
     read_s16le,
     read_u16le,
@@ -22,11 +22,11 @@ from . utils import (
     read_s64le,
     read_u64le,
     read_string,
-    read_raw_uuid,
+    read_raw_uuid, write_raw_uuid,
     read_uuid,
     reverse_str,
     read_exp10_encoded_float,
-    read_object_ref,
+    read_object_ref, write_object_ref,
     read_datetime,
     iter_ext,
     read_assert_tag,
@@ -75,6 +75,32 @@ class MediaDescriptor(core.AVBObject):
 
         if self.class_id == b'MDES':
             read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(MediaDescriptor, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x03)
+
+        write_u8(f, self.mob_kind)
+        write_object_ref(self.root, f, self.locator)
+        write_bool(f, self.intermediate)
+        write_object_ref(self.root, f, self.physical_media)
+
+        if hasattr(self, 'uuid'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            write_u8(f, 65)
+            write_raw_uuid(f, self.uuid)
+
+        if hasattr(self, 'attributes'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x03)
+            write_u8(f, 72)
+            write_object_ref(self.root, f, self.attributes)
+
+        if self.class_id == b'MDES':
+            write_u8(f, 0x03)
+
 
 @utils.register_class
 class TapeDescriptor(MediaDescriptor):
