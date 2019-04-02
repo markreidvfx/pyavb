@@ -440,7 +440,7 @@ class ParamClip(Clip):
         write_s32le(f, self.interp_kind)
         write_s16le(f, self.value_type)
 
-        write_s32le(f, len(control_points))
+        write_s32le(f, len(self.control_points))
 
         for cp in self.control_points:
             write_s32le(f, cp.offset[0])
