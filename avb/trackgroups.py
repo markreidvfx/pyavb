@@ -142,6 +142,9 @@ class TrackGroup(Component):
             if has_tracks:
                 self.tracks[i].lock_number = lock
 
+    def write(self, f):
+        super(TrackGroup, self).write(f)
+
 @utils.register_class
 class TrackEffect(TrackGroup):
     class_id = b'TKFX'

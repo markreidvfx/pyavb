@@ -96,6 +96,9 @@ class AVBObject(object):
     def read(self, f):
         pass
 
+    def write(self, f):
+        pass
+
     def __repr__(self):
         s = "%s.%s"  % (self.__class__.__module__,
                                 self.__class__.__name__)

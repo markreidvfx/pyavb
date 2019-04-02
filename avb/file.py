@@ -16,10 +16,10 @@ from weakref import WeakValueDictionary
 # from . attributes import read_attributes
 from . import utils
 from .utils import (
-    read_string,
-    read_u32le,
-    read_fourcc,
-    read_u8,
+    read_string, write_string,
+    read_u32le, write_u32le,
+    read_fourcc, write_fourcc,
+    read_u8, write_u8,
     reverse_str,
 )
 
@@ -86,9 +86,8 @@ class AVBFile(object):
         # skip 4 bytes
         f.read(4)
 
-        file_type = read_fourcc(f)
-        creator = read_fourcc(f)
-        # print(file_type, creator)
+        self.file_type = read_fourcc(f)
+        self.creator = read_fourcc(f)
 
         self.creator_version = read_string(f)
 
@@ -108,6 +107,29 @@ class AVBFile(object):
             f.seek(size, os.SEEK_CUR)
 
         self.content = self.read_object(self.root_index)
+
+    def write_header(self, f):
+        f.write(utils.MAC_BYTES)
+        f.write(utils.MAGIC)
+
+        write_fourcc(f, b'OBJD')
+        write_string(f, u'AObjDoc')
+        write_u8(f, 0x04)
+        write_string(f, self.last_save)
+        pos = f.tell()
+        write_u32le(f, 0)
+        write_u32le(f, 0)
+        write_u32le(f, 0x49494949)
+        write_u32le(f, self.last_save_timestamp)
+        write_u32le(f, 0)
+
+        write_fourcc(f, self.file_type)
+        write_fourcc(f, self.creator)
+
+        write_string(f, self.creator_version)
+        f.write(bytearray(16))
+
+        return pos
 
     def read_chunk(self, index):
         if index == 0:
@@ -152,6 +174,28 @@ class AVBFile(object):
             print(chunk.class_id)
             print(chunk.hex())
             raise NotImplementedError(chunk.class_id)
+
+    def write_object(self, f, obj):
+        buffer = io.BytesIO()
+        obj.write(buffer)
+        data = buffer.getvalue()
+        write_fourcc(f, obj.class_id)
+        write_u32le(f, len(data))
+        f.write(data)
+
+    def write(self, path):
+        self.next_chunk_id = 0
+        self.ref_stack = []
+        self.ref_mapping = {}
+
+        with io.open(path, 'wb') as f:
+            count_pos = self.write_header(f)
+            for mob in self.content.mobs:
+                self.next_chunk_id += 1
+                self.ref_mapping[id(mob)] = self.next_chunk_id
+                self.write_object(f, mob)
+                while self.ref_stack:
+                    self.write_object(f, self.ref_stack.pop(0))
 
     def chunks(self):
         for i in range(len(self.object_positions)):

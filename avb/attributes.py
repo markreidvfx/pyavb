@@ -61,6 +61,9 @@ class Attributes(AVBPropertyData):
         self.update(result)
         read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        pass
+
 @utils.register_class
 class ParameterList(AVBRefList):
     class_id = b'PRLS'

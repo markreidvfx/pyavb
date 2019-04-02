@@ -220,11 +220,28 @@ def read_object_ref(root, f):
         return ref
     raise ValueError("bad index: %d" % index)
 
+def write_object_ref(root, f, value):
+    if value is None:
+        index = 0
+    elif id(value) not in root.ref_mapping:
+        root.next_chunk_id += 1
+        index = root.next_chunk_id
+        root.ref_mapping[id(value)] = index
+        root.ref_stack.append(value)
+    else:
+        index = root.ref_mapping[id(value)]
+
+    write_u32le(f, index)
+
 def read_exp10_encoded_float(f):
     mantissa = read_s32le(f)
     exp10 = read_s16le(f)
 
     return float(mantissa) * pow(10, exp10)
+
+def write_exp10_encoded_float(f, value):
+    write_s32le(f, 0)
+    write_s16le(f, 0)
 
 def read_rect(f):
     version = read_s16le(f)

@@ -11,17 +11,17 @@ from . import utils
 from . import mobid
 
 from . utils import (
-    read_u8,
+    read_u8, write_u8,
     read_s8,
     read_bool,
-    read_s16le,
+    read_s16le, write_s16le,
     read_u16le,
     read_u32le,
     read_s32le,
-    read_string,
+    read_string, write_string,
     read_doublele,
-    read_exp10_encoded_float,
-    read_object_ref,
+    read_exp10_encoded_float, write_exp10_encoded_float,
+    read_object_ref, write_object_ref,
     read_datetime,
     iter_ext,
     read_assert_tag,
@@ -71,6 +71,26 @@ class Component(core.AVBObject):
                 self.param_list = read_object_ref(self.root, f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
+
+    def write(self, f):
+        write_u8(f, 0x02)
+        write_u8(f, 0x03)
+        write_object_ref(self.root, f, self.left_bob)
+        write_object_ref(self.root, f, self.right_bob)
+        write_s16le(f, self.media_kind_id)
+
+        write_exp10_encoded_float(f, self.edit_rate)
+        write_string(f, self.name)
+        write_string(f, self.effect_id)
+
+        write_object_ref(self.root, f, self.attributes)
+        write_object_ref(self.root, f, self.session_attrs)
+        write_object_ref(self.root, f, self.precomputed)
+
+        if hasattr(self, 'param_list'):
+            write_u8(f, 0x01)
+            write_u8(f, 72)
+            write_object_ref(self.root, f, self.param_list)
 
     @property
     def media_kind(self):
