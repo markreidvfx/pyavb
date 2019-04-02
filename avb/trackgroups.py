@@ -13,15 +13,15 @@ from . import mobid
 
 from . utils import (
     read_u8, write_u8,
-    read_s8,
+    read_s8, write_s8,
     read_bool,  write_bool,
     read_s16le, write_s16le,
     read_u16le, write_u16le,
     read_u32le, write_u32le,
     read_s32le, write_s32le,
-    read_s64le,
-    read_string,
-    read_doublele,
+    read_s64le, write_s64le,
+    read_string, write_string,
+    read_doublele, write_doublele,
     read_exp10_encoded_float,
     read_object_ref, write_object_ref,
     read_datetime, write_datetime,
@@ -250,6 +250,35 @@ class TrackEffect(TrackGroup):
         if self.class_id is b'TKFX':
             read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        super(TrackEffect, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x06)
+
+        write_s32le(f, self.left_length)
+        write_s32le(f, self.right_length)
+
+        write_s16le(f, self.info_version)
+        write_s32le(f, self.info_current)
+        write_s32le(f, self.info_smooth)
+        write_s16le(f, self.info_color_item)
+        write_s16le(f, self.info_quality)
+        write_s8(f, self.info_is_reversed)
+        write_bool(f, self.info_aspect_on)
+
+        write_object_ref(self.root, f, self.keyframes)
+        write_bool(f, self.info_force_software)
+        write_bool(f, self.info_never_hardware)
+
+        if hasattr(self, 'trackman'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x02)
+            write_u8(f, 72)
+            write_object_ref(self.root, f, self.trackman)
+
+        if self.class_id is b'TKFX':
+            write_u8(f, 0x03)
+
 @utils.register_class
 class PanVolumeEffect(TrackEffect):
     class_id = b'PVOL'
@@ -287,6 +316,31 @@ class PanVolumeEffect(TrackEffect):
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(PanVolumeEffect, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x05)
+
+        write_s32le(f, self.level)
+        write_s32le(f, self.pan)
+
+        write_bool(f, self.suppress_validation)
+        write_bool(f, self.level_set)
+        write_bool(f, self.pan_set)
+
+        if hasattr(self, 'supports_seperate_gain'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            write_u8(f, 71)
+            write_s32le(f, self.supports_seperate_gain)
+        if hasattr(self, 'is_trim_gain_effect'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x02)
+            write_u8(f, 71)
+            write_s32le(f, self.is_trim_gain_effect)
+
+        write_u8(f, 0x03)
 
 class ASPIPlugin(core.AVBObject):
     propertydefs = [
@@ -435,6 +489,115 @@ class AudioSuitePluginEffect(TrackEffect):
 
         read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        super(AudioSuitePluginEffect, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_s32le(f, len(self.plugins))
+        for plugin in self.plugins:
+            write_string(f, plugin.name)
+            write_u32le(f, plugin.manufacturer_id)
+            write_u32le(f, plugin.product_id)
+            write_u32le(f, plugin.plugin_id)
+
+            # print(peek_data(f).encode("hex"))
+            num_of_chunks = read_s32le(f)
+
+            write_s32le(f, len(plugin.chunks))
+
+            for chunk in plugin.chunks:
+
+                write_s32le(f, len(chunk.data))
+
+                write_s32le(f, chunk.version)
+                write_u32le(f, chunk.manufacturer_id)
+                write_u32le(f, chunk.product_id)
+                write_u32le(f, chunk.plugin_id)
+
+                write_u32le(f, chunk.chunk_id)
+                write_string(f, chunk.name)
+
+                f.write(chunk.data)
+
+        if hasattr(self, 'mob_id'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+
+            mob_lo = self.mob_id.material.time_low
+            mob_hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
+            write_u8(f, 71)
+            write_s32le(f, mob_lo)
+            write_u8(f, 71)
+            write_s32le(f, mob_hi)
+
+        if hasattr(self, 'mark_in'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x02)
+            write_u8(f, 77)
+            write_s64le(f, self.mark_in)
+        if hasattr(self, 'mark_out'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x03)
+            write_u8(f, 77)
+            write_s64le(f, self.mark_out)
+        if hasattr(self, 'tracks_to_affect'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x04)
+            write_u8(f, 72)
+            write_s32le(f, self.tracks_to_affect)
+        if hasattr(self, 'rendering_mode'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x05)
+            write_u8(f, 71)
+            write_s32le(f, self.rendering_mode)
+        if hasattr(self, 'padding_secs'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x06)
+            write_u8(f, 71)
+            write_s32le(f, self.padding_secs)
+        if hasattr(self, 'mob_id'):
+            mod_id = self.mob_id
+            write_u8(f, 0x01)
+            write_u8(f, 0x08)
+
+            write_u8(f, 65)
+            write_s32le(f ,12) # length
+            for i in mob_id.SMPTELabel:
+                read_u8(f, i)
+
+            write_u8(f, 68)
+            write_u8(mob_id.length)
+            write_u8(f, 68)
+            write_u8(f, mob_id.instanceHigh)
+            write_u8(f, 68)
+            write_u8(f, mob_id.instanceMid)
+            write_u8(f, 68)
+            write_u8(f, mob_id.instanceLow)
+            write_u8(f, 72)
+            write_u32le(f, mob_id.Data1)
+            write_u8(f, 70)
+            write_u16le(f, mob_id.Data2)
+            write_u8(f, 70)
+            write_u16le(f, mob_id.Data3)
+            write_u8(f, 65)
+            write_s32le(f, 8)
+
+            for i in mob_id.Data4:
+                write_u8(f, i)
+
+        if hasattr(self, 'preset_path'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x09)
+            write_u8(f, 72)
+            # yes its twice for some reason
+            write_u32le(f, len(self.preset_path))
+            read_assert_tag(f, 65)
+            write_u32le(f, len(self.preset_path))
+            f.write(self.preset_path)
+
+        write_u8(f, 0x03)
+
 class EqualizerBand(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('type',   'OMFI:EQBD:AV:BandType',   'int32'),
@@ -478,6 +641,24 @@ class EqualizerMultiBand(TrackEffect):
 
         read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        super(EqualizerMultiBand, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x05)
+
+        write_s32le(f, len(self.bands))
+        for band in self.bands:
+            write_s32le(f, band.type)
+            write_s32le(f, band.freq)
+            write_s32le(f, band.gain)
+            write_s32le(f, band.q)
+            write_bool(f, band.enable)
+
+        write_bool(f, self.effect_enable)
+        write_string(f, self.filter_name)
+
+        write_u8(f, 0x03)
+
 class TimeWarp(TrackGroup):
     class_id = b'WARP'
     propertydefs = TrackGroup.propertydefs + [
@@ -490,6 +671,12 @@ class TimeWarp(TrackGroup):
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x02)
         self.phase_offset = read_s32le(f)
+
+    def write(self, f):
+        super(TimeWarp, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x02)
+        write_s32le(f, self.phase_offset)
 
 @utils.register_class
 class CaptureMask(TimeWarp):
@@ -509,6 +696,17 @@ class CaptureMask(TimeWarp):
         self.mask_bits = read_u32le(f)
 
         read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(CaptureMask, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_bool(f, self.is_double)
+        write_u32le(f, self.mask_bits)
+
+        write_u8(f, 0x03)
+
 
 @utils.register_class
 class MotionEffect(TimeWarp):
@@ -546,6 +744,32 @@ class MotionEffect(TimeWarp):
 
         read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        super(MotionEffect, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x03)
+
+        write_s32le(f, self.speed_ratio[0])
+        write_s32le(f, self.speed_ratio[1])
+
+        if hasattr(self, 'offset_adjust'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            write_u8(f, 75)
+            write_doublele(f, self.offset_adjust)
+        if hasattr(self, 'source_param_list'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x02)
+            write_u8(f, 72)
+            write_object_ref(self.root, f, self.source_param_list)
+        if hasattr(self, 'new_source_calculation'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x03)
+            write_u8(f, 66)
+            write_bool(f, self.new_source_calculation)
+
+        write_u8(f, 0x03)
+
 @utils.register_class
 class Repeat(TimeWarp):
     class_id = b'REPT'
@@ -557,6 +781,13 @@ class Repeat(TimeWarp):
         read_assert_tag(f, 0x01)
 
         read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(Repeat, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_u8(f, 0x03)
 
 @utils.register_class
 class EssenceGroup(TrackGroup):
@@ -579,6 +810,19 @@ class EssenceGroup(TrackGroup):
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(EssenceGroup, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        if hasattr(self, 'rep_set_type'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            write_u8(f, 71)
+            write_s32le(f, self.rep_set_type)
+
+        write_u8(f, 0x03)
 
 @utils.register_class
 class TransitionEffect(TrackGroup):
@@ -636,6 +880,40 @@ class TransitionEffect(TrackGroup):
 
         read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        super(TransitionEffect, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_s32le(f, self.cutpoint)
+
+        # the rest is the same as TKFX
+        write_u8(f, 0x02)
+        write_u8(f, 0x05)
+
+        write_s32le(f, self.left_length)
+        write_s32le(f, self.right_length)
+
+        write_s16le(f, self.info_version)
+        write_s32le(f, self.info_current)
+        write_s32le(f, self.info_smooth)
+        write_s16le(f, self.info_color_item)
+        write_s16le(f, self.info_quality)
+        write_s8(f, self.info_is_reversed)
+        write_bool(f, self.info_aspect_on)
+
+        write_object_ref(self.root, f, self.keyframes)
+        write_bool(f, self.info_force_software)
+        write_bool(f, self.info_never_hardware)
+
+        if hasattr(self, 'trackman'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            write_u8(f, 72)
+            write_object_ref(self.root, f, self.trackman)
+
+        write_u8(f, 0x03)
+
 @utils.register_class
 class Selector(TrackGroup):
     class_id = b'SLCT'
@@ -656,6 +934,16 @@ class Selector(TrackGroup):
         assert self.selected < len(self.tracks)
 
         read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(Selector, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_bool(f, self.is_ganged)
+        write_u16le(f, self.selected)
+
+        write_u8(f, 0x03)
 
     def components(self):
         for track in self.tracks:
