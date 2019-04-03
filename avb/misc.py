@@ -564,7 +564,7 @@ class Position(core.AVBObject):
 
         self.mob_id = mobid.read_mob_id(f)
 
-        if self.class_id ==  b'APOS':
+        if self.class_id[:] ==  b'APOS':
             read_assert_tag(f, 0x03)
 
     def write(self, f):
@@ -579,7 +579,7 @@ class Position(core.AVBObject):
 
         mobid.write_mob_id(f, self.mob_id)
 
-        if self.class_id ==  b'APOS':
+        if self.class_id[:] ==  b'APOS':
             write_u8(f, 0x03)
 
 @utils.register_class
@@ -604,7 +604,7 @@ class BOBPosition(Position):
         self.track_type = read_s16le(f)
         self.track_index = read_s16le(f)
 
-        if self.class_id ==  b'ABOB':
+        if self.class_id[:] ==  b'ABOB':
             read_assert_tag(f, 0x03)
 
     def write(self, f):
@@ -618,7 +618,7 @@ class BOBPosition(Position):
         write_s16le(f, self.track_type)
         write_s16le(f, self.track_index)
 
-        if self.class_id ==  b'ABOB':
+        if self.class_id[:] ==  b'ABOB':
             write_u8(f, 0x03)
 
 @utils.register_class
@@ -724,7 +724,7 @@ class MobRef(core.AVBObject):
 
         self.mob_id = mobid.read_mob_id(f)
 
-        if self.class_id == b'MCMR':
+        if self.class_id[:] == b'MCMR':
             read_assert_tag(f, 0x03)
 
     def write(self, f):
@@ -741,7 +741,7 @@ class MobRef(core.AVBObject):
 
         mobid.write_mob_id(f, self.mob_id)
 
-        if self.class_id == b'MCMR':
+        if self.class_id[:] == b'MCMR':
             write_u8(f, 0x03)
 
 # also called a TimeCrumb

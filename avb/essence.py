@@ -73,7 +73,7 @@ class MediaDescriptor(core.AVBObject):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        if self.class_id == b'MDES':
+        if self.class_id[:] == b'MDES':
             read_assert_tag(f, 0x03)
 
     def write(self, f):
@@ -99,7 +99,7 @@ class MediaDescriptor(core.AVBObject):
             write_u8(f, 72)
             write_object_ref(self.root, f, self.attributes)
 
-        if self.class_id == b'MDES':
+        if self.class_id[:] == b'MDES':
             write_u8(f, 0x03)
 
 
@@ -517,7 +517,7 @@ class DIDDescriptor(MediaFileDescriptor):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        if self.class_id == b'DIDD':
+        if self.class_id[:] == b'DIDD':
             read_assert_tag(f, 0x03)
 
     def write(self, f):
@@ -712,7 +712,7 @@ class DIDDescriptor(MediaFileDescriptor):
             write_u8(f, 66)
             write_bool(f, self.frame_checked_with_mapper)
 
-        if self.class_id == b'DIDD':
+        if self.class_id[:] == b'DIDD':
             write_u8(f, 0x03)
 
 @utils.register_class

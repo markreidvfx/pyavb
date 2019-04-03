@@ -173,6 +173,7 @@ class AVBFile(object):
             try:
                 r = io.BytesIO(data)
                 object_instance.read(r)
+                # print(len(r.read()))
                 assert len(r.read()) == 0
                 self.object_cache[index] = object_instance
                 return object_instance
@@ -191,7 +192,7 @@ class AVBFile(object):
         buffer = io.BytesIO()
         obj.write(buffer)
         data = buffer.getvalue()
-        assert bytearray(data[-1])[0] == 0x03
+        assert data[-1:] == b'\x03'
         write_fourcc(f, obj.class_id)
         write_u32le(f, len(data))
         f.write(data)

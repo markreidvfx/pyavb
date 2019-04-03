@@ -247,7 +247,7 @@ class TrackEffect(TrackGroup):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        if self.class_id is b'TKFX':
+        if self.class_id[:] == b'TKFX':
             read_assert_tag(f, 0x03)
 
     def write(self, f):
@@ -276,7 +276,7 @@ class TrackEffect(TrackGroup):
             write_u8(f, 72)
             write_object_ref(self.root, f, self.trackman)
 
-        if self.class_id is b'TKFX':
+        if self.class_id[:] == b'TKFX':
             write_u8(f, 0x03)
 
 @utils.register_class
