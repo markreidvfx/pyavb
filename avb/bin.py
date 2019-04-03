@@ -141,8 +141,8 @@ class BinViewSetting(Setting):
 
                 write_u8(f, 76)
                 #null bytes
-                write_s32le(f, 0)
-
+                write_s16le(f,  len(format_data) + 2)
+                write_s16le(f, 0)
                 f.write(format_data)
 
         write_u8(f, 0x03)
@@ -187,8 +187,8 @@ class Bin(core.AVBObject):
         AVBPropertyDef('background_color', 'BackColor',      'color'),
         AVBPropertyDef('forground_color',  'ForeColor',      'color'),
         AVBPropertyDef('ql_image_scale',   'QLImageScale',   'int16'),
-        AVBPropertyDef('was_iconic',       'WasIconic',      'bool'),
         AVBPropertyDef('attributes',       'BinAttr',        'reference'),
+        AVBPropertyDef('was_iconic',       'WasIconic',      'bool'),
     ]
     __slots__ = ('mob_dict')
 
@@ -256,9 +256,9 @@ class Bin(core.AVBObject):
         self.forground_color = utils.read_rgb_color(f)
 
         self.ql_image_scale = read_s16le(f)
-        self.was_iconic = read_bool(f)
 
         self.attributes = read_object_ref(self.root, f)
+        self.was_iconic = read_bool(f)
         read_assert_tag(f, 0x03)
 
     def write(self, f):
@@ -319,9 +319,8 @@ class Bin(core.AVBObject):
         utils.write_rgb_color(f, self.forground_color)
 
         write_s16le(f, self.ql_image_scale)
-        write_bool(f, self.was_iconic)
-
         write_object_ref(self.root, f, self.attributes)
+        write_bool(f, self.was_iconic)
         write_u8(f, 0x03)
 
     def build_mob_dict(self):

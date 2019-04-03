@@ -171,7 +171,9 @@ class AVBFile(object):
         if obj_class:
             object_instance = obj_class(self)
             try:
-                object_instance.read(io.BytesIO(data))
+                r = io.BytesIO(data)
+                object_instance.read(r)
+                assert len(r.read()) == 0
                 self.object_cache[index] = object_instance
                 return object_instance
             except:
@@ -217,9 +219,10 @@ class AVBFile(object):
                     self.write_object(f, self.ref_stack.pop(0))
 
             self.ref_mapping = mob_mapping
-            view_setting = self.content.view_setting
+            view_attributes = self.content.view_setting.attributes
             bin_attributes = self.content.attributes
-            for item in (view_setting, bin_attributes):
+            view_setting = self.content.view_setting
+            for item in (view_attributes, bin_attributes,view_setting):
                 if item is None:
                     continue
                 self.next_chunk_id += 1
