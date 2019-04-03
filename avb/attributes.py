@@ -31,7 +31,7 @@ if bytes is not str:
 @utils.register_class
 class Attributes(AVBPropertyData):
     class_id = b'ATTR'
-    __slots__ = ('root', 'instance_id', '__weakref__')
+    __slots__ = ('root', 'instance_id', )
 
     def __init__(self, root):
         super(Attributes, self).__init__()
@@ -43,26 +43,26 @@ class Attributes(AVBPropertyData):
         read_assert_tag(f, 0x01)
 
         count = read_u32le(f)
-        result = {}
+
 
         for i in range(count):
             attr_type = read_u32le(f)
             attr_name = read_string(f)
 
             if attr_type == INT_ATTR:
-                result[attr_name] = read_s32le(f)
+                self[attr_name] = read_s32le(f)
             elif attr_type == STR_ATTR:
-                result[attr_name] = read_string(f)
+                self[attr_name] = read_string(f)
             elif attr_type == OBJ_ATTR:
-                result[attr_name] = read_object_ref(self.root, f)
+                self[attr_name] = read_object_ref(self.root, f)
             elif attr_type == BOB_ATTR:
                 size = read_u32le(f)
-                result[attr_name] = bytearray(f.read(size))
+                self[attr_name] = bytearray(f.read(size))
             else:
                 raise Exception("Unkown attr name: %s type: %d" % ( attr_name, attr_type))
 
         # print("read", result)
-        self.update(result)
+
         read_assert_tag(f, 0x03)
 
     def write(self, f):
@@ -70,7 +70,7 @@ class Attributes(AVBPropertyData):
         write_u8(f, 0x01)
 
         write_u32le(f, len(self))
-        for key, value in sorted(self.items()):
+        for key, value in self.items():
             assert isinstance(key, unicode)
 
             if isinstance(value, int):

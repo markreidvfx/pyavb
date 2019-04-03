@@ -6,6 +6,7 @@ from __future__ import (
     )
 import uuid
 from . import utils
+from collections import OrderedDict
 
 class AVBPropertyDef(object):
     __slots__ = ('name', 'long_name', 'type')
@@ -23,7 +24,7 @@ class AVBPropertyDef(object):
 
         return '<%s at 0x%x>' % (s, id(self))
 
-class AVBPropertyData(dict):
+class AVBPropertyData(OrderedDict):
     __slots__ = ()
     def deref(self, value):
         if isinstance(value, utils.AVBObjectRef):
