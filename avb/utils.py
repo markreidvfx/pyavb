@@ -142,7 +142,7 @@ def read_string(f, encoding = 'macroman'):
         return ""
 
     s = f.read(size)
-    s = s.strip()
+    s = s.strip(b'\x00')
     return s.decode(encoding)
 
 def write_string(f, s, encoding = 'macroman'):
