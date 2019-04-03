@@ -92,7 +92,7 @@ class TrackGroup(Component):
         self.tracks = []
         # print("tracks:", track_count)
         # really annoying, tracks can have variable lengths!!
-        has_tracks = True
+
         for i in range(track_count):
             # print(peek_data(f).encode("hex"))
             track = Track(self.root)
@@ -133,14 +133,13 @@ class TrackGroup(Component):
 
             self.tracks.append(track)
 
-        read_assert_tag(f, 0x01)
-        read_assert_tag(f, 0x01)
-
-        for i in range(track_count):
-            read_assert_tag(f, 69)
-            lock = read_s16le(f)
-            if has_tracks:
-                self.tracks[i].lock_number = lock
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                for i in range(track_count):
+                    read_assert_tag(f, 69)
+                    self.tracks[i].lock_number =  read_s16le(f)
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
     def write(self, f):
         super(TrackGroup, self).write(f)
@@ -189,15 +188,16 @@ class TrackGroup(Component):
             if track.flags & TRACK_UNKNOWN_FLAGS:
                 raise ValueError("Unknown Track Flag: %d" % track.flags)
 
-        write_u8(f, 0x01)
-        write_u8(f, 0x01)
+        if self.tracks:
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
 
-        for i in range(len(self.tracks)):
-            write_u8(f, 69)
-            if hasattr(self.tracks[i], 'lock_number'):
-                write_s16le(f, self.tracks[i].lock_number)
-            else:
-                write_s16le(f, 0)
+            for i in range(len(self.tracks)):
+                write_u8(f, 69)
+                if hasattr(self.tracks[i], 'lock_number'):
+                    write_s16le(f, self.tracks[i].lock_number)
+                else:
+                    write_s16le(f, 0)
 
 
 @utils.register_class
