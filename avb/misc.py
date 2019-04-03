@@ -69,14 +69,16 @@ class FileLocator(core.AVBObject):
         if hasattr(self, 'path_posix'):
             write_u8(f, 0x01)
             write_u8(f, 0x01)
+            write_u8(f, 76)
             write_string(f, self.path_posix)
 
         if hasattr(self, 'path_utf8'):
             write_u8(f, 0x01)
             write_u8(f, 0x02)
+            write_u8(f, 76)
             write_string(f, self.path_utf8, encoding='utf-8')
 
-
+        write_u8(f, 0x03)
 
 @utils.register_class
 class MacFileLocator(FileLocator):

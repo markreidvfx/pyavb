@@ -559,8 +559,9 @@ class ControlClip(Clip):
         for cp in self.control_points:
             write_s32le(f, cp.offset[0])
             write_s32le(f, cp.offset[1])
+            write_s32le(f, cp.time_scale)
 
-            write_bool(f ,True)
+            write_bool(f, True)
             write_s32le(f, cp.value[0])
             write_s32le(f, cp.value[1])
 
