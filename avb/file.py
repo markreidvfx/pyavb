@@ -17,7 +17,7 @@ from weakref import WeakValueDictionary
 from . import utils
 from .utils import (
     read_string, write_string,
-    read_u32le, write_u32le,
+    read_u32le, write_u32le, write_u16le,
     read_fourcc, write_fourcc,
     read_u8, write_u8,
     reverse_str,
@@ -126,7 +126,17 @@ class AVBFile(object):
         write_fourcc(f, self.file_type)
         write_fourcc(f, self.creator)
 
-        write_string(f, self.creator_version)
+        # version =
+
+        s = f.tell()
+        v = self.creator_version.encode('macroman')
+        v = v[:30]
+        write_u16le(f, 30)
+        f.write(v)
+
+        # pad with 0x20
+        while f.tell() - s < 32:
+            write_u8(f, 0x20)
         f.write(bytearray(16))
 
         return pos
