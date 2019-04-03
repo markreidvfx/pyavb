@@ -11,15 +11,15 @@ from . import utils
 from . core import AVBPropertyDef
 
 from . utils import (
-    read_u8,
-    read_bool,
-    read_s16le,
-    read_u16le,
-    read_u32le,
-    read_s32le,
-    read_string,
+    read_u8,          write_u8,
+    read_bool,        write_bool,
+    read_s16le,       write_s16le,
+    read_u16le,       write_u16le,
+    read_u32le,       write_u32le,
+    read_s32le,       write_s32le,
+    read_string,      write_string,
+    read_object_ref,  write_object_ref,
     read_assert_tag,
-    read_object_ref,
     iter_ext,
     peek_data,
 )
@@ -47,6 +47,18 @@ class Setting(core.AVBObject):
         self.attr_type = read_s16le(f)
         self.attributes = read_object_ref(self.root, f)
 
+    def write(self, f):
+        super(Setting, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x06)
+
+        write_string(f, self.name)
+        write_string(f, self.kind)
+
+        write_s16le(f, self.attr_count)
+        write_s16le(f, self.attr_type)
+        write_object_ref(self.root, f, self.attributes)
+
 @utils.register_class
 class BinViewSetting(Setting):
     class_id = b'BVst'
@@ -70,7 +82,6 @@ class BinViewSetting(Setting):
             d['format'] = read_s16le(f)
             d['type'] = read_s16le(f)
             d['hidden'] = read_bool(f)
-            # print d
             self.columns.append(d)
 
         for tag in iter_ext(f):
@@ -101,6 +112,41 @@ class BinViewSetting(Setting):
 
         read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        super(BinViewSetting, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 10)
+        write_u16le(f, len(self.columns))
+
+        for d in self.columns:
+            write_string(f, d['title'])
+            write_s16le(f, d['format'])
+            write_s16le(f, d['type'])
+            write_bool(f, d['hidden'])
+
+
+        if hasattr(self, 'format_descriptors'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            write_u8(f, 69)
+            write_u16le(f, len(self.format_descriptors))
+
+            for d in self.format_descriptors:
+                write_u8(f, 69)
+                write_s16le(f, d['vcid_free_column_id'])
+
+                format_data =  d['format_descriptor'].encode('utf-8')
+                write_u8(f, 71)
+                write_s32le(f, len(format_data))
+
+                write_u8(f, 76)
+                #null bytes
+                write_s32le(f, 0)
+
+                f.write(format_data)
+
+        write_u8(f, 0x03)
+
 
 class BinItem(core.AVBObject):
 
@@ -112,17 +158,6 @@ class BinItem(core.AVBObject):
         AVBPropertyDef('user_placed', 'userPlaced',   'bool'),
     ]
     __slots__ = ()
-
-    def read(self, f):
-        self.mob = read_object_ref(self.root, f)
-        self.x = read_s16le(f)
-        self.y = read_s16le(f)
-        self.keyframe = read_s32le(f)
-        self.user_placed = read_u8(f)
-
-    # @property
-    # def ref(self):
-    #     return self.object_ref.value
 
 class SiftItem(core.AVBObject):
     propertydefs = [
@@ -181,7 +216,11 @@ class Bin(core.AVBObject):
 
         for i in range(object_count):
             bin_obj = BinItem(self.root)
-            bin_obj.read(f)
+            bin_obj.mob = read_object_ref(self.root, f)
+            bin_obj.x = read_s16le(f)
+            bin_obj.y = read_s16le(f)
+            bin_obj.keyframe = read_s32le(f)
+            bin_obj.user_placed = read_u8(f)
             self.items.append(bin_obj)
 
         self.display_mask = read_s32le(f)
@@ -221,6 +260,69 @@ class Bin(core.AVBObject):
 
         self.attributes = read_object_ref(self.root, f)
         read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(Bin, self).write(f)
+        write_u8(f, 0x02)
+
+        object_count = len(self.items)
+        #large bin size > max u16
+        if object_count > 0xffff:
+            write_u8(f,  0x0f)
+        else:
+            write_u8(f,  0x0e)
+
+
+        write_object_ref(self.root, f, self.view_setting)
+
+        write_u32le(f, self.uid_high)
+        write_u32le(f, self.uid_low)
+
+
+        #large bin size > max u16
+        if object_count > 0xffff:
+            write_u32le(f, object_count)
+        else:
+            write_u16le(f, object_count)
+
+        for bin_obj in self.items:
+             write_object_ref(self.root, f, bin_obj.mob)
+             write_s16le(f, bin_obj.x)
+             write_s16le(f, bin_obj.y)
+             write_s32le(f, bin_obj.keyframe)
+             write_u8(f, bin_obj.user_placed)
+
+        write_s32le(f, self.display_mask)
+        write_s16le(f, self.display_mode)
+        write_bool(f, self.sifted)
+
+        for i in range(6):
+            s = self.sifted_settings[i]
+            write_s16le(f, s.method)
+            write_string(f, s.string)
+            write_string(f, s.column)
+
+
+        write_s16le(f, len(self.sort_columns))
+
+        for col in self.sort_columns:
+            write_u8(f, col[0])
+            write_string(f, col[1])
+
+        write_s16le(f, self.mac_font)
+        write_s16le(f, self.mac_font_size)
+        write_s16le(f, self.mac_image_scale)
+
+        utils.write_rect(f, self.home_rect)
+
+        utils.write_rgb_color(f, self.background_color)
+        utils.write_rgb_color(f, self.forground_color)
+
+        write_s16le(f, self.ql_image_scale)
+        write_bool(f, self.was_iconic)
+
+        write_object_ref(self.root, f, self.attributes)
+        write_u8(f, 0x03)
 
     def build_mob_dict(self):
         self.mob_dict = {}

@@ -190,12 +190,42 @@ class AVBFile(object):
 
         with io.open(path, 'wb') as f:
             count_pos = self.write_header(f)
+            mob_mapping = {}
+
+            # hold onto references to mobs so they don't get deallocated
+            ref_list = []
+
             for mob in self.content.mobs:
                 self.next_chunk_id += 1
-                self.ref_mapping[id(mob)] = self.next_chunk_id
+                self.ref_mapping[mob.instance_id] = self.next_chunk_id
+                mob_mapping[mob.instance_id] =  self.next_chunk_id
+                ref_list.append(mob)
+
                 self.write_object(f, mob)
                 while self.ref_stack:
                     self.write_object(f, self.ref_stack.pop(0))
+
+            self.ref_mapping = mob_mapping
+            view_setting = self.content.view_setting
+            bin_attributes = self.content.attributes
+            for item in (view_setting, bin_attributes):
+                if item is None:
+                    continue
+                self.next_chunk_id += 1
+                self.ref_mapping[item.instance_id] = self.next_chunk_id
+                self.write_object(f, item)
+                while self.ref_stack:
+                    self.write_object(f, self.ref_stack.pop(0))
+
+            self.next_chunk_id += 1
+            self.write_object(f, self.content)
+            assert len(self.ref_stack) == 0
+
+            pos = f.tell()
+            f.seek(count_pos)
+            write_u32le(f, self.next_chunk_id)
+            write_u32le(f, self.next_chunk_id)
+            f.seek(pos)
 
     def chunks(self):
         for i in range(len(self.object_positions)):

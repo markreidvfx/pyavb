@@ -282,6 +282,13 @@ def read_rect(f):
 
     return [a,b,c,d]
 
+def write_rect(f, v):
+    write_s16le(f, 1)
+    write_s16le(f, v[0])
+    write_s16le(f, v[1])
+    write_s16le(f, v[2])
+    write_s16le(f, v[3])
+
 def read_rgb_color(f):
     version = read_s16le(f)
     assert version == 1
@@ -290,6 +297,12 @@ def read_rgb_color(f):
     b = read_u16le(f)
 
     return [r,g,b]
+
+def write_rgb_color(f, v):
+    write_s16le(f, 1)
+    write_u16le(f, v[0])
+    write_u16le(f, v[1])
+    write_u16le(f, v[2])
 
 def iter_ext(f):
     while True:
