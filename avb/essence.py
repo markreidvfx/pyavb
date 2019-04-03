@@ -90,6 +90,7 @@ class MediaDescriptor(core.AVBObject):
             write_u8(f, 0x01)
             write_u8(f, 0x01)
             write_u8(f, 65)
+            write_s32le(f, 16)
             write_raw_uuid(f, self.uuid)
 
         if hasattr(self, 'attributes'):

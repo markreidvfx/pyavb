@@ -440,8 +440,8 @@ class MSMLocator(core.AVBObject):
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x02)
 
-        mob_id_hi = read_s32le(f)
-        mob_id_lo = read_s32le(f)
+        mob_id_hi = read_u32le(f)
+        mob_id_lo = read_u32le(f)
 
         self.last_known_volume = read_string(f)
 
@@ -491,8 +491,8 @@ class MSMLocator(core.AVBObject):
 
         lo = self.mob_id.material.time_low
         hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
-        write_s32le(f, lo)
-        write_s32le(f, hi)
+        write_u32le(f, lo)
+        write_u32le(f, hi)
 
         write_string(f, self.last_known_volume)
 
@@ -559,8 +559,8 @@ class Position(core.AVBObject):
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x01)
 
-        mob_id_hi = read_s32le(f)
-        mob_id_lo = read_s32le(f)
+        mob_id_hi = read_u32le(f)
+        mob_id_lo = read_u32le(f)
 
         self.mob_id = mobid.read_mob_id(f)
 
@@ -574,8 +574,8 @@ class Position(core.AVBObject):
 
         lo = self.mob_id.material.time_low
         hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
-        write_s32le(f, lo)
-        write_s32le(f, hi)
+        write_u32le(f, lo)
+        write_u32le(f, hi)
 
         mobid.write_mob_id(f, self.mob_id)
 
@@ -718,8 +718,8 @@ class MobRef(core.AVBObject):
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x01)
 
-        mob_hi = read_s32le(f)
-        mob_lo = read_s32le(f)
+        mob_hi = read_u32le(f)
+        mob_lo = read_u32le(f)
         self.position = read_s32le(f)
 
         self.mob_id = mobid.read_mob_id(f)
@@ -735,8 +735,8 @@ class MobRef(core.AVBObject):
         lo = self.mob_id.material.time_low
         hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
 
-        write_s32le(f, lo)
-        write_s32le(f, hi)
+        write_u32le(f, lo)
+        write_u32le(f, hi)
         write_s32le(f, self.position)
 
         mobid.write_mob_id(f, self.mob_id)
@@ -794,13 +794,13 @@ class Marker(MobRef):
         write_object_ref(self.root, f, self.attributes)
 
         #version
-        read_s16le(f, 1)
+        write_s16le(f, 1)
 
-        for c in slef.color:
+        for c in self.color:
             write_u16le(f, c)
 
         if hasattr(self, 'handled_codes'):
-            write_u8(f, 0x02)
+            write_u8(f, 0x01)
             write_u8(f, 0x01)
             write_u8(f, 66)
             write_bool(f ,self.handled_codes)
@@ -917,7 +917,7 @@ class TrackerParameterSlot(core.AVBObject):
         write_s16le(f, len(self.settings))
         f.write(self.settings)
 
-        write_s16le(f, len(self.params))
+        write_s32le(f, len(self.params))
         for p in self.params:
             write_object_ref(self.root, f, p)
 

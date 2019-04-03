@@ -192,8 +192,8 @@ class SourceClip(Clip):
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x03)
 
-        mob_id_hi = read_s32le(f)
-        mob_id_lo = read_s32le(f)
+        mob_id_hi = read_u32le(f)
+        mob_id_lo = read_u32le(f)
 
         self.track_id = read_s16le(f)
         self.start_time = read_s32le(f)
@@ -213,8 +213,8 @@ class SourceClip(Clip):
         lo = self.mob_id.material.time_low
         hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
 
-        write_s32le(f, lo)
-        write_s32le(f, hi)
+        write_u32le(f, lo)
+        write_u32le(f, hi)
 
         write_s16le(f, self.track_id)
         write_s32le(f, self.start_time)
@@ -457,8 +457,8 @@ class ParamClip(Clip):
             write_s16le(f, len(cp.pp))
             for pp in cp.pp:
 
-                write_s16le(pp.code)
-                write_s16le(pp.type)
+                write_s16le(f, pp.code)
+                write_s16le(f, pp.type)
 
                 if pp.type == CP_TYPE_DOUBLE:
                     write_doublele(f, pp.value)

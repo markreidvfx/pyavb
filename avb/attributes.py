@@ -25,6 +25,9 @@ STR_ATTR  = 2
 OBJ_ATTR  = 3
 BOB_ATTR  = 4
 
+if bytes is not str:
+    unicode = str
+
 @utils.register_class
 class Attributes(AVBPropertyData):
     class_id = b'ATTR'
@@ -54,7 +57,7 @@ class Attributes(AVBPropertyData):
                 result[attr_name] = read_object_ref(self.root, f)
             elif attr_type == BOB_ATTR:
                 size = read_u32le(f)
-                result[attr_name] = f.read(size)
+                result[attr_name] = bytearray(f.read(size))
             else:
                 raise Exception("Unkown attr name: %s type: %d" % ( attr_name, attr_type))
 
@@ -68,12 +71,16 @@ class Attributes(AVBPropertyData):
 
         write_u32le(f, len(self))
         for key, value in sorted(self.items()):
+            assert isinstance(key, unicode)
+
             if isinstance(value, int):
                 attr_type = INT_ATTR
-            elif isinstance(value, (str, unicode)):
+            elif isinstance(value, unicode):
                 attr_type = STR_ATTR
-            elif isinstance(value, bytes):
+            elif isinstance(value, bytearray):
                 attr_type = BOB_ATTR
+            elif isinstance(value, bytes):
+                raise ValueError("%s: bytes value type too ambiguous, use bytearray or unicode str" % key)
             else:
                 # assume its AVBObject for now and hope for the best :p
                 attr_type = OBJ_ATTR
@@ -138,7 +145,7 @@ class TimeCrumbList(AVBRefList):
         write_u8(f, 0x02)
         write_u8(f, 0x01)
 
-        write_s32le(f, len(self))
+        write_s16le(f, len(self))
         for obj in self:
             write_object_ref(self.root, f, obj)
 

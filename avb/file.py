@@ -179,6 +179,7 @@ class AVBFile(object):
         buffer = io.BytesIO()
         obj.write(buffer)
         data = buffer.getvalue()
+        assert bytearray(data[-1])[0] == 0x03
         write_fourcc(f, obj.class_id)
         write_u32le(f, len(data))
         f.write(data)

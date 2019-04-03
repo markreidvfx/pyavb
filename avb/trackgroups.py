@@ -501,9 +501,6 @@ class AudioSuitePluginEffect(TrackEffect):
             write_u32le(f, plugin.product_id)
             write_u32le(f, plugin.plugin_id)
 
-            # print(peek_data(f).encode("hex"))
-            num_of_chunks = read_s32le(f)
-
             write_s32le(f, len(plugin.chunks))
 
             for chunk in plugin.chunks:
@@ -557,17 +554,17 @@ class AudioSuitePluginEffect(TrackEffect):
             write_u8(f, 71)
             write_s32le(f, self.padding_secs)
         if hasattr(self, 'mob_id'):
-            mod_id = self.mob_id
+            mob_id = self.mob_id
             write_u8(f, 0x01)
             write_u8(f, 0x08)
 
             write_u8(f, 65)
             write_s32le(f ,12) # length
-            for i in mob_id.SMPTELabel:
-                read_u8(f, i)
+            for i in range(12):
+                write_u8(f, mob_id.SMPTELabel[i])
 
             write_u8(f, 68)
-            write_u8(mob_id.length)
+            write_u8(f, mob_id.length)
             write_u8(f, 68)
             write_u8(f, mob_id.instanceHigh)
             write_u8(f, 68)
@@ -582,9 +579,8 @@ class AudioSuitePluginEffect(TrackEffect):
             write_u16le(f, mob_id.Data3)
             write_u8(f, 65)
             write_s32le(f, 8)
-
-            for i in mob_id.Data4:
-                write_u8(f, i)
+            for i in range(8):
+                write_u8(f,  mob_id.Data4[i])
 
         if hasattr(self, 'preset_path'):
             write_u8(f, 0x01)
@@ -592,7 +588,7 @@ class AudioSuitePluginEffect(TrackEffect):
             write_u8(f, 72)
             # yes its twice for some reason
             write_u32le(f, len(self.preset_path))
-            read_assert_tag(f, 65)
+            write_u8(f, 65)
             write_u32le(f, len(self.preset_path))
             f.write(self.preset_path)
 
@@ -967,8 +963,8 @@ class Composition(TrackGroup):
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x02)
 
-        mob_id_lo = read_s32le(f)
-        mob_id_hi = read_s32le(f)
+        mob_id_lo = read_u32le(f)
+        mob_id_hi = read_u32le(f)
         self.last_modified = read_s32le(f)
 
         self.mob_type_id = read_u8(f)
@@ -996,8 +992,8 @@ class Composition(TrackGroup):
 
         lo = self.mob_id.material.time_low
         hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
-        write_s32le(f, lo)
-        write_s32le(f, hi)
+        write_u32le(f, lo)
+        write_u32le(f, hi)
         write_s32le(f, self.last_modified)
 
         write_u8(f, self.mob_type_id)
