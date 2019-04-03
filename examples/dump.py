@@ -31,7 +31,7 @@ def dump(obj, space=""):
             propertie_keys.append(key)
 
     elif isinstance(obj, dict):
-        propertie_keys = obj.keys()
+        propertie_keys = list(obj.keys())
         propertie_keys.sort()
         property_data = obj
     else:
