@@ -481,6 +481,69 @@ class MSMLocator(core.AVBObject):
 
         read_assert_tag(f, 0x03)
 
+    def write(self, f):
+        super(MSMLocator, self).write(f)
+        # print(peek_data(f).encode('hex'))
+        write_u8(f, 0x02)
+        write_u8(f, 0x02)
+
+        lo = self.mob_id.material.time_low
+        hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
+        write_s32le(f, lo)
+        write_s32le(f, hi)
+
+        write_string(f, self.last_known_volume)
+
+        if hasattr(self, 'domain_type'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            write_u8(f, 71)
+            write_s32le(f, self.domain_type)
+
+        if hasattr(self, 'mob_id'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x02)
+            mob_id = self.mob_id
+
+            write_u8(f, 65)
+            write_s32le(f, 12)
+            for i in mob_id.SMPTELabel:
+                write_u8(f, i)
+
+            write_u8(f, 68)
+            write_u8(f, mob_id.length)
+
+            write_u8(f, 68)
+            write_u8(f, mob_id.instanceHigh)
+
+            write_u8(f, 68)
+            write_u8(f, mob_id.instanceMid)
+
+            write_u8(f, 68)
+            write_u8(f, mob_id.instanceLow)
+
+            write_u8(f, 72)
+            write_u32le(f, mob_id.Data1)
+
+            write_u8(f, 70)
+            write_u16le(f, mob_id.Data2)
+
+            write_u8(f, 70)
+            write_u16le(f, mob_id.Data3)
+
+            write_u8(f, 65)
+            write_s32le(f, 8)
+            for i in mob_id.Data4:
+                write_u8(f, i)
+
+        if hasattr(self, 'last_known_volume_utf8'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x03)
+            write_u8(f, 76)
+            write_string(f, self.last_known_volume_utf8, 'utf-8')
+
+        write_u8(f, 0x03)
+
 @utils.register_class
 class Position(core.AVBObject):
     class_id = b'APOS'
