@@ -474,11 +474,6 @@ class MobID(object):
 
 def read_mob_id(f):
     m = MobID()
-
-    read_assert_tag(f, 0x01)
-    version = read_u8(f)
-    assert version in (0x02, 0x01)
-
     read_assert_tag(f, 65)
     smpte_label_len = read_s32le(f)
     assert smpte_label_len == 12
@@ -501,9 +496,6 @@ def read_mob_id(f):
     return m
 
 def write_mob_id(f, m):
-
-    write_u8(f, 0x01)
-    write_u8(f, 0x02)
 
     write_u8(f, 65)
     write_s32le(f, 12)

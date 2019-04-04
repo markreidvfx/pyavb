@@ -979,6 +979,7 @@ class Composition(TrackGroup):
             if tag == 0x01:
                 read_assert_tag(f, 71)
                 self.creation_time = read_u32le(f)
+            elif tag == 0x02:
                 self.mob_id = mobid.read_mob_id(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
@@ -1005,6 +1006,9 @@ class Composition(TrackGroup):
         write_u8(f, 71)
 
         write_u32le(f, self.creation_time)
+
+        write_u8(f, 0x01)
+        write_u8(f, 0x02)
         mobid.write_mob_id(f, self.mob_id)
 
         write_u8(f, 0x03)

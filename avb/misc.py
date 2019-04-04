@@ -562,7 +562,11 @@ class Position(core.AVBObject):
         mob_id_hi = read_u32le(f)
         mob_id_lo = read_u32le(f)
 
-        self.mob_id = mobid.read_mob_id(f)
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                self.mob_id = mobid.read_mob_id(f)
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         if self.class_id[:] ==  b'APOS':
             read_assert_tag(f, 0x03)
@@ -577,6 +581,8 @@ class Position(core.AVBObject):
         write_u32le(f, lo)
         write_u32le(f, hi)
 
+        write_u8(f, 0x01)
+        write_u8(f, 0x01)
         mobid.write_mob_id(f, self.mob_id)
 
         if self.class_id[:] ==  b'APOS':
@@ -722,7 +728,11 @@ class MobRef(core.AVBObject):
         mob_lo = read_u32le(f)
         self.position = read_s32le(f)
 
-        self.mob_id = mobid.read_mob_id(f)
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                self.mob_id = mobid.read_mob_id(f)
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         if self.class_id[:] == b'MCMR':
             read_assert_tag(f, 0x03)
@@ -739,6 +749,8 @@ class MobRef(core.AVBObject):
         write_u32le(f, hi)
         write_s32le(f, self.position)
 
+        write_u8(f, 0x01)
+        write_u8(f, 0x01)
         mobid.write_mob_id(f, self.mob_id)
 
         if self.class_id[:] == b'MCMR':

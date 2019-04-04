@@ -197,7 +197,12 @@ class SourceClip(Clip):
 
         self.track_id = read_s16le(f)
         self.start_time = read_s32le(f)
-        self.mob_id = mobid.read_mob_id(f)
+
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                self.mob_id = mobid.read_mob_id(f)
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         # null mobid
         if mob_id_hi == 0 and mob_id_lo == 0:
@@ -218,6 +223,9 @@ class SourceClip(Clip):
 
         write_s16le(f, self.track_id)
         write_s32le(f, self.start_time)
+
+        write_u8(f, 0x01)
+        write_u8(f, 0x01)
         mobid.write_mob_id(f, self.mob_id)
 
         write_u8(f, 0x03)
