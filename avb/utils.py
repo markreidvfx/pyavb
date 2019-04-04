@@ -146,7 +146,11 @@ def read_string(f, encoding = 'macroman'):
     return s.decode(encoding)
 
 def write_string(f, s, encoding = 'macroman'):
-    s = s or ""
+    s = s or b""
+    if s == b"":
+        write_u16le(f, 0xFFFF)
+        return
+
     data = s.encode(encoding)
 
     if encoding == 'utf-8':
