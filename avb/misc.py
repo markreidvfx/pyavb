@@ -451,30 +451,7 @@ class MSMLocator(core.AVBObject):
                 read_assert_tag(f, 71)
                 self.domain_type = read_s32le(f)
             elif tag == 0x02:
-                mob_id = mobid.MobID()
-                read_assert_tag(f, 65)
-                length = read_s32le(f)
-                assert length == 12
-                mob_id.SMPTELabel = [read_u8(f) for i in range(12)]
-                read_assert_tag(f, 68)
-                mob_id.length = read_u8(f)
-                read_assert_tag(f, 68)
-                mob_id.instanceHigh = read_u8(f)
-                read_assert_tag(f, 68)
-                mob_id.instanceMid = read_u8(f)
-                read_assert_tag(f, 68)
-                mob_id.instanceLow = read_u8(f)
-                read_assert_tag(f, 72)
-                mob_id.Data1 = read_u32le(f)
-                read_assert_tag(f, 70)
-                mob_id.Data2 = read_u16le(f)
-                read_assert_tag(f, 70)
-                mob_id.Data3 = read_u16le(f)
-                read_assert_tag(f, 65)
-                length = read_s32le(f)
-                assert length == 8
-                mob_id.Data4 = [read_u8(f) for i in range(8)]
-                self.mob_id = mob_id
+                self.mob_id = mobid.read_mob_id(f)
             elif tag == 0x03:
                 read_assert_tag(f, 76)
                 self.last_known_volume_utf8 = read_string(f, 'utf-8')
@@ -505,38 +482,7 @@ class MSMLocator(core.AVBObject):
         if hasattr(self, 'mob_id'):
             write_u8(f, 0x01)
             write_u8(f, 0x02)
-            mob_id = self.mob_id
-
-            write_u8(f, 65)
-            write_s32le(f, 12)
-            for i in mob_id.SMPTELabel:
-                write_u8(f, i)
-
-            write_u8(f, 68)
-            write_u8(f, mob_id.length)
-
-            write_u8(f, 68)
-            write_u8(f, mob_id.instanceHigh)
-
-            write_u8(f, 68)
-            write_u8(f, mob_id.instanceMid)
-
-            write_u8(f, 68)
-            write_u8(f, mob_id.instanceLow)
-
-            write_u8(f, 72)
-            write_u32le(f, mob_id.Data1)
-
-            write_u8(f, 70)
-            write_u16le(f, mob_id.Data2)
-
-            write_u8(f, 70)
-            write_u16le(f, mob_id.Data3)
-
-            write_u8(f, 65)
-            write_s32le(f, 8)
-            for i in mob_id.Data4:
-                write_u8(f, i)
+            mobid.write_mob_id(f, self.mob_id)
 
         if hasattr(self, 'last_known_volume_utf8'):
             write_u8(f, 0x01)
