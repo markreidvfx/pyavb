@@ -813,6 +813,7 @@ def encode_pixel_layout(layout):
         else:
             write_u8(pixel_layout, 0)
             write_u8(pixel_struct, 0)
+            break
 
     return pixel_layout.getvalue(), pixel_struct.getvalue()
 
