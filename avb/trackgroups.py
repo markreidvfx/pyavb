@@ -531,6 +531,8 @@ class AudioSuitePluginEffect(TrackEffect):
             write_u8(f, 71)
             write_s32le(f, self.padding_secs)
         if hasattr(self, 'mob_id'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x08)
             mobid.write_mob_id(f, self.mob_id)
         if hasattr(self, 'preset_path'):
             write_u8(f, 0x01)
@@ -922,7 +924,6 @@ class Composition(TrackGroup):
         self.descriptor = read_object_ref(self.root, f)
 
         self.creation_time = None
-        self.mob_id = None
 
         for tag in iter_ext(f):
 
@@ -951,15 +952,16 @@ class Composition(TrackGroup):
         write_s32le(f, self.usage_code)
         write_object_ref(self.root, f, self.descriptor)
 
-        write_u8(f, 0x01)
-        write_u8(f, 0x01)
-        write_u8(f, 71)
+        if hasattr(self, 'creation_time'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            write_u8(f, 71)
+            write_u32le(f, self.creation_time)
 
-        write_u32le(f, self.creation_time)
-
-        write_u8(f, 0x01)
-        write_u8(f, 0x02)
-        mobid.write_mob_id(f, self.mob_id)
+        if hasattr(self, 'mob_id'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x02)
+            mobid.write_mob_id(f, self.mob_id)
 
         write_u8(f, 0x03)
 

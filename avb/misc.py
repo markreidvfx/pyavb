@@ -527,9 +527,10 @@ class Position(core.AVBObject):
         write_u32le(f, lo)
         write_u32le(f, hi)
 
-        write_u8(f, 0x01)
-        write_u8(f, 0x01)
-        mobid.write_mob_id(f, self.mob_id)
+        if hasattr(self, 'mob_id'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            mobid.write_mob_id(f, self.mob_id)
 
         if self.class_id[:] ==  b'APOS':
             write_u8(f, 0x03)
@@ -695,9 +696,10 @@ class MobRef(core.AVBObject):
         write_u32le(f, hi)
         write_s32le(f, self.position)
 
-        write_u8(f, 0x01)
-        write_u8(f, 0x01)
-        mobid.write_mob_id(f, self.mob_id)
+        if hasattr(self, 'mob_id'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            mobid.write_mob_id(f, self.mob_id)
 
         if self.class_id[:] == b'MCMR':
             write_u8(f, 0x03)

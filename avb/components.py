@@ -204,10 +204,6 @@ class SourceClip(Clip):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        # null mobid
-        if mob_id_hi == 0 and mob_id_lo == 0:
-            self.mob_id = mobid.MobID()
-
         read_assert_tag(f, 0x03)
 
     def write(self, f):
@@ -224,9 +220,10 @@ class SourceClip(Clip):
         write_s16le(f, self.track_id)
         write_s32le(f, self.start_time)
 
-        write_u8(f, 0x01)
-        write_u8(f, 0x01)
-        mobid.write_mob_id(f, self.mob_id)
+        if hasattr(self, 'mob_id'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            mobid.write_mob_id(f, self.mob_id)
 
         write_u8(f, 0x03)
 
