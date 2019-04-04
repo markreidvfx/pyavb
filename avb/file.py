@@ -176,6 +176,7 @@ class AVBFile(object):
                 # print(len(r.read()))
                 assert len(r.read()) == 0
                 self.object_cache[index] = object_instance
+                object_instance.instance_id = index
                 return object_instance
             except:
                 print(chunk.class_id)

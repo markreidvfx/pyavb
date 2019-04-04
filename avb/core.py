@@ -4,7 +4,7 @@ from __future__ import (
     print_function,
     division,
     )
-import uuid
+
 from . import utils
 from collections import OrderedDict
 
@@ -46,7 +46,6 @@ class AVBRefList(list):
     def __init__(self, root):
         super(AVBRefList, self).__init__()
         self.root = root
-        self.instance_id = uuid.uuid4()
 
     def deref(self, value):
         if isinstance(value, utils.AVBObjectRef):
@@ -67,7 +66,6 @@ class AVBObject(object):
     def __init__(self, root):
         self.root = root
         self.property_data = AVBPropertyData()
-        self.instance_id = uuid.uuid4()
 
     def __setattr__(self, name, value):
         for item in self.propertydefs:

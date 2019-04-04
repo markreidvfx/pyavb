@@ -4,7 +4,7 @@ from __future__ import (
     print_function,
     division,
     )
-import uuid
+
 from . import utils
 from . import core
 from .core import AVBPropertyDef, AVBPropertyData, AVBRefList
@@ -36,7 +36,6 @@ class Attributes(AVBPropertyData):
     def __init__(self, root):
         super(Attributes, self).__init__()
         self.root = root
-        self.instance_id  = uuid.uuid4()
 
     def read(self, f):
         read_assert_tag(f, 0x02)
