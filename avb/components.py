@@ -134,8 +134,7 @@ class Sequence(Component):
             # print ref
             self.components.append(ref)
 
-        tag = read_u8(f)
-        assert tag == 0x03
+        read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(Sequence, self).write(f)
