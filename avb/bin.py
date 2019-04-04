@@ -171,6 +171,7 @@ class SiftItem(core.AVBObject):
 class Bin(core.AVBObject):
     class_id = b'ABIN'
     propertydefs = [
+        AVBPropertyDef('large_bin',         'large_bin',      'bool'), #custom
         AVBPropertyDef('view_setting',   'binviewsetting', 'reference'),
         AVBPropertyDef('uid_high',         'binuid.high',    'uint32'),
         AVBPropertyDef('uid_low',          'binuid.low',     'uint32'),
@@ -198,6 +199,10 @@ class Bin(core.AVBObject):
 
         version = read_u8(f)
         assert version in (0x0e, 0x0f)
+        if version ==  0x0f:
+            self.large_bin = True
+        else:
+            self.large_bin = False
 
         self.view_setting = read_object_ref(self.root, f)
 
@@ -267,7 +272,7 @@ class Bin(core.AVBObject):
 
         object_count = len(self.items)
         #large bin size > max u16
-        if object_count > 0xffff:
+        if self.large_bin or object_count > 0xffff:
             write_u8(f,  0x0f)
         else:
             write_u8(f,  0x0e)
@@ -280,7 +285,7 @@ class Bin(core.AVBObject):
 
 
         #large bin size > max u16
-        if object_count > 0xffff:
+        if self.large_bin or object_count > 0xffff:
             write_u32le(f, object_count)
         else:
             write_u16le(f, object_count)
