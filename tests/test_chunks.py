@@ -150,5 +150,8 @@ class TestChuckDB(unittest.TestCase):
         for chunk_path in iter_chunks("BVst"):
             decode_chunk(chunk_path)
 
+    def test_wave_chunks(self):
+        for chunk_path in iter_chunks("WAVE"):
+            decode_chunk(chunk_path)
 if __name__ == "__main__":
     unittest.main()
