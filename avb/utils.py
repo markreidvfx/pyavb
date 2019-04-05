@@ -248,10 +248,7 @@ def write_object_ref(root, f, value):
     elif root.debug_copy_refs:
         index = value.instance_id
     elif value.instance_id not in root.ref_mapping:
-        root.next_chunk_id += 1
-        index = root.next_chunk_id
-        root.ref_mapping[value.instance_id] = index
-        root.ref_stack.append(value)
+        raise Exception("object not written yet")
     else:
         index = root.ref_mapping[value.instance_id]
 

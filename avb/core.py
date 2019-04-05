@@ -59,6 +59,38 @@ class AVBRefList(list):
         for value in super(AVBRefList, self).__iter__():
             yield self.deref(value)
 
+sentinel = object()
+
+def walk_references(obj):
+
+    if isinstance(obj, list):
+        property_values = obj
+    elif isinstance(obj, dict):
+        property_values = obj.values()
+    elif hasattr(obj, 'property_data'):
+        property_values = obj.property_data.values()
+    else:
+        property_values = []
+
+    for v in property_values:
+        if isinstance(v, utils.AVBObjectRef):
+            v = v.value
+        if v is None:
+            continue
+
+        if isinstance(v, list):
+            for item in v:
+                for sub_v in walk_references(item):
+                    yield sub_v
+
+        if hasattr(v, 'class_id'):
+            for sub_v in walk_references(v):
+                yield sub_v
+
+    if hasattr(obj, 'class_id'):
+        yield obj
+
+
 class AVBObject(object):
     propertydefs = []
     __slots__ = ('root', 'property_data', 'instance_id', '__weakref__')

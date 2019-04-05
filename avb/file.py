@@ -22,6 +22,7 @@ from .utils import (
     read_u8, write_u8,
     reverse_str,
 )
+from .core import walk_references
 
 
 class AVBChunk(object):
@@ -203,51 +204,25 @@ class AVBFile(object):
         chunk = self.read_chunk(obj.instance_id)
         orig_chunk_data = chunk.read()
 
-        # if len(orig_chunk_data) != len(data) or orig_chunk_data != data:
+        # if len(orig_chunk_data) != len(data):# or orig_chunk_data != data:
         #     print(obj, len(orig_chunk_data), len(data) )
         #     print(binascii.hexlify(orig_chunk_data))
         #     print("")
         #     print(binascii.hexlify(data))
-
+        #     raise Exception()
 
     def write(self, path):
         self.next_chunk_id = 0
-        self.ref_stack = []
         self.ref_mapping = {}
 
         with io.open(path, 'wb') as f:
             count_pos = self.write_header(f)
-            mob_mapping = {}
-
-            # hold onto references to mobs so they don't get deallocated
-            ref_list = []
-
-            for mob in self.content.mobs:
-                self.next_chunk_id += 1
-                self.ref_mapping[mob.instance_id] = self.next_chunk_id
-                mob_mapping[mob.instance_id] =  self.next_chunk_id
-                ref_list.append(mob)
-
-                self.write_object(f, mob)
-                while self.ref_stack:
-                    self.write_object(f, self.ref_stack.pop(0))
-
-            self.ref_mapping = mob_mapping
-            view_attributes = self.content.view_setting.attributes
-            bin_attributes = self.content.attributes
-            view_setting = self.content.view_setting
-            for item in (view_attributes, bin_attributes,view_setting):
-                if item is None:
+            for obj in walk_references(self.content):
+                if obj.instance_id in self.ref_mapping:
                     continue
                 self.next_chunk_id += 1
-                self.ref_mapping[item.instance_id] = self.next_chunk_id
-                self.write_object(f, item)
-                while self.ref_stack:
-                    self.write_object(f, self.ref_stack.pop(0))
-
-            self.next_chunk_id += 1
-            self.write_object(f, self.content)
-            assert len(self.ref_stack) == 0
+                self.ref_mapping[obj.instance_id] = self.next_chunk_id
+                self.write_object(f, obj)
 
             pos = f.tell()
             f.seek(count_pos)
