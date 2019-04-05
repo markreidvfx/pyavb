@@ -52,7 +52,7 @@ class AVBRefList(list):
             return value.value
         return value
 
-    def __getattr__(self, index):
+    def __getitem__(self, index):
         return self.deref(super(AVBRefList, self).__getitem__(index))
 
     def __iter__(self):
