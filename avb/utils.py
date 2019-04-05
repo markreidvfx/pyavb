@@ -139,7 +139,7 @@ def write_fourcc(f, value):
 def read_string(f, encoding = 'macroman'):
     size = read_u16le(f)
     if size >= 65535:
-        return ""
+        return u""
 
     s = f.read(size)
     s = s.strip(b'\x00')
