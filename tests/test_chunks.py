@@ -168,5 +168,10 @@ class TestChuckDB(unittest.TestCase):
     def test_wave_chunks(self):
         for chunk_path in iter_chunks("WAVE"):
             read_write_chunk(chunk_path)
+
+    def test_mpgi_chunks(self):
+        for chunk_path in iter_chunks("MPGI"):
+            read_write_chunk(chunk_path)
+
 if __name__ == "__main__":
     unittest.main()

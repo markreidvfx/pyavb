@@ -785,7 +785,8 @@ class CDCIDescriptor(DIDDescriptor):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        if self.class_id[:] == b'CDCI':
+            read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(CDCIDescriptor, self).write(f)
@@ -814,6 +815,59 @@ class CDCIDescriptor(DIDDescriptor):
             write_u8(f, 0x02)
             write_u8(f, 72)
             write_u32le(f, self.ignore_bw)
+
+        if self.class_id[:] == b'CDCI':
+            write_u8(f, 0x03)
+
+@utils.register_class
+class MPGIDescriptor(CDCIDescriptor):
+    class_id = b'MPGI'
+    propertydefs = CDCIDescriptor.propertydefs + [
+        AVBPropertyDef('mpeg_version',     "OMFI:MPGI:MPEGVersion",        "uint8"),
+        AVBPropertyDef('profile',          "OMFI:MPGI:ProfileAndLevel",    "uint8"),
+        AVBPropertyDef('gop_structure',    "OMFI:MPGI:GOPStructure",       "uint8"),
+        AVBPropertyDef('stream_type',      "OMFI:MPGI:StreamType",         "uint8"),
+        AVBPropertyDef('random_access',    "OMFI:MPGI:RandomAccess",       "bool"),
+        AVBPropertyDef('leading_discard',  "OMFI:MPGI:LeadingDiscard",     "bool"),
+        AVBPropertyDef('trailing_discard', "OMFI:MPGI:TrailingDiscard",    "bool"),
+        AVBPropertyDef('min_gop_length',   "OMFI:MPGI:omMPGIMinGOPLength", "uint16"),
+        AVBPropertyDef('max_gop_length',   "OMFI:MPGI:omMPGIMaxGOPLength", "uint16"),
+        AVBPropertyDef('sequence_hdrlen',  "OMFI:MPGI:SequenceHdrLen",     "int32"),
+    ]
+    def read(self, f):
+        super(MPGIDescriptor, self).read(f)
+
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        self.mpeg_version = read_u8(f)
+        self.profile = read_u8(f)
+        self.gop_structure = read_u8(f)
+        self.stream_type = read_u8(f)
+        self.random_access = read_bool(f)
+        self.leading_discard = read_bool(f)
+        self.trailing_discard = read_bool(f)
+        self.min_gop_length = read_u16le(f)
+        self.max_gop_length = read_u16le(f)
+        self.sequence_hdrlen = read_u32le(f)
+
+        read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(MPGIDescriptor, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_u8(f, self.mpeg_version)
+        write_u8(f, self.profile)
+        write_u8(f, self.gop_structure)
+        write_u8(f, self.stream_type)
+        write_bool(f, self.random_access)
+        write_bool(f, self.leading_discard)
+        write_bool(f, self.trailing_discard)
+        write_u16le(f, self.min_gop_length)
+        write_u16le(f, self.max_gop_length)
+        write_u32le(f, self.sequence_hdrlen)
 
         write_u8(f, 0x03)
 
