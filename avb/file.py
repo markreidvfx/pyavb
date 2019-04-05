@@ -58,6 +58,7 @@ class AVBFile(object):
 
         self.mode = mode
         self.check_refs = True
+        self.debug_copy_refs = False
         self.f = io.open(path, self.mode, buffering=buffering)
 
         f = self.f
@@ -194,9 +195,20 @@ class AVBFile(object):
         obj.write(buffer)
         data = buffer.getvalue()
         assert data[-1:] == b'\x03'
+
         write_fourcc(f, obj.class_id)
         write_u32le(f, len(data))
         f.write(data)
+
+        chunk = self.read_chunk(obj.instance_id)
+        orig_chunk_data = chunk.read()
+
+        # if len(orig_chunk_data) != len(data) or orig_chunk_data != data:
+        #     print(obj, len(orig_chunk_data), len(data) )
+        #     print(binascii.hexlify(orig_chunk_data))
+        #     print("")
+        #     print(binascii.hexlify(data))
+
 
     def write(self, path):
         self.next_chunk_id = 0

@@ -505,6 +505,12 @@ class AudioSuitePluginEffect(TrackEffect):
             write_u8(f, 71)
             write_s32le(f, mob_hi)
 
+        # NOTE: out of order to match seen files
+        if hasattr(self, 'mob_id'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x08)
+            mobid.write_mob_id(f, self.mob_id)
+
         if hasattr(self, 'mark_in'):
             write_u8(f, 0x01)
             write_u8(f, 0x02)
@@ -530,10 +536,6 @@ class AudioSuitePluginEffect(TrackEffect):
             write_u8(f, 0x06)
             write_u8(f, 71)
             write_s32le(f, self.padding_secs)
-        if hasattr(self, 'mob_id'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x08)
-            mobid.write_mob_id(f, self.mob_id)
         if hasattr(self, 'preset_path'):
             write_u8(f, 0x01)
             write_u8(f, 0x09)

@@ -80,8 +80,16 @@ class Component(core.AVBObject):
         write_s16le(f, self.media_kind_id)
 
         write_exp10_encoded_float(f, self.edit_rate)
-        write_string(f, self.name)
-        write_string(f, self.effect_id)
+
+        if self.name:
+            write_string(f, self.name)
+        else:
+            write_u16le(f, 0xFFFF)
+
+        if self.effect_id:
+            write_string(f, self.effect_id)
+        else:
+            write_u16le(f, 0xFFFF)
 
         write_object_ref(self.root, f, self.attributes)
         write_object_ref(self.root, f, self.session_attrs)

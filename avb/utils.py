@@ -148,7 +148,7 @@ def read_string(f, encoding = 'macroman'):
 def write_string(f, s, encoding = 'macroman'):
     s = s or b""
     if s == b"":
-        write_u16le(f, 0xFFFF)
+        write_u16le(f, 0)
         return
 
     data = s.encode(encoding)
@@ -245,6 +245,8 @@ def read_object_ref(root, f):
 def write_object_ref(root, f, value):
     if value is None:
         index = 0
+    elif root.debug_copy_refs:
+        index = value.instance_id
     elif value.instance_id not in root.ref_mapping:
         root.next_chunk_id += 1
         index = root.next_chunk_id
@@ -261,19 +263,27 @@ def read_exp10_encoded_float(f):
 
     return float(mantissa) * pow(10, exp10)
 
+exp10_pretty = {
+5994: (59940, -3),
+}
+
 def write_exp10_encoded_float(f, value):
+    exponent = 0
+    while int(value) != value:
+        if abs(value * 10) >= 0x7FFFFFFF:
+            break
+        if exponent <= -6:
+            break
+        value *= 10
+        exponent -= 1
 
-    # this is really hacky need to limit exponent to s16 min/max
-    # and limit mantissa s32 min/max
-    d = decimal.Decimal(str(value))
-    (sign, digits, exponent) = decimal.Decimal(str(value)).as_tuple()
-    mantissa = int("".join([str(i) for i in digits]))
-    if sign:
-        mantissa *= -1
-
-    # print(mantissa, exponent)
-    write_s32le(f, mantissa)
-    write_s16le(f, exponent)
+    # remap values pretty values to match seen files
+    if value in exp10_pretty:
+        write_s32le(f, exp10_pretty[value][0])
+        write_s16le(f, exp10_pretty[value][1])
+    else:
+        write_s32le(f, int(value))
+        write_s16le(f, exponent)
 
 def read_rect(f):
     version = read_s16le(f)

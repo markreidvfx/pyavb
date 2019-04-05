@@ -411,7 +411,11 @@ class ParameterItems(core.AVBObject):
         else:
             raise ValueError("unknown value_type: %d" % self.value_type)
 
-        write_string(f, self.name)
+        if self.name:
+            write_string(f, self.name)
+        else:
+            write_u16le(f, 0xFFFF)
+
         write_bool(f, self.enable)
         write_object_ref(self.root, f, self.control_track)
 
