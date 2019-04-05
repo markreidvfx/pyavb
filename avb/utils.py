@@ -32,6 +32,8 @@ class AVBObjectRef(object):
     def value(self):
         if self.index <= 0:
             return None
+        if self.root.debug_copy_refs:
+            return self
 
         return self.root.read_object(self.index)
 
@@ -246,7 +248,7 @@ def write_object_ref(root, f, value):
     if value is None:
         index = 0
     elif root.debug_copy_refs:
-        index = value.instance_id
+        index = value.index
     elif value.instance_id not in root.ref_mapping:
         raise Exception("object not written yet")
     else:
