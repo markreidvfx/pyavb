@@ -191,6 +191,32 @@ class MultiDescriptor(MediaFileDescriptor):
         write_u8(f, 0x03)
 
 @utils.register_class
+class WaveDescriptor(MediaFileDescriptor):
+    class_id = b'WAVE'
+    propertydefs = MediaFileDescriptor.propertydefs + [
+        AVBPropertyDef('summary',   'OMFI:WAVD:Summary',   'bytes'),
+    ]
+    def read(self, f):
+        super(WaveDescriptor, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        assert f.read(4) == b'RIFF'
+
+        size = read_u32le(f)
+        self.summary = bytearray(f.read(size))
+        read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(WaveDescriptor, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+        f.write(b'RIFF')
+        write_u32le(f, len(self.summary))
+        f.write(self.summary)
+        write_u8(f, 0x03)
+
+@utils.register_class
 class PCMADescriptor(MediaFileDescriptor):
     class_id = b'PCMA'
     propertydefs = MediaFileDescriptor.propertydefs + [
