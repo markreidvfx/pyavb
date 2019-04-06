@@ -37,6 +37,27 @@ class Attributes(AVBPropertyData):
         super(Attributes, self).__init__()
         self.root = root
 
+    def mark_modified(self):
+        if not self.root.reading:
+            self.root.add_modified(self)
+
+    def __setitem__(self, key, value):
+        super(Attributes, self).__setitem__(key, value)
+        self.mark_modified()
+
+    def __delitem__(self, key):
+        super(Attributes, self).__delitem__(key)
+        self.mark_modified()
+
+    def clear(self):
+        super(Attributes, self).clear()
+        self.mark_modified()
+
+    def pop(self, *args, **kwargs):
+        result = super(Attributes, self).pop(*args, **kwargs)
+        self.mark_modified()
+        return result
+
     def read(self, f):
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x01)

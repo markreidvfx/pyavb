@@ -60,6 +60,8 @@ class AVBFile(object):
         self.mode = mode
         self.check_refs = True
         self.debug_copy_refs = False
+        self.reading = False
+
         self.f = io.open(path, self.mode, buffering=buffering)
 
         f = self.f
@@ -99,6 +101,7 @@ class AVBFile(object):
         self.root_chunk = AVBChunk(self, b'OBJD', pos, f.tell() - pos)
 
         self.object_cache = WeakValueDictionary()
+        self.modified_objects = {}
         self.object_positions = array.array(str('L'), [0 for i in range(num_objects+1)])
 
         for i in range(num_objects):
@@ -109,6 +112,9 @@ class AVBFile(object):
             f.seek(size, os.SEEK_CUR)
 
         self.content = self.read_object(self.root_index)
+
+    def add_modified(self, obj):
+        self.modified_objects[obj.instance_id] = obj
 
     def write_header(self, f):
         f.write(utils.MAC_BYTES)
@@ -173,6 +179,7 @@ class AVBFile(object):
         if obj_class:
             object_instance = obj_class(self)
             try:
+                self.reading = True
                 r = io.BytesIO(data)
                 object_instance.read(r)
                 # print(len(r.read()))
@@ -185,6 +192,8 @@ class AVBFile(object):
                 print(chunk.hex())
                 print(traceback.format_exc())
                 raise
+            finally:
+                self.reading = False
 
         else:
             print(chunk.class_id)

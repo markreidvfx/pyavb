@@ -8,6 +8,8 @@ from __future__ import (
 from . import utils
 from collections import OrderedDict
 
+sentinel = object()
+
 class AVBPropertyDef(object):
     __slots__ = ('name', 'long_name', 'type')
     def __init__(self, name, long_name, data_type, tag=None):
@@ -47,6 +49,43 @@ class AVBRefList(list):
         super(AVBRefList, self).__init__()
         self.root = root
 
+    def mark_modified(self):
+        if not self.root.reading:
+            self.root.add_modified(self)
+
+    def extend(self, x):
+        super(AVBRefList, self).extend(x)
+        self.mark_modified()
+
+    def append(self, x):
+        super(AVBRefList, self).append(x)
+        self.mark_modified()
+
+    def insert(self, i, x):
+        super(AVBRefList, self).insert(i, x)
+        self.mark_modified()
+
+    def remove(self, x):
+        super(AVBRefList, self).remove(x)
+        self.mark_modified()
+
+    def pop(self, i=-1):
+        result = elf.deref(super(AVBRefList, self).pop(i))
+        self.mark_modified()
+        return result
+
+    def clear(self):
+        super(AVBRefList, self)
+        self.mark_modified()
+
+    def sort(key=None, reverse=False):
+        super(AVBRefList, self)
+        self.mark_modified()
+
+    def reverse(self):
+        super(AVBRefList, self)
+        self.mark_modified()
+
     def deref(self, value):
         if isinstance(value, utils.AVBObjectRef):
             return value.value
@@ -55,11 +94,17 @@ class AVBRefList(list):
     def __getitem__(self, index):
         return self.deref(super(AVBRefList, self).__getitem__(index))
 
+    def __setitem__(self, index, value):
+        super(AVBRefList, self).__setitem__(index, value)
+        self.mark_modified()
+
+    def __delitem__(self, index):
+        super(AVBRefList, self).__delitem__(index)
+        self.mark_modified()
+
     def __iter__(self):
         for value in super(AVBRefList, self).__iter__():
             yield self.deref(value)
-
-sentinel = object()
 
 def walk_references(obj):
 
@@ -99,31 +144,32 @@ class AVBObject(object):
         self.root = root
         self.property_data = AVBPropertyData()
 
-    def __setattr__(self, name, value):
-        for item in self.propertydefs:
-            if name == item.name:
-                self.property_data[name] = value
-                return
-
-        super(AVBObject, self).__setattr__(name, value)
+    def mark_modified(self):
+        if not self.root.reading:
+            self.root.add_modified(self)
 
     def get_property_def(self, name):
         for item in self.propertydefs:
             if item.name == name:
                 return item
 
+    def __setattr__(self, name, value):
+        for item in self.propertydefs:
+            if name == item.name:
+                self.property_data[name] = value
+                self.mark_modified()
+                return
+
+        super(AVBObject, self).__setattr__(name, value)
+
     def __getattr__(self, name):
-        if name in self.property_data:
-            v =  self.property_data[name]
+        v = self.property_data.get(name, sentinel)
+        if v is not sentinel:
             if isinstance(v, utils.AVBObjectRef):
                 return v.value
-            # p_def = self.get_property_def(name)
-            # if p_def.type == 'reference':
-            #     return v
-
             return v
+
         raise AttributeError("'%s' has no attribute '%s'" % (self.__class__.__name__, name))
-        # return super(AVBObject, self).__getattr__(name)
 
     def read(self, f):
         pass

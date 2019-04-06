@@ -23,6 +23,7 @@ class MockFile(object):
         self.f = f
         self.check_refs = False
         self.debug_copy_refs = True
+        self.reading = True
 
 def read_write_chunk(path):
 

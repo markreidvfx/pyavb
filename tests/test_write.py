@@ -62,7 +62,7 @@ def compare(a, b):
             assert a_value == b_value
 
 
-class TestRead(unittest.TestCase):
+class TestWrite(unittest.TestCase):
 
     def test_rewrite_all(self):
 
@@ -99,6 +99,35 @@ class TestRead(unittest.TestCase):
                 a.f.seek(s)
                 b.f.seek(s)
                 assert a.f.read() == b.f.read()
+
+    def test_no_modify(self):
+        result_file = os.path.join(result_dir, 'modifed.avb')
+        with avb.open(test_file_01) as f:
+            for mob in f.content.mobs:
+                for track in mob.tracks:
+                    c = track.component
+                    if isinstance(c, avb.components.Sequence):
+                        for item in c.components:
+                            pass
+
+            # nothin should be modified
+            assert not f.modified_objects
+
+    def test_modify(self):
+        result_file = os.path.join(result_dir, 'modifed.avb')
+        with avb.open(test_file_01) as f:
+            for mob in f.content.mobs:
+                mob.name = u"Cow"
+                mob.attributes['Test'] = 5
+
+            assert f.modified_objects
+            f.write(result_file)
+
+        with avb.open(result_file) as f:
+            for mob in f.content.mobs:
+                assert mob.name == u"Cow"
+                assert mob.attributes['Test'] == 5
+
 
 if __name__ == "__main__":
     unittest.main()
