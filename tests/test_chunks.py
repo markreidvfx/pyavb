@@ -33,7 +33,7 @@ def read_write_chunk(path):
         obj_class = avb.utils.AVBClaseID_dict.get(chunk.class_id, None)
         assert obj_class
         try:
-            object_instance = obj_class(m)
+            object_instance = obj_class.__new__(obj_class, root=m)
             chunk_data = chunk.read()
             object_instance.read(io.BytesIO(chunk_data))
         except:

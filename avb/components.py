@@ -136,7 +136,7 @@ class Sequence(Component):
         read_assert_tag(f, 0x03)
 
         count = read_u32le(f)
-        self.components = AVBRefList(self.root)
+        self.components = AVBRefList.__new__(AVBRefList, root=self.root)
         for i in range(count):
             ref = read_object_ref(self.root, f)
             # print ref
@@ -358,10 +358,6 @@ class ParamControlPoint(core.AVBObject):
     ]
     __slots__ = ()
 
-    def __init__(self, root):
-        super(ParamControlPoint, self).__init__(root)
-        self.pp = []
-
 # not sure hwat PP's stands for
 class ParamPerPoint(core.AVBObject):
     propertydefs = [
@@ -399,7 +395,7 @@ class ParamClip(Clip):
 
         self.control_points = []
         for i in range(point_count):
-            cp = ParamControlPoint(self.root)
+            cp = ParamControlPoint.__new__(ParamControlPoint, root=self.root)
 
             num = read_s32le(f)
             den = read_s32le(f)
@@ -415,9 +411,9 @@ class ParamClip(Clip):
 
             pp_count = read_s16le(f)
             assert pp_count >= 0
-
+            cp.pp = []
             for j in range(pp_count):
-                pp = ParamPerPoint(self.root)
+                pp = ParamPerPoint.__new__(ParamPerPoint, root=self.root)
                 pp.code = read_s16le(f)
                 pp.type = read_s16le(f)
 
@@ -531,7 +527,7 @@ class ControlClip(Clip):
         #
         # print(peek_data(f).encode("hex"))
         for i in range(count):
-            cp = ControlPoint(self.root)
+            cp = ControlPoint.__new__(ControlPoint, root=self.root)
             a = read_s32le(f)
             b = read_s32le(f)
             cp.offset = [a, b]
@@ -549,7 +545,7 @@ class ControlClip(Clip):
             pp_count = read_s16le(f)
             assert pp_count >= 0
             for j in range(pp_count):
-                pp = PerPoint(self.root)
+                pp = PerPoint.__new__(PerPoint, root=self.root)
                 pp.code = read_s16le(f)
                 a = read_s32le(f)
                 b = read_s32le(f)

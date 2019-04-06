@@ -60,9 +60,6 @@ class Track(core.AVBObject):
     ]
     __slots__ = ()
 
-    def __init__(self, root):
-        super(Track, self).__init__(root)
-
     @property
     def media_kind(self):
         if hasattr(self, 'component'):
@@ -95,7 +92,7 @@ class TrackGroup(Component):
 
         for i in range(track_count):
             # print(peek_data(f).encode("hex"))
-            track = Track(self.root)
+            track = Track.__new__(Track, root=self.root)
             track.flags = read_u16le(f)
 
             if track.flags & TRACK_LABEL_FLAG:
@@ -395,7 +392,7 @@ class AudioSuitePluginEffect(TrackEffect):
         #TODO: find sample with multiple plugins
         assert number_of_plugins == 1
 
-        plugin = ASPIPlugin(self.root)
+        plugin = ASPIPlugin.__new__(ASPIPlugin, root=self.root)
         plugin.name = read_string(f)
         plugin.manufacturer_id = read_u32le(f)
         plugin.product_id = read_u32le(f)
@@ -406,12 +403,13 @@ class AudioSuitePluginEffect(TrackEffect):
         #TODO: find sample with multiple chunks
         # print('chunks', num_of_chunks)
         assert num_of_chunks >= 0
+        plugin.chunks = []
         for i in range(num_of_chunks):
 
             chunk_size = read_s32le(f)
             assert chunk_size >= 0
 
-            chunk = ASPIPluginChunk(self.root)
+            chunk = ASPIPluginChunk.__new__(ASPIPluginChunk, root=self.root)
             chunk.version = read_s32le(f)
             chunk.manufacturer_id = read_u32le(f)
             chunk.product_id = read_u32le(f)
@@ -578,7 +576,7 @@ class EqualizerMultiBand(TrackEffect):
 
         self.bands = []
         for i in range(num_bands):
-            band = EqualizerBand(self.root)
+            band = EqualizerBand.__new__(EqualizerBand, root=self.root)
             band.type = read_s32le(f)
             band.freq = read_s32le(f)
             band.gain = read_s32le(f)

@@ -45,9 +45,14 @@ class AVBPropertyData(OrderedDict):
 
 class AVBRefList(list):
     __slots__ = ('root', 'instance_id', '__weakref__')
-    def __init__(self, root):
-        super(AVBRefList, self).__init__()
-        self.root = root
+
+    def __new__(cls, *args, **kwargs):
+        self = super(AVBRefList, cls).__new__(cls)
+        self.root = kwargs.get("root", None)
+        return self
+    # def __init__(self, root):
+    #     super(AVBRefList, self).__init__()
+    #     self.root = root
 
     def mark_modified(self):
         if not self.root.reading:
@@ -140,9 +145,15 @@ class AVBObject(object):
     propertydefs = []
     __slots__ = ('root', 'property_data', 'instance_id', '__weakref__')
 
-    def __init__(self, root):
-        self.root = root
+    def __new__(cls, *args, **kwargs):
+        self = super(AVBObject, cls).__new__(cls)
+        self.root = kwargs.get("root", None)
         self.property_data = AVBPropertyData()
+        return self
+
+    # def __init__(self, root):
+    #     self.root = root
+    #     self.property_data = AVBPropertyData()
 
     def mark_modified(self):
         if not self.root.reading:
@@ -154,11 +165,12 @@ class AVBObject(object):
                 return item
 
     def __setattr__(self, name, value):
-        for item in self.propertydefs:
-            if name == item.name:
-                self.property_data[name] = value
-                self.mark_modified()
-                return
+        if name != 'root':
+            for item in self.propertydefs:
+                if name == item.name:
+                    self.property_data[name] = value
+                    self.mark_modified()
+                    return
 
         super(AVBObject, self).__setattr__(name, value)
 

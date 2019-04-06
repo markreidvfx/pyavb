@@ -179,7 +179,7 @@ class EffectParamList(core.AVBObject):
         self.parameters = []
 
         for i in range(count):
-            p = EffectParam(self.root)
+            p = EffectParam.__new__(EffectParam, root=self.root)
             start = f.tell()
             p.percent_time = read_s32le(f)
             p.level = read_s32le(f)
@@ -815,7 +815,7 @@ class TrackerDataSlot(core.AVBObject):
         read_assert_tag(f, 0x01)
 
         count = read_s32le(f)
-        self.tracker_data = AVBRefList(self.root)
+        self.tracker_data = AVBRefList.__new__(AVBRefList, root=self.root)
         for i in range(count):
             ref = read_object_ref(self.root, f)
             self.tracker_data.append(ref)
@@ -866,7 +866,7 @@ class TrackerParameterSlot(core.AVBObject):
 
         count = read_s32le(f)
         assert count >= 0
-        self.params = AVBRefList(self.root)
+        self.params = AVBRefList.__new__(AVBRefList, root=self.root)
         for i in range(count):
             ref = read_object_ref(self.root, f)
             self.params.append(ref)
@@ -913,7 +913,7 @@ class TrackerData(core.AVBObject):
         self.clip_version = read_u32le(f)
 
         count = read_s16le(f)
-        self.clips = AVBRefList(self.root)
+        self.clips = AVBRefList.__new__(AVBRefList, root=self.root)
         for i in range(count):
             ref = read_object_ref(self.root, f)
             self.clips.append(ref)

@@ -220,7 +220,7 @@ class Bin(core.AVBObject):
         self.items = []
 
         for i in range(object_count):
-            bin_obj = BinItem(self.root)
+            bin_obj = BinItem.__new__(BinItem, root=self.root)
             bin_obj.mob = read_object_ref(self.root, f)
             bin_obj.x = read_s16le(f)
             bin_obj.y = read_s16le(f)
@@ -237,7 +237,7 @@ class Bin(core.AVBObject):
         self.sifted_settings= []
 
         for i in range(6):
-            s = SiftItem(self.root)
+            s = SiftItem.__new__(SiftItem, root=self.root)
             s.method = read_s16le(f)
             s.string = read_string(f)
             s.column = read_string(f)

@@ -33,9 +33,10 @@ class Attributes(AVBPropertyData):
     class_id = b'ATTR'
     __slots__ = ('root', 'instance_id', )
 
-    def __init__(self, root):
-        super(Attributes, self).__init__()
-        self.root = root
+    def __new__(cls, *args, **kwargs):
+        self = super(Attributes, cls).__new__(cls)
+        self.root = kwargs.get('root', None)
+        return self
 
     def mark_modified(self):
         if not self.root.reading:

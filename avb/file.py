@@ -177,9 +177,15 @@ class AVBFile(object):
 
         obj_class = utils.AVBClaseID_dict.get(chunk.class_id, None)
         if obj_class:
-            object_instance = obj_class(self)
             try:
                 self.reading = True
+                # NOTE: objects read from file do not run __init__
+                object_instance = obj_class.__new__(obj_class, root=self)
+
+                # Only OrderedDict needs run __init__ in order to work
+                if chunk.class_id == b'ATTR':
+                    object_instance.__init__(object_instance)
+
                 r = io.BytesIO(data)
                 object_instance.read(r)
                 # print(len(r.read()))
