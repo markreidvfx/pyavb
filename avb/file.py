@@ -5,6 +5,8 @@ from __future__ import (
     division,
     )
 
+import datetime
+
 import struct
 import io
 import os
@@ -50,19 +52,54 @@ def read_chunk(root, f):
 
     return AVBChunk(root, class_id, pos, size)
 
-class AVBFile(object):
-    def __init__(self, path, mode='r', buffering=io.DEFAULT_BUFFER_SIZE):
-        if mode in ('r', 'rb'):
-            mode = 'rb'
-        else:
-            raise ValueError("invalid mode: %s" % mode)
+class AVBFactory(object):
 
-        self.mode = mode
+    def __init__(self, root):
+        self.root = root
+        self.class_name = None
+
+    def __getattr__(self, name):
+        self.class_name = name
+        return self.create_instance
+
+    def from_name(self, name, *args, **kwargs):
+
+        classobj = obj_class = utils.AVBClassName_dict.get(name, None)
+
+        # obj = classobj(None, *args, **kwargs)
+        obj = classobj.__new__(classobj)
+        obj.root = self.root
+        if hasattr(obj, 'class_id'):
+            self.root.next_object_id += 1
+            obj.instance_id = self.root.next_object_id
+
+            self.root.modified_objects[obj.instance_id] = obj
+            self.root.object_cache[obj.instance_id] = obj
+
+        obj.__init__(*args, **kwargs)
+
+        return obj
+
+    def create_instance(self, *args, **kwargs):
+        return self.from_name(self.class_name, *args, **kwargs)
+
+class AVBFile(object):
+    def __init__(self, path=None, buffering=io.DEFAULT_BUFFER_SIZE):
+
         self.check_refs = True
         self.debug_copy_refs = False
         self.reading = False
 
-        self.f = io.open(path, self.mode, buffering=buffering)
+        self.create = AVBFactory(self)
+        self.object_cache = WeakValueDictionary()
+        self.modified_objects = {}
+        self.next_object_id = 0
+
+        if path is None:
+            self.setup_empty()
+            return
+
+        self.f = io.open(path, 'rb', buffering=buffering)
 
         f = self.f
         file_bytes = f.read(2)
@@ -90,8 +127,8 @@ class AVBFile(object):
         # skip 4 bytes
         f.read(4)
 
-        self.file_type = read_fourcc(f)
-        self.creator = read_fourcc(f)
+        assert read_fourcc(f) == b'ATob'
+        assert read_fourcc(f) == b'ATve'
 
         self.creator_version = read_string(f)
 
@@ -100,9 +137,8 @@ class AVBFile(object):
 
         self.root_chunk = AVBChunk(self, b'OBJD', pos, f.tell() - pos)
 
-        self.object_cache = WeakValueDictionary()
-        self.modified_objects = {}
         self.object_positions = array.array(str('L'), [0 for i in range(num_objects+1)])
+        self.next_object_id = len(self.object_positions)
 
         for i in range(num_objects):
             self.object_positions[i+1] = f.tell()
@@ -112,6 +148,20 @@ class AVBFile(object):
             f.seek(size, os.SEEK_CUR)
 
         self.content = self.read_object(self.root_index)
+
+    def setup_empty(self):
+        self.f = None
+
+        self.creator_version = u'pyavb 0.1.0'
+        self.content = self.create.Bin()
+
+        self.update_save_time()
+
+    def update_save_time(self):
+        # TODO: Verify what type of timestamps are used
+        now = datetime.datetime.now()
+        self.last_save = now.strftime(u'%Y/%m/%d %H:%M:%S')
+        self.last_save_timestamp = utils.datetime_to_timestamp(now)
 
     def add_modified(self, obj):
         self.modified_objects[obj.instance_id] = obj
@@ -131,8 +181,8 @@ class AVBFile(object):
         write_u32le(f, self.last_save_timestamp)
         write_u32le(f, 0)
 
-        write_fourcc(f, self.file_type)
-        write_fourcc(f, self.creator)
+        write_fourcc(f, b'ATob')
+        write_fourcc(f, b'ATve')
 
         # version =
 
@@ -216,8 +266,8 @@ class AVBFile(object):
         write_u32le(f, len(data))
         f.write(data)
 
-        chunk = self.read_chunk(obj.instance_id)
-        orig_chunk_data = chunk.read()
+        # chunk = self.read_chunk(obj.instance_id)
+        # orig_chunk_data = chunk.read()
 
         # if len(orig_chunk_data) != len(data):# or orig_chunk_data != data:
         #     print(obj, len(orig_chunk_data), len(data) )
@@ -235,6 +285,7 @@ class AVBFile(object):
             for obj in walk_references(self.content):
                 if obj.instance_id in self.ref_mapping:
                     continue
+
                 self.next_chunk_id += 1
                 self.ref_mapping[obj.instance_id] = self.next_chunk_id
                 self.write_object(f, obj)
@@ -255,7 +306,8 @@ class AVBFile(object):
                 yield self.read_object(i)
 
     def close(self):
-        self.f.close()
+        if self.f:
+            self.f.close()
 
     def __exit__(self, exc_type, exc_value, traceback):
         if (exc_type is None and exc_value is None and traceback is None):

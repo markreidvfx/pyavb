@@ -9,7 +9,7 @@ import struct
 from io import BytesIO
 import os
 import decimal
-from uuid import UUID
+from uuid import UUID, uuid4
 from datetime import datetime
 import time
 from binascii import hexlify, unhexlify
@@ -165,9 +165,12 @@ def write_string(f, s, encoding = 'macroman'):
 def read_datetime(f):
     return datetime.utcfromtimestamp(read_u32le(f))
 
+def datetime_to_timestamp(utc_date):
+    timestamp = (utc_date.toordinal() - datetime(1970, 1, 1).toordinal()) * 24*60*60
+    return timestamp
+
 def write_datetime(f, value):
-    unixtime = time.mktime(value.timetuple())
-    write_u32le(f, unixtime)
+    write_u32le(f, datetime_to_timestamp(value))
 
 def read_raw_uuid(f):
     return UUID(bytes_le=f.read(16))
@@ -349,10 +352,18 @@ def unpack_u32le_from(buffer, offset):
     value += buffer[offset+3] << 24
     return value
 
+def generate_uid():
+    v = uuid4().int & (1<<64)-1
+    return v
+
 AVBClaseID_dict = {}
 AVBClassName_dict = {}
 def register_class(classobj):
     AVBClaseID_dict[classobj.class_id] = classobj
     AVBClassName_dict[classobj.__name__] = classobj
 
+    return classobj
+
+def register_helper_class(classobj):
+    AVBClassName_dict[classobj.__name__] = classobj
     return classobj

@@ -43,6 +43,7 @@ TRACK_SESSION_ATTR_FLAG     = 1 << 9
 
 TRACK_UNKNOWN_FLAGS         = 0xFC00
 
+@utils.register_helper_class
 class Track(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('flags',            'OMFI:TRAK:OptFlags',       'int16'),
@@ -339,6 +340,7 @@ class PanVolumeEffect(TrackEffect):
 
         write_u8(f, 0x03)
 
+@utils.register_helper_class
 class ASPIPlugin(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('name',             'OMFI:ASPI:plugInName',             'string'),
@@ -353,6 +355,7 @@ class ASPIPlugin(core.AVBObject):
         super(ASPIPlugin, self).__init__(root)
         self.chunks = []
 
+@utils.register_helper_class
 class ASPIPluginChunk(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('version',         'OMFI:ASPI:chunkfVersion',         'int32'),
@@ -546,6 +549,7 @@ class AudioSuitePluginEffect(TrackEffect):
 
         write_u8(f, 0x03)
 
+@utils.register_helper_class
 class EqualizerBand(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('type',   'OMFI:EQBD:AV:BandType',   'int32'),

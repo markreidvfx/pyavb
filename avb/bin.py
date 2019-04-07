@@ -17,6 +17,7 @@ from . utils import (
     read_u16le,       write_u16le,
     read_u32le,       write_u32le,
     read_s32le,       write_s32le,
+    read_u64le,       write_u64le,
     read_string,      write_string,
     read_object_ref,  write_object_ref,
     read_assert_tag,
@@ -29,8 +30,8 @@ class Setting(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('name',       'name',       'string'),
         AVBPropertyDef('kind',       'kind',       'string'),
-        AVBPropertyDef('attr_count', 'attributes', 'int16'),
-        AVBPropertyDef('attr_type',  'type',       'int16'),
+        AVBPropertyDef('attr_count', 'attributes', 'int16',      1),
+        AVBPropertyDef('attr_type',  'type',       'int16',     20),
         AVBPropertyDef('attributes', 'attrList',   'reference'),
     ]
     __slots__ = ()
@@ -59,14 +60,40 @@ class Setting(core.AVBObject):
         write_s16le(f, self.attr_type)
         write_object_ref(self.root, f, self.attributes)
 
+default_bin_columns = [
+    {u'title': u'Color',         u'format': 105,  u'type': 51,  u'hidden': False},
+    {u'title': u'   ',           u'format': 0,    u'type': 200, u'hidden': False},
+    {u'title': u'Name',          u'format': 20,   u'type': 201, u'hidden': False},
+    {u'title': u'Creation Date', u'format': 102,  u'type': 12,  u'hidden': False},
+    {u'title': u'Duration',      u'format': 100,  u'type': 4,   u'hidden': False},
+    {u'title': u'Drive',         u'format': 2,    u'type': 14,  u'hidden': False},
+    {u'title': u'IN-OUT',        u'format': 100,  u'type': 7,   u'hidden': False},
+    {u'title': u'Mark IN',       u'format': 100,  u'type': 5,   u'hidden': False},
+    {u'title': u'Mark OUT',      u'format': 100,  u'type': 6,   u'hidden': False},
+    {u'title': u'Tracks',        u'format': 2,    u'type': 1,   u'hidden': False},
+    {u'title': u'Start',         u'format': 100,  u'type': 2,   u'hidden': False},
+    {u'title': u'Tape',          u'format': 2,    u'type': 8,   u'hidden': False},
+    {u'title': u'Video',         u'format': 2,    u'type': 13,  u'hidden': False},
+    {u'title': u'Plug-in',       u'format': 2,    u'type': 133, u'hidden': False},
+    {u'title': u'TapeID',        u'format': 2,    u'type': 50,  u'hidden': False},
+    {u'title': u'Audio SR',      u'format': 2,    u'type': 11,  u'hidden': False},
+    {u'title': u'Comments',      u'format': 2,    u'type': 40,  u'hidden': False},
+]
+
 @utils.register_class
 class BinViewSetting(Setting):
     class_id = b'BVst'
     propertydefs = Setting.propertydefs + [
-        AVBPropertyDef('columns',              'Columns',          'list'),
-        AVBPropertyDef('format_descriptors',   'FormatDescriptor', 'list'),
+        AVBPropertyDef('columns',              'Columns',          'list', default_bin_columns),
+        AVBPropertyDef('format_descriptors',   'FormatDescriptor', 'list', []),
     ]
     __slots__ = ()
+
+    def __init__(self):
+        super(BinViewSetting, self).__init__(self)
+        self.name = u'Untitled'
+        self.kind = u'Bin View'
+        self.attributes = self.root.create.Attributes()
 
     def read(self, f):
         super(BinViewSetting, self).read(f)
@@ -124,7 +151,6 @@ class BinViewSetting(Setting):
             write_s16le(f, d['type'])
             write_bool(f, d['hidden'])
 
-
         if hasattr(self, 'format_descriptors'):
             write_u8(f, 0x01)
             write_u8(f, 0x01)
@@ -147,7 +173,7 @@ class BinViewSetting(Setting):
 
         write_u8(f, 0x03)
 
-
+@utils.register_helper_class
 class BinItem(core.AVBObject):
 
     propertydefs = [
@@ -159,11 +185,12 @@ class BinItem(core.AVBObject):
     ]
     __slots__ = ()
 
+@utils.register_helper_class
 class SiftItem(core.AVBObject):
     propertydefs = [
-        AVBPropertyDef('method', 'SiftMethod', 'int16'),
-        AVBPropertyDef('string', 'SiftString', 'string'),
-        AVBPropertyDef('column', 'SiftColumn', 'string'),
+        AVBPropertyDef('method', 'SiftMethod', 'int16' ,       1),
+        AVBPropertyDef('string', 'SiftString', 'string',     u''),
+        AVBPropertyDef('column', 'SiftColumn', 'string',  u'Any'),
     ]
     __slots__ = ()
 
@@ -171,27 +198,39 @@ class SiftItem(core.AVBObject):
 class Bin(core.AVBObject):
     class_id = b'ABIN'
     propertydefs = [
-        AVBPropertyDef('large_bin',         'large_bin',      'bool'), #custom
+        AVBPropertyDef('large_bin',         'large_bin',      'bool',     False), #custom
         AVBPropertyDef('view_setting',   'binviewsetting', 'reference'),
-        AVBPropertyDef('uid_high',         'binuid.high',    'uint32'),
-        AVBPropertyDef('uid_low',          'binuid.low',     'uint32'),
-        AVBPropertyDef('items',            'Items',          'list'), # custom
-        AVBPropertyDef('display_mask',     'DisplayMask',    'int32'),
-        AVBPropertyDef('display_mode',     'DisplayMode',    'int32'),
-        AVBPropertyDef('sifted',           'Sifted',         'bool'),
+        AVBPropertyDef('uid',            'binuid.high',    'uint64'),
+        AVBPropertyDef('items',            'Items',          'list',         []), # custom
+        AVBPropertyDef('display_mask',     'DisplayMask',    'int32',     98999),
+        AVBPropertyDef('display_mode',     'DisplayMode',    'int32',         0),
+        AVBPropertyDef('sifted',           'Sifted',         'bool',      False),
         AVBPropertyDef('sifted_settings',  'SiftedSettring', 'list'), #custom
-        AVBPropertyDef('sort_columns',     'SortColumns',    'list'),
-        AVBPropertyDef('mac_font',         'MacFont',        'int16'),
-        AVBPropertyDef('mac_font_size',    'MacFontSize',    'int16'),
-        AVBPropertyDef('mac_image_scale',  'MacImageScale',  'int16'),
-        AVBPropertyDef('home_rect',        'HomeRect',       'rect'),
-        AVBPropertyDef('background_color', 'BackColor',      'color'),
-        AVBPropertyDef('forground_color',  'ForeColor',      'color'),
-        AVBPropertyDef('ql_image_scale',   'QLImageScale',   'int16'),
+        AVBPropertyDef('sort_columns',     'SortColumns',    'list',         []),
+        AVBPropertyDef('mac_font',         'MacFont',        'int16',         1),
+        AVBPropertyDef('mac_font_size',    'MacFontSize',    'int16',        11),
+        AVBPropertyDef('mac_image_scale',  'MacImageScale',  'int16',         5),
+        AVBPropertyDef('home_rect',        'HomeRect',       'rect',       [0, 0 , 300, 600]),
+        AVBPropertyDef('background_color', 'BackColor',      'color', [45568, 45568, 45568]),
+        AVBPropertyDef('forground_color',  'ForeColor',      'color',    [3328, 3328, 3328]),
+        AVBPropertyDef('ql_image_scale',   'QLImageScale',   'int16',         6),
         AVBPropertyDef('attributes',       'BinAttr',        'reference'),
-        AVBPropertyDef('was_iconic',       'WasIconic',      'bool'),
+        AVBPropertyDef('was_iconic',       'WasIconic',      'bool',      False),
     ]
     __slots__ = ('mob_dict')
+
+    def __init__(self):
+        super(Bin, self).__init__(self)
+
+        self.view_setting = self.root.create.BinViewSetting()
+        self.uid = utils.generate_uid()
+
+        self.sifted_settings= []
+        for i in range(6):
+            s = self.root.create.SiftItem()
+            self.sifted_settings.append(s)
+
+        self.attributes = self.root.create.Attributes()
 
     def read(self, f):
         super(Bin, self).read(f)
@@ -205,11 +244,7 @@ class Bin(core.AVBObject):
             self.large_bin = False
 
         self.view_setting = read_object_ref(self.root, f)
-
-        self.uid_high = read_u32le(f)
-        self.uid_low  = read_u32le(f)
-
-        # print "%04X-%04X" %(uid_high, uid_low)
+        self.uid = read_u64le(f)
 
         if version == 0x0e:
             object_count = read_u16le(f)
@@ -277,12 +312,8 @@ class Bin(core.AVBObject):
         else:
             write_u8(f,  0x0e)
 
-
         write_object_ref(self.root, f, self.view_setting)
-
-        write_u32le(f, self.uid_high)
-        write_u32le(f, self.uid_low)
-
+        write_u64le(f, self.uid)
 
         #large bin size > max u16
         if self.large_bin or object_count > 0xffff:

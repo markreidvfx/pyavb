@@ -11,11 +11,12 @@ from collections import OrderedDict
 sentinel = object()
 
 class AVBPropertyDef(object):
-    __slots__ = ('name', 'long_name', 'type')
-    def __init__(self, name, long_name, data_type, tag=None):
+    __slots__ = ('name', 'long_name', 'type', 'default')
+    def __init__(self, name, long_name, data_type, default_value=sentinel):
         self.name = name
         self.long_name = name
         self.type = data_type
+        self.default = default_value
     def __repr__(self):
         s = ""
         s += "%s.%s"  % (self.__class__.__module__,
@@ -151,12 +152,14 @@ class AVBObject(object):
         self.property_data = AVBPropertyData()
         return self
 
-    # def __init__(self, root):
-    #     self.root = root
-    #     self.property_data = AVBPropertyData()
+    def __init__(self, *args, **kwargs):
+        for pdef in self.propertydefs:
+            if pdef.default is sentinel:
+                continue
+            self.__setattr__(pdef.name, pdef.default)
 
     def mark_modified(self):
-        if not self.root.reading:
+        if not self.root.reading and hasattr(self, 'instance_id'):
             self.root.add_modified(self)
 
     def get_property_def(self, name):
