@@ -4,6 +4,7 @@ from __future__ import (
     print_function,
     division,
     )
+import datetime
 
 from . import core
 from .core import AVBPropertyDef, AVBRefList
@@ -70,10 +71,10 @@ class Track(core.AVBObject):
 class TrackGroup(Component):
     class_id = b'TRKG'
     propertydefs = Component.propertydefs + [
-        AVBPropertyDef('mc_mode',     'OMFI:TRKG:MC:Mode',     'int8'),
-        AVBPropertyDef('length',      'OMFI:TRKG:GroupLength',  'int32'),
-        AVBPropertyDef('num_scalars', 'OMFI:TRKG:NumScalars',  'int32'),
-        AVBPropertyDef('tracks',      'OMFI:TRKG:Tracks',      'list')
+        AVBPropertyDef('mc_mode',     'OMFI:TRKG:MC:Mode',     'int8',    0),
+        AVBPropertyDef('length',      'OMFI:TRKG:GroupLength',  'int32',  0),
+        AVBPropertyDef('num_scalars', 'OMFI:TRKG:NumScalars',  'int32',   0),
+        AVBPropertyDef('tracks',      'OMFI:TRKG:Tracks',      'list',   [])
     ]
     __slots__ = ()
 
@@ -905,14 +906,34 @@ class Selector(TrackGroup):
 class Composition(TrackGroup):
     class_id = b'CMPO'
     propertydefs = TrackGroup.propertydefs + [
-        AVBPropertyDef('last_modified', 'OMFI:MOBJ:LastModified',  'int32'),
-        AVBPropertyDef('mob_type_id',   '__OMFI:MOBJ:MobType',     'int8'),
-        AVBPropertyDef('usage_code',    'OMFI:MOBJ:UsageCode',     'int8'),
-        AVBPropertyDef('descriptor',    'OMFI:MOBJ:PhysicalMedia', 'reference'),
+        AVBPropertyDef('last_modified', 'OMFI:MOBJ:LastModified',  'int32',        0),
+        AVBPropertyDef('mob_type_id',   '__OMFI:MOBJ:MobType',     'int8',         2),
+        AVBPropertyDef('usage_code',    'OMFI:MOBJ:UsageCode',     'int8',         0),
+        AVBPropertyDef('descriptor',    'OMFI:MOBJ:PhysicalMedia', 'reference', None),
         AVBPropertyDef('creation_time', 'OMFI:MOBJ:_CreationTime', 'int32'),
         AVBPropertyDef('mob_id',        'MobID',                   'MobID'),
     ]
     __slots__ = ()
+
+    def __init__(self, name='Mob', mob_type="MasterMob"):
+        super(Composition, self).__init__()
+
+        self.name = mob_type
+        if mob_type == "CompositionMob":
+            self.mob_type_id = 1
+
+        elif mob_type == "MasterMob":
+            self.mob_type_id = 2
+
+        elif mob_type == "SourceMob":
+            self.mob_type_id = 3
+        else:
+            ValueError("Unknown mob type: %d" % mob_type)
+
+        self.mob_id = mobid.MobID.new()
+        now = datetime.datetime.now()
+        self.last_modified = utils.datetime_to_timestamp(now)
+        self.creation_time = self.last_modified
 
     def read(self, f):
         super(Composition, self).read(f)
@@ -926,8 +947,6 @@ class Composition(TrackGroup):
         self.mob_type_id = read_u8(f)
         self.usage_code =  read_s32le(f)
         self.descriptor = read_object_ref(self.root, f)
-
-        self.creation_time = None
 
         for tag in iter_ext(f):
 

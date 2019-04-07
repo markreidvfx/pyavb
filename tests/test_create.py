@@ -27,6 +27,24 @@ class TestCreate(unittest.TestCase):
             assert f.content.view_setting.name == u'Untitled'
             assert len(f.content.items) == 0
 
+    def test_create_mastermob(self):
+        result_file = os.path.join(result_dir, 'mastermob.avb')
+
+        mob_id = None
+        with avb.open() as f:
+            mob = f.create.Composition(mob_type="MasterMob")
+            mob.name = u"Clip1"
+            mob_id = mob.mob_id
+            f.content.add_mob(mob)
+
+            f.write(result_file)
+
+        with avb.open(result_file) as f:
+            mobs = list(f.content.mobs)
+            mob = mobs[0]
+            assert mob.name == u"Clip1"
+            assert mob.mob_id == mob_id
+            assert mob.mob_type == 'MasterMob'
 
 if __name__ == "__main__":
     unittest.main()

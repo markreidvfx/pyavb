@@ -33,18 +33,22 @@ from . utils import (
 class Component(core.AVBObject):
     class_id = b'COMP'
     propertydefs = [
-        AVBPropertyDef('left_bob',      '__OMFI:CPNT:LeftBob',    'reference'),
-        AVBPropertyDef('right_bob',     '__OMFI:CPNT:RightBob',   'reference'),
-        AVBPropertyDef('media_kind_id', 'OMFI:CPNT:TrackKind',    'int16'),
-        AVBPropertyDef('edit_rate',     'EdRate',                 'fexp10'),
-        AVBPropertyDef('name',          'OMFI:CPNT:Name',         'string'),
-        AVBPropertyDef('effect_id',     'OMFI:CPNT:EffectID',     'string'),
+        AVBPropertyDef('left_bob',      '__OMFI:CPNT:LeftBob',    'reference', None),
+        AVBPropertyDef('right_bob',     '__OMFI:CPNT:RightBob',   'reference', None),
+        AVBPropertyDef('media_kind_id', 'OMFI:CPNT:TrackKind',    'int16',        0),
+        AVBPropertyDef('edit_rate',     'EdRate',                 'fexp10',      25),
+        AVBPropertyDef('name',          'OMFI:CPNT:Name',         'string',    None),
+        AVBPropertyDef('effect_id',     'OMFI:CPNT:EffectID',     'string',    None),
         AVBPropertyDef('attributes',    'OMFI:CPNT:Attributes',   'reference'),
-        AVBPropertyDef('session_attrs', 'OMFI:CPNT:SessionAttrs', 'reference'),
-        AVBPropertyDef('precomputed',   'OMFI:CPNT:Precomputed',  'reference'),
+        AVBPropertyDef('session_attrs', 'OMFI:CPNT:SessionAttrs', 'reference', None),
+        AVBPropertyDef('precomputed',   'OMFI:CPNT:Precomputed',  'reference', None),
         AVBPropertyDef('param_list',    'OMFI:CPNT:ParamList',    'reference'),
     ]
     __slots__ = ()
+
+    def __init__(self):
+        super(Component, self).__init__(self)
+        self.attributes = self.root.create.Attributes()
 
     def read(self, f):
         read_assert_tag(f, 0x02)

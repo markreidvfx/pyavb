@@ -178,10 +178,10 @@ class BinItem(core.AVBObject):
 
     propertydefs = [
         AVBPropertyDef('mob',         'Composition',  'reference'),
-        AVBPropertyDef('x',           'Xpos',         'int16'),
-        AVBPropertyDef('y',           'Ypos',         'int16'),
-        AVBPropertyDef('keyframe',    'Keyframe',     'int32'),
-        AVBPropertyDef('user_placed', 'userPlaced',   'bool'),
+        AVBPropertyDef('x',           'Xpos',         'int16',    -30000),
+        AVBPropertyDef('y',           'Ypos',         'int16',    -30000),
+        AVBPropertyDef('keyframe',    'Keyframe',     'int32',         0),
+        AVBPropertyDef('user_placed', 'userPlaced',   'bool',       True),
     ]
     __slots__ = ()
 
@@ -260,7 +260,7 @@ class Bin(core.AVBObject):
             bin_obj.x = read_s16le(f)
             bin_obj.y = read_s16le(f)
             bin_obj.keyframe = read_s32le(f)
-            bin_obj.user_placed = read_u8(f)
+            bin_obj.user_placed = read_bool(f)
             self.items.append(bin_obj)
 
         self.display_mask = read_s32le(f)
@@ -363,6 +363,11 @@ class Bin(core.AVBObject):
         self.mob_dict = {}
         for mob in self.mobs:
             self.mob_dict[mob.mob_id] = mob
+
+    def add_mob(self, mob):
+        bin_item = self.root.create.BinItem()
+        bin_item.mob = mob
+        self.items.append(bin_item)
 
     @property
     def mobs(self):
