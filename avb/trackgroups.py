@@ -932,8 +932,8 @@ class Composition(TrackGroup):
 
         self.mob_id = mobid.MobID.new()
         now = datetime.datetime.now()
-        self.last_modified = utils.datetime_to_timestamp(now)
-        self.creation_time = self.last_modified
+        self.last_modified = now
+        self.creation_time = now
 
     def read(self, f):
         super(Composition, self).read(f)
@@ -942,7 +942,7 @@ class Composition(TrackGroup):
 
         mob_id_lo = read_u32le(f)
         mob_id_hi = read_u32le(f)
-        self.last_modified = read_s32le(f)
+        self.last_modified = read_datetime(f)
 
         self.mob_type_id = read_u8(f)
         self.usage_code =  read_s32le(f)
@@ -952,7 +952,7 @@ class Composition(TrackGroup):
 
             if tag == 0x01:
                 read_assert_tag(f, 71)
-                self.creation_time = read_u32le(f)
+                self.creation_time = read_datetime(f)
             elif tag == 0x02:
                 self.mob_id = mobid.read_mob_id(f)
             else:
@@ -969,7 +969,7 @@ class Composition(TrackGroup):
         hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
         write_u32le(f, lo)
         write_u32le(f, hi)
-        write_s32le(f, self.last_modified)
+        write_datetime(f, self.last_modified)
 
         write_u8(f, self.mob_type_id)
         write_s32le(f, self.usage_code)
@@ -979,7 +979,7 @@ class Composition(TrackGroup):
             write_u8(f, 0x01)
             write_u8(f, 0x01)
             write_u8(f, 71)
-            write_u32le(f, self.creation_time)
+            write_datetime(f, self.creation_time)
 
         if hasattr(self, 'mob_id'):
             write_u8(f, 0x01)

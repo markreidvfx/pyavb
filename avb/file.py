@@ -22,6 +22,7 @@ from .utils import (
     read_u32le, write_u32le, write_u16le,
     read_fourcc, write_fourcc,
     read_u8, write_u8,
+    read_datetime, write_datetime,
     reverse_str,
 )
 from .core import walk_references
@@ -116,13 +117,13 @@ class AVBFile(object):
         assert read_string(f) == u'AObjDoc'
         assert read_u8(f) == 0x04
 
-        self.last_save = read_string(f)
+        last_save_str = read_string(f)
         num_objects = read_u32le(f)
         self.root_index = read_u32le(f)
 
         assert read_u32le(f) == 0x49494949
 
-        self.last_save_timestamp = read_u32le(f)
+        self.last_save = read_datetime(f)
 
         # skip 4 bytes
         f.read(4)
@@ -158,10 +159,7 @@ class AVBFile(object):
         self.update_save_time()
 
     def update_save_time(self):
-        # TODO: Verify what type of timestamps are used
-        now = datetime.datetime.now()
-        self.last_save = now.strftime(u'%Y/%m/%d %H:%M:%S')
-        self.last_save_timestamp = utils.datetime_to_timestamp(now)
+        self.last_save = datetime.datetime.now()
 
     def add_modified(self, obj):
         self.modified_objects[obj.instance_id] = obj
@@ -173,12 +171,13 @@ class AVBFile(object):
         write_fourcc(f, b'OBJD')
         write_string(f, u'AObjDoc')
         write_u8(f, 0x04)
-        write_string(f, self.last_save)
+        last_save_str = self.last_save.strftime(u'%Y/%m/%d %H:%M:%S')
+        write_string(f, last_save_str)
         pos = f.tell()
         write_u32le(f, 0)
         write_u32le(f, 0)
         write_u32le(f, 0x49494949)
-        write_u32le(f, self.last_save_timestamp)
+        write_datetime(f, self.last_save)
         write_u32le(f, 0)
 
         write_fourcc(f, b'ATob')

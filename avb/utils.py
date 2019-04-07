@@ -163,11 +163,10 @@ def write_string(f, s, encoding = 'macroman'):
     f.write(data)
 
 def read_datetime(f):
-    return datetime.utcfromtimestamp(read_u32le(f))
+    return datetime.fromtimestamp(read_u32le(f))
 
-def datetime_to_timestamp(utc_date):
-    timestamp = (utc_date.toordinal() - datetime(1970, 1, 1).toordinal()) * 24*60*60
-    return timestamp
+def datetime_to_timestamp(d):
+    return int(time.mktime(d.timetuple()))
 
 def write_datetime(f, value):
     write_u32le(f, datetime_to_timestamp(value))
