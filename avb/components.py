@@ -227,7 +227,7 @@ class SourceClip(Clip):
 
     def __init__(self, edit_rate=25, media_kind=None):
         super(SourceClip, self).__init__(edit_rate=edit_rate, media_kind=media_kind)
-        self.mob_id = mobid.ZeroMobID()
+        self.mob_id = mobid.MobID()
 
     def read(self, f):
         super(SourceClip, self).read(f)

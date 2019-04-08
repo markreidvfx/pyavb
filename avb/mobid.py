@@ -154,7 +154,7 @@ MOBID_STRUCT = struct.Struct(str(''.join(( '<',
    'H',    # UInt16         Data3          22
    '8B',   # UInt8Array8    Data4          24
  ))))
-def ZeroMobID():
+def UniqueMobID():
     m = MobID()              # Description              Meaning
     m.SMPTELabel = [0x06,    # Object identifier        Universal label start
                     0x0a,    # Label size               12-byte Universal label
@@ -173,10 +173,6 @@ def ZeroMobID():
     m.instanceHigh = 0x00
     m.instanceMid = 0x00
     m.instanceLow = 0x00
-    return m
-
-def UniqueMobID():
-    m = ZeroMobID()
     m.material = uuid.uuid4() # 16 byte material slot, filled with uuid according to RFC4122
     return m
 
