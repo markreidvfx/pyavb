@@ -46,9 +46,11 @@ class Component(core.AVBObject):
     ]
     __slots__ = ()
 
-    def __init__(self):
+    def __init__(self, edit_rate=25, media_kind=None):
         super(Component, self).__init__(self)
         self.attributes = self.root.create.Attributes()
+        self.media_kind = media_kind
+        self.edit_rate = edit_rate
 
     def read(self, f):
         read_assert_tag(f, 0x02)
@@ -107,9 +109,9 @@ class Component(core.AVBObject):
 
     @property
     def media_kind(self):
-        if self.media_kind_id   == 0:
+        if self.media_kind_id == 0:
             return None
-        elif self.media_kind_id   == 1:
+        elif self.media_kind_id == 1:
             return "picture"
         elif self.media_kind_id == 2:
             return "sound"
@@ -126,6 +128,27 @@ class Component(core.AVBObject):
         else:
             return "unknown%d" % self.media_kind_id
 
+    @media_kind.setter
+    def media_kind(self, value):
+        if value == None:
+            self.media_kind_id = 0
+        elif value == "picture":
+            self.media_kind_id = 1
+        elif value == "sound":
+            self.media_kind_id = 2
+        elif value =="timecode":
+            self.media_kind_id = 3
+        elif value == "edgecode":
+            self.media_kind_id = 4
+        elif value == "attribute":
+            self.media_kind_id = 5
+        elif value == 'effectdata':
+            self.media_kind_id = 6
+        elif value == 'DescriptiveMetadata':
+            self.media_kind_id = 7
+        else:
+            raise ValueError('unknown media kind: %s' % str(value))
+
 @utils.register_class
 class Sequence(Component):
     class_id = b"SEQU"
@@ -133,6 +156,10 @@ class Sequence(Component):
         AVBPropertyDef('components', 'OMFI:SEQU:Sequence', 'ref_list'),
     ]
     __slots__ = ()
+
+    def __init__(self, edit_rate=25, media_kind=None):
+        super(Sequence, self).__init__(edit_rate=edit_rate, media_kind=media_kind)
+        self.components = []
 
     def read(self, f):
         super(Sequence, self).read(f)
@@ -172,7 +199,7 @@ class Sequence(Component):
 class Clip(Component):
     class_id = b'CLIP'
     propertydefs = Component.propertydefs + [
-        AVBPropertyDef('length', 'OMFI:CLIP:Length', 'int32'),
+        AVBPropertyDef('length', 'OMFI:CLIP:Length', 'int32', 0),
     ]
     __slots__ = ()
 
@@ -192,11 +219,15 @@ class Clip(Component):
 class SourceClip(Clip):
     class_id = b'SCLP'
     propertydefs = Clip.propertydefs + [
-        AVBPropertyDef('track_id',   'OMFI:SCLP:SourceTrack',     'int16'),
-        AVBPropertyDef('start_time', 'OMFI:SCLP:SourcePosition',  'int32'),
+        AVBPropertyDef('track_id',   'OMFI:SCLP:SourceTrack',     'int16', 0),
+        AVBPropertyDef('start_time', 'OMFI:SCLP:SourcePosition',  'int32', 0),
         AVBPropertyDef('mob_id',     'MobID',                     'MobID'),
     ]
     __slots__ = ()
+
+    def __init__(self, edit_rate=25, media_kind=None):
+        super(SourceClip, self).__init__(edit_rate=edit_rate, media_kind=media_kind)
+        self.mob_id = mobid.ZeroMobID()
 
     def read(self, f):
         super(SourceClip, self).read(f)
@@ -323,8 +354,8 @@ class Edgecode(Clip):
 class TrackRef(Clip):
     class_id = b'TRKR'
     propertydefs = Clip.propertydefs + [
-        AVBPropertyDef('relative_scope', 'OMFI:TRKR:RelativeScope', 'int16'),
-        AVBPropertyDef('relative_track', 'OMFI:TRKR:RelativeTrack', 'int16'),
+        AVBPropertyDef('relative_scope', 'OMFI:TRKR:RelativeScope', 'int16',  0),
+        AVBPropertyDef('relative_track', 'OMFI:TRKR:RelativeTrack', 'int16', -1),
     ]
     __slots__ = ()
 

@@ -109,9 +109,13 @@ class TrackGroup(Component):
         AVBPropertyDef('mc_mode',     'OMFI:TRKG:MC:Mode',     'int8',    0),
         AVBPropertyDef('length',      'OMFI:TRKG:GroupLength',  'int32',  0),
         AVBPropertyDef('num_scalars', 'OMFI:TRKG:NumScalars',  'int32',   0),
-        AVBPropertyDef('tracks',      'OMFI:TRKG:Tracks',      'list',   [])
+        AVBPropertyDef('tracks',      'OMFI:TRKG:Tracks',      'list',     )
     ]
     __slots__ = ()
+
+    def __init__(self, edit_rate=25, media_kind=None):
+        super(TrackGroup, self).__init__(edit_rate=edit_rate, media_kind=media_kind)
+        self.tracks = []
 
     def read(self, f):
         super(TrackGroup, self).read(f)

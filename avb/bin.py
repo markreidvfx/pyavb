@@ -84,8 +84,8 @@ default_bin_columns = [
 class BinViewSetting(Setting):
     class_id = b'BVst'
     propertydefs = Setting.propertydefs + [
-        AVBPropertyDef('columns',              'Columns',          'list', default_bin_columns),
-        AVBPropertyDef('format_descriptors',   'FormatDescriptor', 'list', []),
+        AVBPropertyDef('columns',              'Columns',          'list'),
+        AVBPropertyDef('format_descriptors',   'FormatDescriptor', 'list'),
     ]
     __slots__ = ()
 
@@ -94,6 +94,9 @@ class BinViewSetting(Setting):
         self.name = u'Untitled'
         self.kind = u'Bin View'
         self.attributes = self.root.create.Attributes()
+        self.format_descriptors = []
+        self.columns = []
+        self.columns.extend(default_bin_columns)
 
     def read(self, f):
         super(BinViewSetting, self).read(f)
@@ -201,12 +204,12 @@ class Bin(core.AVBObject):
         AVBPropertyDef('large_bin',         'large_bin',      'bool',     False), #custom
         AVBPropertyDef('view_setting',   'binviewsetting', 'reference'),
         AVBPropertyDef('uid',            'binuid.high',    'uint64'),
-        AVBPropertyDef('items',            'Items',          'list',         []), # custom
+        AVBPropertyDef('items',            'Items',          'list',           ), # custom
         AVBPropertyDef('display_mask',     'DisplayMask',    'int32',     98999),
         AVBPropertyDef('display_mode',     'DisplayMode',    'int32',         0),
         AVBPropertyDef('sifted',           'Sifted',         'bool',      False),
         AVBPropertyDef('sifted_settings',  'SiftedSettring', 'list'), #custom
-        AVBPropertyDef('sort_columns',     'SortColumns',    'list',         []),
+        AVBPropertyDef('sort_columns',     'SortColumns',    'list',           ),
         AVBPropertyDef('mac_font',         'MacFont',        'int16',         1),
         AVBPropertyDef('mac_font_size',    'MacFontSize',    'int16',        11),
         AVBPropertyDef('mac_image_scale',  'MacImageScale',  'int16',         5),
@@ -224,6 +227,8 @@ class Bin(core.AVBObject):
 
         self.view_setting = self.root.create.BinViewSetting()
         self.uid = utils.generate_uid()
+        self.items = []
+        self.sort_columns = []
 
         self.sifted_settings= []
         for i in range(6):
