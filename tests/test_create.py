@@ -36,7 +36,15 @@ class TestCreate(unittest.TestCase):
 
             tape_mob =  f.create.Composition(mob_type="SourceMob")
             tape_mob.descriptor = f.create.TapeDescriptor()
+            tape_mob.descriptor.mob_kind = 2 # won't work without
             tape_mob.name = "Example Tape"
+            tape_mob.length = 25 * 60 * 60
+
+            track = f.create.Track()
+            track.index = 1
+            track.component = f.create.Timecode(edit_rate=edit_rate, media_kind='picture')
+            track.component.length = 10368000
+            tape_mob.tracks.append(track)
 
             track = f.create.Track()
             track.index = 1
@@ -46,10 +54,11 @@ class TestCreate(unittest.TestCase):
             track.filler_proxy.length = 2147483647
             tape_mob.tracks.append(track)
 
-            source_mob = f.create.Composition(mob_type="SourceMob")
-            source_mob.descriptor = f.create.CDCIDescriptor()
-            source_mob.descriptor.length = 100
-            source_mob.length = 100
+            file_mob = f.create.Composition(mob_type="SourceMob")
+            file_mob.descriptor = f.create.CDCIDescriptor()
+            file_mob.descriptor.length = 100
+            file_mob.descriptor.mob_kind = 1 # won't work without
+            file_mob.length = 100
             track = f.create.Track()
 
             track.index = 1
@@ -60,7 +69,7 @@ class TestCreate(unittest.TestCase):
             track.filler_proxy = f.create.TrackRef(edit_rate=edit_rate, media_kind='picture')
             track.filler_proxy.length = 2147483647
 
-            source_mob.tracks.append(track)
+            file_mob.tracks.append(track)
 
             mob = f.create.Composition(mob_type="MasterMob")
             mob.name = u"Clip1"
@@ -73,16 +82,15 @@ class TestCreate(unittest.TestCase):
 
             clip = f.create.SourceClip(edit_rate=edit_rate, media_kind='picture')
             clip.length = 100
-            clip.mob_id = source_mob.mob_id
+            clip.mob_id = file_mob.mob_id
             clip.track_id = 1
-
             track.component = clip
             mob.length = 100
 
             mob.tracks.append(track)
 
             f.content.add_mob(mob)
-            f.content.add_mob(source_mob)
+            f.content.add_mob(file_mob)
             f.content.add_mob(tape_mob)
 
             f.write(result_file)

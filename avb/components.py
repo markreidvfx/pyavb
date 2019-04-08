@@ -274,9 +274,9 @@ class SourceClip(Clip):
 class Timecode(Clip):
     class_id = b'TCCP'
     propertydefs = Clip.propertydefs + [
-        AVBPropertyDef('flags', 'OMFI:TCCP:Flags',   'int32'),
-        AVBPropertyDef('fps',   'OMFI:TCCP:FPS',     'int32'),
-        AVBPropertyDef('start', 'OMFI:TCCP:StartTC', 'int32'),
+        AVBPropertyDef('flags', 'OMFI:TCCP:Flags',   'int32',  0),
+        AVBPropertyDef('fps',   'OMFI:TCCP:FPS',     'int32', 25),
+        AVBPropertyDef('start', 'OMFI:TCCP:StartTC', 'int32',  0),
     ]
     __slots__ = ()
 
