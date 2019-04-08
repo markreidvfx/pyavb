@@ -47,7 +47,6 @@ TRACK_UNKNOWN_FLAGS         = 0xFC00
 @utils.register_helper_class
 class Track(core.AVBObject):
     propertydefs = [
-        AVBPropertyDef('flags',            'OMFI:TRAK:OptFlags',       'int16'),
         AVBPropertyDef('index',            'OMFI:TRAK:LabelNumber',    'int16'),
         AVBPropertyDef('attributes',       'OMFI:TRAK:Attributes',     'reference'),
         AVBPropertyDef('session_attr',     'OMFI:TRAK:SessionAttrs',   'reference'),
@@ -66,6 +65,42 @@ class Track(core.AVBObject):
     def media_kind(self):
         if hasattr(self, 'component'):
             return self.component.media_kind
+
+    @property
+    def flags(self):
+        flags = 0
+        if hasattr(self, 'index'):
+            flags |= TRACK_LABEL_FLAG
+
+        if hasattr(self, 'attributes'):
+            flags |= TRACK_ATTRIBUTES_FLAG
+
+        if hasattr(self, 'session_attr'):
+            flags |= TRACK_SESSION_ATTR_FLAG
+
+        if hasattr(self, 'component'):
+            flags |= TRACK_COMPONENT_FLAG
+
+        if hasattr(self, 'filler_proxy'):
+            flags |= TRACK_FILLER_PROXY_FLAG
+
+        if hasattr(self, 'bob_data'):
+            flags |= TRACK_BOB_DATA_FLAG
+
+        if hasattr(self, 'control_code'):
+            flags |= TRACK_CONTROL_CODE_FLAG
+
+        if hasattr(self, 'control_sub_code'):
+            flags |= TRACK_CONTROL_SUB_CODE_FLAG
+
+        if hasattr(self, 'start_pos'):
+            flags |= TRACK_START_POS_FLAG
+
+        if hasattr(self, 'read_only'):
+            flags |= TRACK_READ_ONLY_FLAG
+
+        return flags
+
 
 @utils.register_class
 class TrackGroup(Component):
@@ -95,40 +130,42 @@ class TrackGroup(Component):
         for i in range(track_count):
             # print(peek_data(f).encode("hex"))
             track = Track.__new__(Track, root=self.root)
-            track.flags = read_u16le(f)
+            flags = read_u16le(f)
 
-            if track.flags & TRACK_LABEL_FLAG:
+            if flags & TRACK_LABEL_FLAG:
                 track.index = read_s16le(f)
 
-            if track.flags & TRACK_ATTRIBUTES_FLAG:
+            if flags & TRACK_ATTRIBUTES_FLAG:
                 track.attributes = read_object_ref(self.root, f)
 
-            if track.flags & TRACK_SESSION_ATTR_FLAG:
+            if flags & TRACK_SESSION_ATTR_FLAG:
                 track.session_attr = read_object_ref(self.root, f)
 
-            if track.flags & TRACK_COMPONENT_FLAG:
+            if flags & TRACK_COMPONENT_FLAG:
                 track.component = read_object_ref(self.root, f)
 
-            if track.flags & TRACK_FILLER_PROXY_FLAG:
+            if flags & TRACK_FILLER_PROXY_FLAG:
                 track.filler_proxy = read_object_ref(self.root, f)
 
-            if track.flags & TRACK_BOB_DATA_FLAG:
+            if flags & TRACK_BOB_DATA_FLAG:
                 track.bob_data = read_object_ref(self.root, f)
 
-            if track.flags & TRACK_CONTROL_CODE_FLAG:
+            if flags & TRACK_CONTROL_CODE_FLAG:
                 track.control_code = read_s16le(f)
 
-            if track.flags & TRACK_CONTROL_SUB_CODE_FLAG:
+            if flags & TRACK_CONTROL_SUB_CODE_FLAG:
                 track.control_sub_code = read_s16le(f)
 
-            if track.flags & TRACK_START_POS_FLAG:
+            if flags & TRACK_START_POS_FLAG:
                 track.start_pos = read_s32le(f)
 
-            if track.flags & TRACK_READ_ONLY_FLAG:
+            if flags & TRACK_READ_ONLY_FLAG:
                 track.read_only = read_bool(f)
 
-            if track.flags & TRACK_UNKNOWN_FLAGS:
-                raise ValueError("Unknown Track Flag: %d" % track.flags)
+            if flags & TRACK_UNKNOWN_FLAGS:
+                raise ValueError("Unknown Track Flag: %d" % flags)
+
+            assert track.flags == flags
 
             self.tracks.append(track)
 
@@ -151,41 +188,41 @@ class TrackGroup(Component):
 
         write_s32le(f, len(self.tracks))
 
-        # TODO: cacluate flags dynamically using hasattr
         for track in self.tracks:
-            write_u16le(f, track.flags)
-            if track.flags & TRACK_LABEL_FLAG:
+            flags = track.flags
+            if flags & TRACK_UNKNOWN_FLAGS:
+                raise ValueError("Unknown Track Flag: %d" % flags)
+
+            write_u16le(f, flags)
+            if flags & TRACK_LABEL_FLAG:
                 write_s16le(f, track.index)
 
-            if track.flags & TRACK_ATTRIBUTES_FLAG:
+            if flags & TRACK_ATTRIBUTES_FLAG:
                 write_object_ref(self.root, f, track.attributes)
 
-            if track.flags & TRACK_SESSION_ATTR_FLAG:
+            if flags & TRACK_SESSION_ATTR_FLAG:
                 write_object_ref(self.root, f, track.session_attr)
 
-            if track.flags & TRACK_COMPONENT_FLAG:
+            if flags & TRACK_COMPONENT_FLAG:
                 write_object_ref(self.root, f, track.component)
 
-            if track.flags & TRACK_FILLER_PROXY_FLAG:
+            if flags & TRACK_FILLER_PROXY_FLAG:
                 write_object_ref(self.root, f, track.filler_proxy)
 
-            if track.flags & TRACK_BOB_DATA_FLAG:
+            if flags & TRACK_BOB_DATA_FLAG:
                 write_object_ref(self.root, f, track.bob_data)
 
-            if track.flags & TRACK_CONTROL_CODE_FLAG:
+            if flags & TRACK_CONTROL_CODE_FLAG:
                 write_s16le(f, track.control_code)
 
-            if track.flags & TRACK_CONTROL_SUB_CODE_FLAG:
+            if flags & TRACK_CONTROL_SUB_CODE_FLAG:
                 write_s16le(f, track.control_sub_code)
 
-            if track.flags & TRACK_START_POS_FLAG:
+            if flags & TRACK_START_POS_FLAG:
                 write_s32le(f, track.start_pos)
 
-            if track.flags & TRACK_READ_ONLY_FLAG:
+            if flags & TRACK_READ_ONLY_FLAG:
                 write_bool(f, track.read_only)
-
-            if track.flags & TRACK_UNKNOWN_FLAGS:
-                raise ValueError("Unknown Track Flag: %d" % track.flags)
 
         if self.tracks:
             write_u8(f, 0x01)
