@@ -260,10 +260,17 @@ def iter_tracks(avb_mob):
         for track in tracks:
             yield track
 
+def zero_mob_id(mob_id):
+    material = mob_id.material.uuid
+    lo = material.time_low
+    hi = material.time_mid + (material.time_hi_version << 16)
+    if lo == 0 and hi == 0:
+        return True
+    return False
 
 def check_source_clip(f, avb_source_clip):
     mob_id = MobID(bytes_le=avb_source_clip.mob_id.bytes_le)
-    if mob_id.int == 0:
+    if zero_mob_id(mob_id):
         return 0
     avb_mob = avb_source_clip.root.content.mob_dict[avb_source_clip.mob_id]
     if mob_id in f.content.mobs:
@@ -292,6 +299,9 @@ def convert_source_clip(f, avb_source_clip):
     slot_id = check_source_clip(f, avb_source_clip)
 
     mob_id = MobID(bytes_le= avb_source_clip.mob_id.bytes_le)
+    if zero_mob_id(mob_id):
+        mob_id = MobID()
+
     aaf_component = f.create.SourceClip()
     aaf_component['SourceID'].value = mob_id
     aaf_component['StartTime'].value = avb_source_clip.start_time
@@ -370,6 +380,12 @@ def convert_title(f, avb_title):
 
     pict_data = fx_attr.pict_data
     if not pict_data:
+        return f.create.Filler()
+
+    pict_data = bytearray(pict_data)
+    if len(pict_data) > 0xFFFF:
+        # TODO: think this need to be a stream
+        print("pict data to big, replacing with filler")
         return f.create.Filler()
 
     op = f.create.OperationGroup('Title_2')
