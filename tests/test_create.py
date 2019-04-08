@@ -38,11 +38,11 @@ class TestCreate(unittest.TestCase):
             tape_mob.descriptor = f.create.TapeDescriptor()
             tape_mob.descriptor.mob_kind = 2 # won't work without
             tape_mob.name = "Example Tape"
-            tape_mob.length = 25 * 60 * 60
+            tape_mob.length = 10368000
 
             track = f.create.Track()
             track.index = 1
-            track.component = f.create.Timecode(edit_rate=edit_rate, media_kind='picture')
+            track.component = f.create.Timecode(edit_rate=edit_rate, media_kind='timecode')
             track.component.length = 10368000
             tape_mob.tracks.append(track)
 
@@ -65,6 +65,7 @@ class TestCreate(unittest.TestCase):
             track.component = f.create.SourceClip(edit_rate=edit_rate, media_kind='picture')
             track.component.length = 100
             track.component.track_id = 1
+            track.component.start_time = 25 * 60 * 60
             track.component.mob_id = tape_mob.mob_id
             track.filler_proxy = f.create.TrackRef(edit_rate=edit_rate, media_kind='picture')
             track.filler_proxy.length = 2147483647
