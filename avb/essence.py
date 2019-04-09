@@ -42,6 +42,7 @@ class MediaDescriptor(core.AVBObject):
         AVBPropertyDef('intermediate',   'OMFI:MDES:MC:Intermediate', 'bool',     False),
         AVBPropertyDef('physical_media', 'OMFI:MOBJ:PhysicalMedia',   'reference', None),
         AVBPropertyDef('uuid',           'OMFI:AMDL:acfUID',          'UUID'),
+        AVBPropertyDef('wchar',          'OMFI:AMDL:acfWChar',        'bytes'),
         AVBPropertyDef('attributes',     'OMFI:AMDL:Attributes',      'reference'),
     ]
     __slots__ = ()
@@ -67,6 +68,11 @@ class MediaDescriptor(core.AVBObject):
                 uuid_len = read_s32le(f)
                 assert uuid_len == 16
                 self.uuid = read_raw_uuid(f)
+            elif tag == 0x02:
+                # this is utf-16 string data
+                read_assert_tag(f, 65)
+                size = read_s32le(f)
+                self.wchar = bytearray(f.read(size))
             elif tag == 0x03:
                 read_assert_tag(f, 72)
                 self.attributes = read_object_ref(self.root, f)
@@ -92,6 +98,13 @@ class MediaDescriptor(core.AVBObject):
             write_u8(f, 65)
             write_s32le(f, 16)
             write_raw_uuid(f, self.uuid)
+
+        if hasattr(self, 'wchar'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x02)
+            write_u8(f, 65)
+            write_s32le(f, len(self.wchar))
+            f.write(self.wchar)
 
         if hasattr(self, 'attributes'):
             write_u8(f, 0x01)
