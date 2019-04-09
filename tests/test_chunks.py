@@ -6,6 +6,7 @@ from __future__ import (
     )
 import os
 import io
+import binascii
 import unittest
 import avb
 
@@ -52,7 +53,9 @@ def read_write_chunk(path):
             print('write error:')
             print(path)
             print(chunk.class_id)
-            print(chunk.hex())
+            print(binascii.hexlify(chunk_data))
+            print()
+            print(binascii.hexlify(write_data))
             raise
 
 class TestChuckDB(unittest.TestCase):
@@ -80,6 +83,10 @@ class TestChuckDB(unittest.TestCase):
 
     def test_fxps_chunks(self):
         for chunk_path in iter_chunks("FXPS"):
+            read_write_chunk(chunk_path)
+
+    def test_file_chunks(self):
+        for chunk_path in iter_chunks("FILE"):
             read_write_chunk(chunk_path)
 
     def test_rept_chunks(self):

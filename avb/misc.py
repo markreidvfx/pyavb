@@ -33,9 +33,10 @@ from . utils import (
 class FileLocator(core.AVBObject):
     class_id = b'FILE'
     propertydefs = [
-        AVBPropertyDef('path',       'OMFI:FL:PathName',       'string'),
-        AVBPropertyDef('path_posix', 'OMFI:FL:POSIXPathName',  'string'),
-        AVBPropertyDef('path_utf8',  'OMFI:FL:PathNameUTF8',   'string')
+        AVBPropertyDef('path',        'OMFI:FL:PathName',       'string'),
+        AVBPropertyDef('path_posix',  'OMFI:FL:POSIXPathName',  'string'),
+        AVBPropertyDef('path_utf8',   'OMFI:FL:PathNameUTF8',   'string'),
+        AVBPropertyDef('path2_utf8',  'OMFI:FL:PathNameUTF8',   'string')
     ]
     __slots__ = ()
 
@@ -50,10 +51,12 @@ class FileLocator(core.AVBObject):
             if tag == 0x01:
                 read_assert_tag(f, 76)
                 self.path_posix = read_string(f)
-
             elif tag == 0x02:
                 read_assert_tag(f, 76)
                 self.path_utf8 = read_string(f, 'utf-8')
+            elif tag == 0x03:
+                read_assert_tag(f, 76)
+                self.path2_utf8 = read_string(f, 'utf-8')
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
@@ -77,6 +80,12 @@ class FileLocator(core.AVBObject):
             write_u8(f, 0x02)
             write_u8(f, 76)
             write_string(f, self.path_utf8, encoding='utf-8')
+
+        if hasattr(self, 'path2_utf8'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x03)
+            write_u8(f, 76)
+            write_string(f, self.path2_utf8, encoding='utf-8')
 
         write_u8(f, 0x03)
 
