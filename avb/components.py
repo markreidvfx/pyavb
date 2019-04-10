@@ -383,6 +383,7 @@ class TrackRef(Clip):
 
 CP_TYPE_INT = 1
 CP_TYPE_DOUBLE = 2
+CP_TYPE_REFERENCE = 4
 
 class ParamControlPoint(core.AVBObject):
     propertydefs = [
@@ -421,9 +422,8 @@ class ParamClip(Clip):
 
         self.interp_kind = read_s32le(f)
         self.value_type = read_s16le(f)
-        # print(self.value_type)
-        # not sure what 4 is BOB data?
-        assert self.value_type in (CP_TYPE_INT, CP_TYPE_DOUBLE, 4)
+
+        assert self.value_type in (CP_TYPE_INT, CP_TYPE_DOUBLE, CP_TYPE_REFERENCE)
 
         point_count = read_s32le(f)
         assert point_count >= 0
@@ -431,7 +431,6 @@ class ParamClip(Clip):
         self.control_points = []
         for i in range(point_count):
             cp = ParamControlPoint.__new__(ParamControlPoint, root=self.root)
-
             num = read_s32le(f)
             den = read_s32le(f)
             cp.offset = [num, den]
@@ -441,8 +440,10 @@ class ParamClip(Clip):
                 cp.value = read_s32le(f)
             elif self.value_type == CP_TYPE_DOUBLE:
                 cp.value = read_doublele(f)
+            elif self.value_type == CP_TYPE_REFERENCE:
+                cp.value = read_object_ref(self.root, f)
             else:
-                raise ValueError("unknown value type: %d" % cp.type)
+                raise ValueError("unknown value type: %d" % self.value_type)
 
             pp_count = read_s16le(f)
             assert pp_count >= 0
@@ -494,8 +495,10 @@ class ParamClip(Clip):
                 write_s32le(f, cp.value)
             elif self.value_type == CP_TYPE_DOUBLE:
                 write_doublele(f, cp.value)
+            elif self.value_type == CP_TYPE_REFERENCE:
+                write_object_ref(self.root, f, cp.value)
             else:
-                raise ValueError("unknown value type: %d" % cp.type)
+                raise ValueError("unknown value type: %d" % cp.value_type)
 
             write_s16le(f, len(cp.pp))
             for pp in cp.pp:
