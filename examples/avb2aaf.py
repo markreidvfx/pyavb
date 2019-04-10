@@ -383,15 +383,14 @@ def convert_title(f, avb_title):
         return f.create.Filler()
 
     pict_data = bytearray(pict_data)
-    if len(pict_data) > 0xFFFF:
-        # TODO: think this need to be a stream
-        print("pict data to big, replacing with filler")
-        return f.create.Filler()
 
     op = f.create.OperationGroup('Title_2')
-
-    param = f.create.ConstantValue('AvidGraphicFXAttr', bytearray(pict_data))
-    op.parameters.append(param)
+    if len(pict_data) > 0xFFFF:
+        stream = op['OpGroupGraphicsParamStream'].open('w')
+        stream.write(pict_data)
+    else:
+        param = f.create.ConstantValue('AvidGraphicFXAttr', bytearray(pict_data))
+        op.parameters.append(param)
 
     param = f.create.ConstantValue('AvidEffectID', bytearray(b'EFF2_BLEND_GRAPHIC\x00'))
     op.parameters.append(param)
