@@ -130,6 +130,35 @@ class GraphicEffect(core.AVBObject):
 
         write_u8(f, 0x03)
 
+@utils.register_class
+class ShapeList(core.AVBObject):
+    class_id = b'SHLP'
+    propertydefs = [
+        AVBPropertyDef('shape_data', 'ShapeList', 'bytes'),
+    ]
+
+    def read(self, f):
+        super(ShapeList, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        data_size = read_s32le(f)
+        assert data_size >= 0
+
+        self.shape_data = bytearray(f.read(data_size))
+        assert len(self.shape_data) == data_size
+        read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(ShapeList, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_s32le(f, len(self.shape_data))
+        f.write(self.shape_data)
+
+        write_u8(f, 0x03)
+
 class EffectParam(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('percent_time',     'OMFI:FXPS:percentTime',         'int32'),
