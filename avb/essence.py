@@ -884,29 +884,13 @@ class MPGIDescriptor(CDCIDescriptor):
 
         write_u8(f, 0x03)
 
-def decode_pixel_layout(pixel_layout, pixel_struct):
-
-    layout = []
-    for i in range(8):
-        code = read_u8(pixel_layout)
-        depth = read_u8(pixel_struct)
-        if not code:
-            break
-        layout.append({'Code':code, 'Size':depth})
-
-    return layout
-
 def encode_pixel_layout(layout):
     pixel_layout = BytesIO()
     pixel_struct = BytesIO()
-    for i in range(8):
-        if i < len(layout):
-            write_u8(pixel_layout, layout[i]['Code'])
-            write_u8(pixel_struct, layout[i]['Size'])
-        else:
-            write_u8(pixel_layout, 0)
-            write_u8(pixel_struct, 0)
-            break
+
+    for i in range(len(layout)):
+        write_u8(pixel_layout, layout[i]['Code'])
+        write_u8(pixel_struct, layout[i]['Size'])
 
     return pixel_layout.getvalue(), pixel_struct.getvalue()
 
@@ -933,14 +917,18 @@ class RGBADescriptor(DIDDescriptor):
 
         # this seems to be encode the same way as in AAF
         layout_size = read_u32le(f)
-        pixel_layout = BytesIO(f.read(layout_size))
+        pixel_layout = bytearray(f.read(layout_size))
 
         struct_size =  read_u32le(f)
-        pixel_struct = BytesIO(f.read(struct_size))
+        pixel_struct = bytearray(f.read(struct_size))
 
-        self.pixel_layout = decode_pixel_layout(pixel_layout, pixel_struct)
+        assert layout_size == struct_size
 
-        # print([self.pixel_struct])
+        layout = []
+        for code, size in zip(pixel_layout, pixel_struct):
+            layout.append({'Code': code, "Size" : size})
+
+        self.pixel_layout = layout
 
         palette_layout_size = read_u32le(f)
         assert palette_layout_size == 0

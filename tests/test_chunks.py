@@ -43,7 +43,7 @@ def read_write_chunk(path):
             print(chunk.class_id)
             print(chunk.hex())
             raise
-
+        write_data = b''
         try:
             r = io.BytesIO()
             object_instance.write(r)
