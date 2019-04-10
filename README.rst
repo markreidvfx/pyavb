@@ -3,7 +3,21 @@
 pyavb
 =====
 
-A very experimental python module for reading Avid Bin Files (AVB).
+A very experimental python module for reading/writing Avid Bin Files (AVB).
+
+Requirements
+------------
+
+- Python >= 2.7
+
+Installation
+------------
+
+clone the latest development git master::
+
+    git clone https://github.com/markreidvfx/pyavb
+    cd pyavb
+    python setup.py install
 
 Based one the work from
 
