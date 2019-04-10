@@ -182,11 +182,9 @@ def convert_descriptor(d, aaf_file):
     descriptor = None
     if type(d) is avb.essence.MediaDescriptor:
         descriptor = aaf_file.create.ImportDescriptor()
-        return descriptor
 
     elif type(d) is avb.essence.TapeDescriptor:
         descriptor = aaf_file.create.TapeDescriptor()
-        return descriptor
 
     elif type(d) is avb.essence.PCMADescriptor:
         descriptor = aaf_file.create.PCMDescriptor()
@@ -203,6 +201,10 @@ def convert_descriptor(d, aaf_file):
             descriptor = aaf_file.create.CDCIDescriptor()
             descriptor['ComponentWidth'].value = d.component_width
             descriptor['HorizontalSubsampling'].value = d.horizontal_subsampling
+            descriptor['VerticalSubsampling'].value = d.vertical_subsampling
+            descriptor['ResolutionID'].value = d.resolution_id
+            descriptor['ImageAlignmentFactor'].value = d.image_alignment_factor
+            # avb_dump(d)
 
         elif type(d) is avb.essence.RGBADescriptor:
             descriptor = aaf_file.create.RGBADescriptor()
@@ -227,7 +229,8 @@ def convert_descriptor(d, aaf_file):
         avb_dump(d)
         raise ValueError("unhandle descriptor")
 
-    descriptor["Length"].value = d.length
+    if hasattr(d, 'length'):
+        descriptor["Length"].value = d.length
 
     if d.physical_media:
         loc = d.physical_media.locator
@@ -417,10 +420,6 @@ def convert_track_effect(f, avb_effect):
     # print('------')
     elif avb_effect.effect_id == b'Audio Pan Volume':
         return convert_component(f, sequ_first_item(avb_effect.tracks[0].component))
-
-    elif avb_effect.effect_id == b'EFF2_BLEND_GRAPHIC':
-        track = avb_effect.tracks[-1]
-        return convert_component(f, track.component)
 
     elif avb_effect.effect_id == b'EFF2_RGB_COLOR_CORRECTION':
 
@@ -790,7 +789,7 @@ def avb2aaf_main(path):
             avb2aaf(aaf_file, avb_file)
 
     # with aaf2.open(path + ".aaf", 'r') as aaf_file:
-    #     aaf_file.dump()
+    #     aaf_file.content.dump()
 
 
 
