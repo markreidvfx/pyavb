@@ -294,6 +294,7 @@ class PCMADescriptor(MediaFileDescriptor):
         AVBPropertyDef('peak_frame_count',            'OMFI:PCMA:PeakFrameCount',            'int32'),
         AVBPropertyDef('peak_of_peaks_offset',        'OMFI:PCMA:PeakOfPeaksOffset',         'uint64'),
         AVBPropertyDef('peak_envelope_timestamp',     'OMFI:PCMA:PeakEnvelopeTimestamp',     'int32'),
+        AVBPropertyDef('ebu_timestamp',               'OMFI:PCMA:SmpteEbuTimestamp',         'int64'),
     ]
     __slots__ = ()
 
@@ -327,6 +328,13 @@ class PCMADescriptor(MediaFileDescriptor):
         self.peak_of_peaks_offset = read_u64le(f)
         self.peak_envelope_timestamp = read_s32le(f)
 
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                read_assert_tag(f, 77)
+                self.ebu_timestamp = read_s64le(f)
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
+
         read_assert_tag(f, 0x03)
 
     def write(self, f):
@@ -358,6 +366,12 @@ class PCMADescriptor(MediaFileDescriptor):
         write_s32le(f, self.peak_frame_count)
         write_u64le(f, self.peak_of_peaks_offset)
         write_s32le(f, self.peak_envelope_timestamp)
+
+        if hasattr(self, 'ebu_timestamp'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            write_u8(f, 77)
+            write_s64le(f, self.ebu_timestamp)
 
         write_u8(f, 0x03)
 

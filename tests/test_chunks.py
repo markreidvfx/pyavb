@@ -132,6 +132,10 @@ class TestChuckDB(unittest.TestCase):
         for chunk_path in iter_chunks("TMBC"):
             read_write_chunk(chunk_path)
 
+    def test_pcma_chunks(self):
+        for chunk_path in iter_chunks("PCMA"):
+            read_write_chunk(chunk_path)
+
     def test_prit_chunks(self):
         for chunk_path in iter_chunks("PRIT"):
             read_write_chunk(chunk_path)
