@@ -500,10 +500,13 @@ class AudioSuitePluginEffect(TrackEffect):
             elif tag == 0x09:
                 read_assert_tag(f, 72)
                 preset_path_length = read_u32le(f)
-                read_assert_tag(f, 65)
-                length = read_u32le(f)
-                assert preset_path_length == length
-                self.preset_path = bytearray(f.read(length))
+                if preset_path_length > 0:
+                    read_assert_tag(f, 65)
+                    length = read_u32le(f)
+                    assert preset_path_length == length
+                    self.preset_path = bytearray(f.read(length))
+                else:
+                    self.preset_path = bytearray()
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
@@ -585,9 +588,10 @@ class AudioSuitePluginEffect(TrackEffect):
             write_u8(f, 72)
             # yes its twice for some reason
             write_u32le(f, len(self.preset_path))
-            write_u8(f, 65)
-            write_u32le(f, len(self.preset_path))
-            f.write(self.preset_path)
+            if len(self.preset_path) > 0:
+                write_u8(f, 65)
+                write_u32le(f, len(self.preset_path))
+                f.write(self.preset_path)
 
         write_u8(f, 0x03)
 
