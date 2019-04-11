@@ -159,6 +159,24 @@ class FilmDescriptor(MediaDescriptor):
         write_u8(f, 0x03)
 
 @utils.register_class
+class NGDescriptor(MediaDescriptor):
+    class_id = b'MDNG'
+    __slots__ = ()
+
+    def read(self, f):
+        super(NGDescriptor, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(NGDescriptor, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+        write_u8(f, 0x03)
+
+@utils.register_class
 class MediaFileDescriptor(MediaDescriptor):
     class_id = b'MDFL'
     propertydefs = MediaDescriptor.propertydefs + [
