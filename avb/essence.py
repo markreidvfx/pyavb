@@ -423,6 +423,7 @@ class DIDDescriptor(MediaFileDescriptor):
         AVBPropertyDef('client_fill_start',          'OMFI:DIDD:ClientFillStart',                         'int32'),
         AVBPropertyDef('client_fill_end',            'OMFI:DIDD:ClientFillEnd',                           'int32'),
         AVBPropertyDef('offset_to_rle_frame_index',  'OMFI:DIDD:OffsetToRLEFrameIndexes',                 'int32'),
+        AVBPropertyDef('frame_start_offset',         'OMFI:DIDD:FrameStartOffset',                        'int32'),
         AVBPropertyDef('valid_box',                  'OMFI:DIDD:Valid',                                   'bounds_box'),
         AVBPropertyDef('essence_box',                'OMFI:DIDD:Essence',                                 'bounds_box'),
         AVBPropertyDef('source_box',                 'OMFI:DIDD:Source',                                  'bounds_box'),
@@ -504,6 +505,10 @@ class DIDDescriptor(MediaFileDescriptor):
             elif tag == 0x05:
                 read_assert_tag(f, 71)
                 self.offset_to_rle_frame_index = read_s32le(f)
+
+            elif tag == 0x06:
+                read_assert_tag(f, 71)
+                self.frame_start_offset = read_s32le(f)
 
             elif tag == 0x08:
                 # valid
@@ -711,6 +716,12 @@ class DIDDescriptor(MediaFileDescriptor):
             write_u8(f, 0x05)
             write_u8(f, 71)
             write_s32le(f, self.offset_to_rle_frame_index)
+
+        if hasattr(self, 'frame_start_offset'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x06)
+            write_u8(f, 71)
+            write_s32le(f, self.frame_start_offset)
 
         if hasattr(self, 'valid_box') and hasattr(self, 'essence_box') and hasattr(self, 'source_box'):
             write_u8(f, 0x01)
