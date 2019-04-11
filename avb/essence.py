@@ -140,6 +140,24 @@ class TapeDescriptor(MediaDescriptor):
         write_s16le(f, self.cframe)
         write_u8(f, 0x03)
 
+@utils.register_class
+class FilmDescriptor(MediaDescriptor):
+    class_id = b'MDFM'
+    __slots__ = ()
+
+    def read(self, f):
+        super(FilmDescriptor, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(FilmDescriptor, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+        write_u8(f, 0x03)
+
 class MediaFileDescriptor(MediaDescriptor):
     class_id = b'MDFL'
     propertydefs = MediaDescriptor.propertydefs + [

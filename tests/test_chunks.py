@@ -84,6 +84,10 @@ class TestChuckDB(unittest.TestCase):
         for chunk_path in iter_chunks("MDTP"):
             read_write_chunk(chunk_path)
 
+    def test_mdfm_chunks(self):
+        for chunk_path in iter_chunks("MDFM"):
+            read_write_chunk(chunk_path)
+
     def test_fxps_chunks(self):
         for chunk_path in iter_chunks("FXPS"):
             read_write_chunk(chunk_path)
