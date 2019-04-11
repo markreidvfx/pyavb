@@ -705,6 +705,28 @@ class CaptureMask(TimeWarp):
 
         write_u8(f, 0x03)
 
+@utils.register_class
+class StrobeEffect(TimeWarp):
+    class_id = b'STRB'
+    propertydefs = TimeWarp.propertydefs + [
+        AVBPropertyDef('strobe_value',  'OMFI:STRB:MC:StrobeVal',  'int32'),
+    ]
+    __slots__ = ()
+
+    def read(self, f):
+        super(StrobeEffect, self).read(f)
+        # print(peek_data(f).encode("hex"))
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+        self.strobe_value = read_s32le(f)
+        read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(StrobeEffect, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+        write_s32le(f, self.strobe_value)
+        write_u8(f, 0x03)
 
 @utils.register_class
 class MotionEffect(TimeWarp):

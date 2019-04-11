@@ -156,6 +156,10 @@ class TestChuckDB(unittest.TestCase):
         for chunk_path in iter_chunks("ASPI"):
             read_write_chunk(chunk_path)
 
+    def test_strb_chunks(self):
+        for chunk_path in iter_chunks("STRB"):
+            read_write_chunk(chunk_path)
+
     def test_tkds_chunks(self):
         for chunk_path in iter_chunks("TKDS"):
             read_write_chunk(chunk_path)
