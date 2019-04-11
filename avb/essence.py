@@ -413,6 +413,7 @@ class DIDDescriptor(MediaFileDescriptor):
         AVBPropertyDef('transfer_characteristic',    'OMFI:DIDD:TransferCharacteristic',                  'UUID'),
         AVBPropertyDef('color_primaries',            'OMFI:DIDD:ColorPrimaries',                          'UUID'),
         AVBPropertyDef('coding_equations',           'OMFI:DIDD:CodingEquations',                         'UUID'),
+        AVBPropertyDef('essence_compression',        'OMFI:DIDD:EssenceCompression',                      'UIDD'),
         AVBPropertyDef('frame_checked_with_mapper',  'OMFI:DIDD:FrameSampleSizeHasBeenCheckedWithMapper', 'bool'),
     ]
     __slots__ = ()
@@ -603,7 +604,9 @@ class DIDDescriptor(MediaFileDescriptor):
                 self.color_primaries =  read_raw_uuid(f)
                 read_assert_tag(f, 80)
                 self.coding_equations = read_raw_uuid(f)
-
+            elif tag == 12:
+                read_assert_tag(f, 80)
+                self.essence_compression = read_raw_uuid(f)
             elif tag == 15:
                 read_assert_tag(f, 66)
                 self.frame_checked_with_mapper = read_bool(f)
@@ -799,6 +802,12 @@ class DIDDescriptor(MediaFileDescriptor):
             write_raw_uuid(f, self.color_primaries)
             write_u8(f, 80)
             write_raw_uuid(f, self.coding_equations)
+
+        if hasattr(self, 'essence_compression'):
+            write_u8(f, 0x01)
+            write_u8(f, 12)
+            write_u8(f, 80)
+            write_raw_uuid(f, self.essence_compression)
 
         if hasattr(self, 'frame_checked_with_mapper'):
             write_u8(f, 0x01)
