@@ -80,6 +80,12 @@ def read_u32le(f):
 def write_u32le(f, value):
     f.write(struct.pack(b"<I", value))
 
+def read_u32be(f):
+    return struct.unpack(b">I", f.read(4))[0]
+
+def write_u32be(f, value):
+    f.write(struct.pack(b">I", value))
+
 def read_s16le(f):
     return struct.unpack(b"<h", f.read(2))[0]
 

@@ -60,6 +60,9 @@ def read_write_chunk(path):
 
 class TestChuckDB(unittest.TestCase):
 
+    def test_aifc_chunks(self):
+        for chunk_path in iter_chunks("AIFC"):
+            read_write_chunk(chunk_path)
 
     def test_cdci_chunks(self):
         for chunk_path in iter_chunks("CDCI"):

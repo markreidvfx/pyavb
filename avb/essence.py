@@ -6,7 +6,6 @@ from __future__ import (
     )
 
 from io import BytesIO
-
 from . import core
 from . import utils
 from .core import AVBPropertyDef, AVBRefList
@@ -18,6 +17,7 @@ from . utils import (
     read_s16le,  write_s16le,
     read_u16le,  write_u16le,
     read_u32le,  write_u32le,
+    read_u32be,  write_u32be,
     read_s32le,  write_s32le,
     read_s64le,  write_s64le,
     read_u64le,  write_u64le,
@@ -227,6 +227,47 @@ class WaveDescriptor(MediaFileDescriptor):
         f.write(b'RIFF')
         write_u32le(f, len(self.summary))
         f.write(self.summary)
+        write_u8(f, 0x03)
+
+@utils.register_class
+class AIFCDescriptor(MediaFileDescriptor):
+    class_id = b'AIFC'
+    propertydefs = MediaFileDescriptor.propertydefs + [
+        AVBPropertyDef('summary',   'OMFI:AIFD:Summary',   'bytes'),
+        AVBPropertyDef('data_pos',  'OMFI:AIFD:MC:DataPos', 'int32'),
+    ]
+    def read(self, f):
+        super(AIFCDescriptor, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        assert f.read(4) == b'FORM'
+        size = read_u32be(f)
+        self.summary = bytearray(f.read(size))
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                read_assert_tag(f, 71)
+                self.data_pos = read_s32le(f)
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
+
+        read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(AIFCDescriptor, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        f.write(b'FORM')
+        write_u32be(f, len(self.summary))
+        f.write(self.summary)
+
+        if hasattr(self, 'data_pos'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            write_u8(f, 71)
+            write_s32le(f, self.data_pos)
+
         write_u8(f, 0x03)
 
 @utils.register_class
