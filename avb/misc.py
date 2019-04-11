@@ -159,6 +159,35 @@ class ShapeList(core.AVBObject):
 
         write_u8(f, 0x03)
 
+@utils.register_class
+class ColorCorrectionEffect(core.AVBObject):
+    class_id = b'CCFX'
+    propertydefs = [
+        AVBPropertyDef('color_correction', 'OMFI:FXPS:colorCorrection', 'bytes'),
+    ]
+
+    def read(self, f):
+        super(ColorCorrectionEffect, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        data_size = read_s16le(f)
+        assert data_size >= 0
+        #
+        self.color_correction = bytearray(f.read(data_size))
+        assert len(self.color_correction) == data_size
+        read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(ColorCorrectionEffect, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_s16le(f, len(self.color_correction))
+        f.write(self.color_correction)
+
+        write_u8(f, 0x03)
+
 class EffectParam(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('percent_time',     'OMFI:FXPS:percentTime',         'int32'),

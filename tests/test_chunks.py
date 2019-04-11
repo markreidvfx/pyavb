@@ -88,6 +88,10 @@ class TestChuckDB(unittest.TestCase):
         for chunk_path in iter_chunks("FXPS"):
             read_write_chunk(chunk_path)
 
+    def test_ccfx_chunks(self):
+        for chunk_path in iter_chunks("CCFX"):
+            read_write_chunk(chunk_path)
+
     def test_file_chunks(self):
         for chunk_path in iter_chunks("FILE"):
             read_write_chunk(chunk_path)
