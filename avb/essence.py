@@ -954,7 +954,7 @@ class JPEGDescriptor(CDCIDescriptor):
     propertydefs = CDCIDescriptor.propertydefs + [
         AVBPropertyDef('jpeg_table_id',           "OMFI:JPED:JPEGTableID",           "int32"),
         AVBPropertyDef('jpeg_frame_index_offset', "OMFI:JPED:OffsetToFrameIndexes",  "uint64"),
-        AVBPropertyDef('quantization_tables',     "OMFI:JPED:QuantizationTables",    "int32"),
+        AVBPropertyDef('quantization_tables',     "OMFI:JPED:QuantizationTables",    "bytes"),
         AVBPropertyDef('image_start_align',       "OMFI:JPED:ImageStartAlignment",   "int32"),
     ]
 
@@ -965,7 +965,9 @@ class JPEGDescriptor(CDCIDescriptor):
 
         self.jpeg_table_id = read_s32le(f)
         self.jpeg_frame_index_offset = read_u64le(f)
-        self.quantization_tables = read_s32le(f)
+        table_size = read_s32le(f)
+        assert table_size >= 0
+        self.quantization_tables = bytearray(f.read(table_size))
 
         for tag in iter_ext(f):
             if tag == 0x01:
@@ -983,7 +985,8 @@ class JPEGDescriptor(CDCIDescriptor):
 
         write_s32le(f, self.jpeg_table_id)
         write_u64le(f, self.jpeg_frame_index_offset)
-        write_s32le(f, self.quantization_tables)
+        write_s32le(f, len(self.quantization_tables))
+        f.write(self.quantization_tables)
 
         if hasattr(self, 'image_start_align'):
             write_u8(f, 0x01)
