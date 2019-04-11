@@ -939,6 +939,51 @@ class MPGIDescriptor(CDCIDescriptor):
 
         write_u8(f, 0x03)
 
+@utils.register_class
+class JPEGDescriptor(CDCIDescriptor):
+    class_id = b'JPED'
+    propertydefs = CDCIDescriptor.propertydefs + [
+        AVBPropertyDef('jpeg_table_id',           "OMFI:JPED:JPEGTableID",           "int32"),
+        AVBPropertyDef('jpeg_frame_index_offset', "OMFI:JPED:OffsetToFrameIndexes",  "uint64"),
+        AVBPropertyDef('quantization_tables',     "OMFI:JPED:QuantizationTables",    "int32"),
+        AVBPropertyDef('image_start_align',       "OMFI:JPED:ImageStartAlignment",   "int32"),
+    ]
+
+    def read(self, f):
+        super(JPEGDescriptor, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        self.jpeg_table_id = read_s32le(f)
+        self.jpeg_frame_index_offset = read_u64le(f)
+        self.quantization_tables = read_s32le(f)
+
+        for tag in iter_ext(f):
+            if tag == 0x01:
+                read_assert_tag(f, 71)
+                self.image_start_align = read_s32le(f)
+            else:
+                raise ValueError("unknown ext tag 0x%02X %d" % (tag,tag))
+
+        read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(JPEGDescriptor, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_s32le(f, self.jpeg_table_id)
+        write_u64le(f, self.jpeg_frame_index_offset)
+        write_s32le(f, self.quantization_tables)
+
+        if hasattr(self, 'image_start_align'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x01)
+            write_u8(f, 71)
+            write_s32le(f, self.image_start_align)
+
+        write_u8(f, 0x03)
+
 def encode_pixel_layout(layout):
     pixel_layout = BytesIO()
     pixel_struct = BytesIO()
