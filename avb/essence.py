@@ -158,6 +158,7 @@ class FilmDescriptor(MediaDescriptor):
         write_u8(f, 0x01)
         write_u8(f, 0x03)
 
+@utils.register_class
 class MediaFileDescriptor(MediaDescriptor):
     class_id = b'MDFL'
     propertydefs = MediaDescriptor.propertydefs + [
@@ -178,6 +179,9 @@ class MediaFileDescriptor(MediaDescriptor):
         self.is_omfi = read_s16le(f)
         self.data_offset = read_s32le(f)
 
+        if self.class_id[:] == b'MDFL':
+            read_assert_tag(f, 0x03)
+
     def write(self, f):
         super(MediaFileDescriptor, self).write(f)
         write_u8(f, 0x02)
@@ -187,6 +191,9 @@ class MediaFileDescriptor(MediaDescriptor):
         write_s32le(f, self.length)
         write_s16le(f, self.is_omfi)
         write_s32le(f, self.data_offset)
+
+        if self.class_id[:] == b'MDFL':
+            write_u8(f, 0x03)
 
 @utils.register_class
 class MultiDescriptor(MediaFileDescriptor):
