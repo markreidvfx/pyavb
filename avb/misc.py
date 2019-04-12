@@ -100,6 +100,18 @@ class WinFileLocator(FileLocator):
     __slots__ = ()
 
 @utils.register_class
+class URLLocator(core.AVBObject):
+    class_id = b'URLL'
+
+    def read(self, f):
+        super(URLLocator, self).read(f)
+        read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(URLLocator, self).write(f)
+        write_u8(f, 0x03)
+
+@utils.register_class
 class GraphicEffect(core.AVBObject):
     class_id = b'GRFX'
     propertydefs = [
