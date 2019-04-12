@@ -338,6 +338,7 @@ class PCMADescriptor(MediaFileDescriptor):
         AVBPropertyDef('peak_of_peaks_offset',        'OMFI:PCMA:PeakOfPeaksOffset',         'uint64'),
         AVBPropertyDef('peak_envelope_timestamp',     'OMFI:PCMA:PeakEnvelopeTimestamp',     'int32'),
         AVBPropertyDef('ebu_timestamp',               'OMFI:PCMA:SmpteEbuTimestamp',         'int64'),
+        AVBPropertyDef('timecode_framerate',          'OMFI:PCMA:TimecodeFrameRate',        'string'),
     ]
     __slots__ = ()
 
@@ -375,6 +376,10 @@ class PCMADescriptor(MediaFileDescriptor):
             if tag == 0x01:
                 read_assert_tag(f, 77)
                 self.ebu_timestamp = read_s64le(f)
+            elif tag == 0x03:
+                read_assert_tag(f, 76)
+                # yes this is a string!
+                self.timecode_framerate = read_string(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
@@ -415,6 +420,12 @@ class PCMADescriptor(MediaFileDescriptor):
             write_u8(f, 0x01)
             write_u8(f, 77)
             write_s64le(f, self.ebu_timestamp)
+
+        if hasattr(self, 'timecode_framerate'):
+            write_u8(f, 0x01)
+            write_u8(f, 0x03)
+            write_u8(f, 76)
+            write_string(f, self.timecode_framerate)
 
         write_u8(f, 0x03)
 
