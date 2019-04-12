@@ -679,7 +679,8 @@ class DIDPosition(BOBPosition):
         self.byte_length = read_u64le(f)
         self.spos_invalid = read_bool(f)
 
-        read_assert_tag(f, 0x03)
+        if self.class_id[:] == b'DIDP':
+            read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(DIDPosition, self).write(f)
@@ -691,6 +692,55 @@ class DIDPosition(BOBPosition):
         write_u64le(f, self.offset)
         write_u64le(f, self.byte_length)
         write_bool(f, self.spos_invalid)
+
+        if self.class_id[:] == b'DIDP':
+            write_u8(f, 0x03)
+
+@utils.register_class
+class MPGPosition(DIDPosition):
+    class_id = b'MPGP'
+    propertydefs = DIDPosition.propertydefs + [
+     AVBPropertyDef('trailing_discards',    '_trailingDiscards',      'int16'),
+     AVBPropertyDef('need_seq_hdr',          '_needSeqHdr',            'Boolean'),
+     AVBPropertyDef('leader_length',         'leaderLength',           'int16'),
+     AVBPropertyDef('fields', '               leadingDiscardFields',   'list'),
+    ]
+    __slots__ = ()
+
+    def read(self, f):
+        super(MPGPosition, self).read(f)
+        read_assert_tag(f, 0x02)
+        read_assert_tag(f, 0x01)
+
+        self.trailing_discards = read_s16le(f)
+        self.need_seq_hdr = read_bool(f)
+
+        # NOTE: I think leading_discard_fields == 2 * leader_length
+        leader_length = read_s16le(f)
+        leading_discard_fields = read_s16le(f)
+
+        self.fields = []
+        for i in range(leader_length):
+            picture_type = read_u8(f)
+            length = read_u32le(f)
+            self.fields.append([picture_type, length])
+
+        read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(MPGPosition, self).write(f)
+        write_u8(f, 0x02)
+        write_u8(f, 0x01)
+
+        write_s16le(f, self.trailing_discards)
+        write_bool(f, self.need_seq_hdr)
+
+        write_s16le(f, len(self.fields))
+        write_s16le(f, len(self.fields)*2)
+
+        for picture_type, length in self.fields:
+            write_u8(f, picture_type)
+            write_u32le(f, length)
 
         write_u8(f, 0x03)
 

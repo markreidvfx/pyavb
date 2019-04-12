@@ -140,6 +140,10 @@ class TestChuckDB(unittest.TestCase):
         for chunk_path in iter_chunks("DIDP"):
             read_write_chunk(chunk_path)
 
+    def test_mpgp_chunks(self):
+        for chunk_path in iter_chunks("MPGP"):
+            read_write_chunk(chunk_path)
+
     def test_jped_chunks(self):
         for chunk_path in iter_chunks("JPED"):
             read_write_chunk(chunk_path)
