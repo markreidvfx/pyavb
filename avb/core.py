@@ -45,6 +45,7 @@ class AVBPropertyData(OrderedDict):
         return self.deref(super(AVBPropertyData, self).get(*args, **kwargs))
 
 class AVBRefList(list):
+    propertydefs = []
     __slots__ = ('root', 'instance_id', '__weakref__')
 
     def __new__(cls, *args, **kwargs):

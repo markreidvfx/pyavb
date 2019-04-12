@@ -31,6 +31,7 @@ if bytes is not str:
 @utils.register_class
 class Attributes(AVBPropertyData):
     class_id = b'ATTR'
+    propertydefs = []
     __slots__ = ('root', 'instance_id', )
 
     def __new__(cls, *args, **kwargs):
