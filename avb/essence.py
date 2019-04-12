@@ -974,7 +974,7 @@ class MPGIDescriptor(CDCIDescriptor):
         AVBPropertyDef('trailing_discard', "OMFI:MPGI:TrailingDiscard",    "bool"),
         AVBPropertyDef('min_gop_length',   "OMFI:MPGI:omMPGIMinGOPLength", "uint16"),
         AVBPropertyDef('max_gop_length',   "OMFI:MPGI:omMPGIMaxGOPLength", "uint16"),
-        AVBPropertyDef('sequence_hdrlen',  "OMFI:MPGI:SequenceHdrLen",     "int32"),
+        AVBPropertyDef('sequence_hdr',     "OMFI:MPGI:SequenceHdr",        "bytes"),
     ]
     def read(self, f):
         super(MPGIDescriptor, self).read(f)
@@ -991,7 +991,9 @@ class MPGIDescriptor(CDCIDescriptor):
         self.trailing_discard = read_bool(f)
         self.min_gop_length = read_u16le(f)
         self.max_gop_length = read_u16le(f)
-        self.sequence_hdrlen = read_u32le(f)
+        hdrlen = read_s32le(f)
+        assert hdrlen >= 0
+        self.sequence_hdr = bytearray(f.read(hdrlen))
 
         read_assert_tag(f, 0x03)
 
@@ -1009,7 +1011,8 @@ class MPGIDescriptor(CDCIDescriptor):
         write_bool(f, self.trailing_discard)
         write_u16le(f, self.min_gop_length)
         write_u16le(f, self.max_gop_length)
-        write_u32le(f, self.sequence_hdrlen)
+        write_s32le(f, len(self.sequence_hdr))
+        f.write(self.sequence_hdr)
 
         write_u8(f, 0x03)
 
