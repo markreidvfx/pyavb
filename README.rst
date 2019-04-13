@@ -1,4 +1,4 @@
-|python-versions| |travis-build| |appveyor-build|
+|python-versions| |travis-build| |appveyor-build| |docs|
 
 pyavb
 =====
@@ -29,3 +29,7 @@ clone the latest development git master::
 .. |appveyor-build| image:: https://ci.appveyor.com/api/projects/status/32r7s2skrgm9ubva?svg=true
     :alt: appveyor build status
     :target: https://ci.appveyor.com/project/markreidvfx/pyavb
+
+.. |docs| image:: https://readthedocs.org/projects/pyavb/badge/?version=latest
+    :alt: Documentation Status
+    :target: http://pyavb.readthedocs.io/en/latest/?badge=latest
