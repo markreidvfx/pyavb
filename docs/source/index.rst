@@ -48,3 +48,16 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+Further Reading
+===============
+
+pyavb was initially started using these projects as reference
+
+- `AVBParser <http://www.medien.ifi.lmu.de/team/raphael.wimmer/projects/avb_parser>`_
+- `Media Decomposer <https://code.google.com/archive/p/media-decomposer>`_
+
+More datatypes and names have been discovered via this avid console command::
+
+  EnableBinXMLDump true
