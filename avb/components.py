@@ -249,7 +249,7 @@ class SourceClip(Clip):
 
         for tag in iter_ext(f):
             if tag == 0x01:
-                self.mob_id = mobid.read_mob_id(f)
+                self.mob_id = ctx.read_mob_id(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
@@ -257,24 +257,25 @@ class SourceClip(Clip):
 
     def write(self, f):
         super(SourceClip, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x03)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x03)
 
         lo = self.mob_id.material.time_low
         hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
 
-        write_u32le(f, lo)
-        write_u32le(f, hi)
+        ctx.write_u32(f, lo)
+        ctx.write_u32(f, hi)
 
-        write_s16le(f, self.track_id)
-        write_s32le(f, self.start_time)
+        ctx.write_s16(f, self.track_id)
+        ctx.write_s32(f, self.start_time)
 
         if hasattr(self, 'mob_id'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            mobid.write_mob_id(f, self.mob_id)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_mob_id(f, self.mob_id)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 
 @utils.register_class

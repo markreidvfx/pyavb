@@ -8,7 +8,10 @@ from __future__ import (
 import time
 from datetime import datetime
 from struct import (pack, unpack)
+from uuid import UUID
+
 from .utils import AVBObjectRef
+from .mobid import MobID
 
 exp10_pretty = {
 5994: (59940, -3),
@@ -36,14 +39,6 @@ class AVBIOContext(object):
 
             self.read_fourcc    = self.read_fourcc_le
             self.write_fourcc   = self.write_fourcc_le
-
-            self.read_datetime  = self.read_datetime_le
-            self.write_datetime = self.write_datetime_le
-
-            self.read_rect       = self.read_rect_le
-            self.write_rect      = self.write_rect_le
-            self.read_rgb_color  = self.read_rgb_color_le
-            self.write_rgb_color = self.write_rgb_color_le
 
         elif byte_order == 'big':
             self.read_u16  = self.read_u16be
@@ -181,6 +176,125 @@ class AVBIOContext(object):
 
         self.write_u32(f, index)
 
+    def read_uuid(self, f):
+        data = b''
+        self.read_assert_tag(f, 72)
+        data += f.read(4)
+
+        self.read_assert_tag(f, 70)
+        data += f.read(2)
+
+        self.read_assert_tag(f, 70)
+        data += f.read(2)
+
+        self.read_assert_tag(f, 65)
+        data4len = self.read_s32(f)
+        assert data4len == 8
+        data += f.read(8)
+
+        if self.byte_order == 'little':
+            return UUID(bytes_le=data)
+        else:
+            return UUID(bytes_be=data)
+
+    def write_uuid(self, f, value):
+        self.write_u8(f, 72)
+        self.write_u32(f, value.time_low)
+        self.write_u8(f, 70)
+        self.write_u16(f, value.time_mid)
+        self.write_u8(f, 70)
+        self.write_u16(f, value.time_hi_version)
+
+        self.write_u8(f, 65)
+        self.write_s32(f, 8)
+        if self.byte_order == 'little':
+            f.write(value.bytes_le[8:])
+        else:
+            f.write(value.bytes_be[8:])
+
+    def read_mob_id(self, f):
+        m = MobID()
+        self.read_assert_tag(f, 65)
+        smpte_label_len = self.read_s32(f)
+        assert smpte_label_len == 12
+
+        m.SMPTELabel = [self.read_u8(f) for i in range(12)]
+
+        self.read_assert_tag(f, 68)
+        m.length = self.read_u8(f)
+
+        self.read_assert_tag(f, 68)
+        m.instanceHigh = self.read_u8(f)
+
+        self.read_assert_tag(f, 68)
+        m.instanceMid = self.read_u8(f)
+
+        self.read_assert_tag(f, 68)
+        m.instanceLow = self.read_u8(f)
+
+        m.material = self.read_uuid(f)
+        return m
+
+    def write_mob_id(self, f, m):
+
+        self.write_u8(f, 65)
+        self.write_s32(f, 12)
+        for i in m.SMPTELabel:
+            self.write_u8(f, i)
+
+        self.write_u8(f, 68)
+        self.write_u8(f, m.length)
+
+        self.write_u8(f, 68)
+        self.write_u8(f, m.instanceHigh)
+
+        self.write_u8(f, 68)
+        self.write_u8(f, m.instanceMid)
+
+        self.write_u8(f, 68)
+        self.write_u8(f, m.instanceLow)
+
+        self.write_uuid(f, m.material)
+
+    def read_datetime(self, f):
+        return datetime.fromtimestamp(self.read_u32(f))
+
+    def write_datetime(self, f, value):
+        self.write_u32(f, self.datetime_to_timestamp(value))
+
+    def read_rect(self, f):
+        version = self.read_s16(f)
+        assert version == 1
+
+        a = self.read_s16(f)
+        b = self.read_s16(f)
+        c = self.read_s16(f)
+        d = self.read_s16(f)
+
+        return [a,b,c,d]
+
+    def write_rect(self, f, v):
+        self.write_s16(f, 1)
+        self.write_s16(f, v[0])
+        self.write_s16(f, v[1])
+        self.write_s16(f, v[2])
+        self.write_s16(f, v[3])
+
+    def read_rgb_color(self, f):
+        version = self.read_s16(f)
+        assert version == 1
+        r = self.read_u16(f)
+        g = self.read_u16(f)
+        b = self.read_u16(f)
+
+        return [r,g,b]
+
+    def write_rgb_color(self, f, v):
+        self.write_s16(f, 1)
+        self.write_u16(f, v[0])
+        self.write_u16(f, v[1])
+        self.write_u16(f, v[2])
+
     # little
 
     @staticmethod
@@ -247,51 +361,6 @@ class AVBIOContext(object):
     def write_fourcc_le(f, value):
         assert len(value) == 4
         f.write(AVBIOContext.reverse_str(value))
-
-    @staticmethod
-    def read_datetime_le(f):
-        return datetime.fromtimestamp(AVBIOContext.read_u32le(f))
-
-    @staticmethod
-    def write_datetime_le(f, value):
-        AVBIOContext.write_u32le(f, AVBIOContext.datetime_to_timestamp(value))
-
-    @staticmethod
-    def read_rect_le(f):
-        version = AVBIOContext.read_s16le(f)
-        assert version == 1
-
-        a = AVBIOContext.read_s16le(f)
-        b = AVBIOContext.read_s16le(f)
-        c = AVBIOContext.read_s16le(f)
-        d = AVBIOContext.read_s16le(f)
-
-        return [a,b,c,d]
-
-    @staticmethod
-    def write_rect_le(f, v):
-        AVBIOContext.write_s16le(f, 1)
-        AVBIOContext.write_s16le(f, v[0])
-        AVBIOContext.write_s16le(f, v[1])
-        AVBIOContext.write_s16le(f, v[2])
-        AVBIOContext.write_s16le(f, v[3])
-
-    @staticmethod
-    def read_rgb_color_le(f):
-        version = AVBIOContext.read_s16le(f)
-        assert version == 1
-        r = AVBIOContext.read_u16le(f)
-        g = AVBIOContext.read_u16le(f)
-        b = AVBIOContext.read_u16le(f)
-
-        return [r,g,b]
-
-    @staticmethod
-    def write_rgb_color_le(f, v):
-        AVBIOContext.write_s16le(f, 1)
-        AVBIOContext.write_u16le(f, v[0])
-        AVBIOContext.write_u16le(f, v[1])
-        AVBIOContext.write_u16le(f, v[2])
 
     # big
 
