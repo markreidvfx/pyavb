@@ -41,24 +41,29 @@ class Setting(core.AVBObject):
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 0x06)
 
-        self.name = read_string(f)
-        self.kind = read_string(f)
+        ctx = self.root.ictx
 
-        self.attr_count = read_s16le(f)
-        self.attr_type = read_s16le(f)
-        self.attributes = read_object_ref(self.root, f)
+        self.name = ctx.read_string(f)
+        self.kind = ctx.read_string(f)
+
+        self.attr_count = ctx.read_s16(f)
+        self.attr_type =  ctx.read_s16(f)
+        self.attributes = ctx.read_object_ref(self.root, f)
 
     def write(self, f):
         super(Setting, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x06)
 
-        write_string(f, self.name)
-        write_string(f, self.kind)
+        ctx = self.root.octx
 
-        write_s16le(f, self.attr_count)
-        write_s16le(f, self.attr_type)
-        write_object_ref(self.root, f, self.attributes)
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x06)
+
+        ctx.write_string(f, self.name)
+        ctx.write_string(f, self.kind)
+
+        ctx.write_s16le(f, self.attr_count)
+        ctx.write_s16le(f, self.attr_type)
+        ctx.write_object_ref(self.root, f, self.attributes)
 
 default_bin_columns = [
     {u'title': u'Color',         u'format': 105,  u'type': 51,  u'hidden': False},
@@ -103,21 +108,23 @@ class BinViewSetting(Setting):
         read_assert_tag(f, 0x02)
         read_assert_tag(f, 10)
 
+        ctx = self.root.ictx
+
         self.columns = []
 
-        column_count = read_u16le(f)
+        column_count = ctx.read_u16(f)
         for i in range(column_count):
             d = {}
-            d['title'] = read_string(f)
-            d['format'] = read_s16le(f)
-            d['type'] = read_s16le(f)
-            d['hidden'] = read_bool(f)
+            d['title']  = ctx.read_string(f)
+            d['format'] = ctx.read_s16(f)
+            d['type']   = ctx.read_s16(f)
+            d['hidden'] = ctx.read_bool(f)
             self.columns.append(d)
 
         for tag in iter_ext(f):
             if tag == 0x01:
                 read_assert_tag(f, 69)
-                num_vcid_free_columns = read_s16le(f)
+                num_vcid_free_columns = ctx.read_s16(f)
                 assert num_vcid_free_columns >= 0
                 self.format_descriptors = []
                 for i in range(num_vcid_free_columns):
@@ -126,15 +133,15 @@ class BinViewSetting(Setting):
                     read_assert_tag(f, 69)
 
                     # vcid == Video Codec ID?
-                    d['vcid_free_column_id'] = read_s16le(f)
+                    d['vcid_free_column_id'] = ctx.read_s16(f)
 
                     read_assert_tag(f, 71)
-                    format_descriptor_size = read_s32le(f)
+                    format_descriptor_size = ctx.read_s32(f)
 
                     read_assert_tag(f, 76)
 
                     # utf-8 seems to start with 4 null bytes
-                    read_s32le(f)
+                    ctx.read_s32(f)
                     d['format_descriptor'] = f.read(format_descriptor_size).decode('utf8')
                     self.format_descriptors.append(d)
             else:
@@ -144,37 +151,39 @@ class BinViewSetting(Setting):
 
     def write(self, f):
         super(BinViewSetting, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 10)
-        write_u16le(f, len(self.columns))
+        ctx = self.root.octx
+
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 10)
+        ctx.write_u16(f, len(self.columns))
 
         for d in self.columns:
-            write_string(f, d['title'])
-            write_s16le(f, d['format'])
-            write_s16le(f, d['type'])
-            write_bool(f, d['hidden'])
+            ctx.write_string(f, d['title'])
+            ctx.write_s16(f, d['format'])
+            ctx.write_s16(f, d['type'])
+            ctx.write_bool(f, d['hidden'])
 
         if hasattr(self, 'format_descriptors'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            write_u8(f, 69)
-            write_u16le(f, len(self.format_descriptors))
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 69)
+            ctx.write_u16(f, len(self.format_descriptors))
 
             for d in self.format_descriptors:
-                write_u8(f, 69)
-                write_s16le(f, d['vcid_free_column_id'])
+                ctx.write_u8(f, 69)
+                ctx.write_s16(f, d['vcid_free_column_id'])
 
                 format_data =  d['format_descriptor'].encode('utf-8')
-                write_u8(f, 71)
-                write_s32le(f, len(format_data))
+                ctx.write_u8(f, 71)
+                ctx.write_s32(f, len(format_data))
 
-                write_u8(f, 76)
+                ctx.write_u8(f, 76)
                 #null bytes
-                write_s16le(f,  len(format_data) + 2)
-                write_s16le(f, 0)
+                ctx.write_s16(f,  len(format_data) + 2)
+                ctx.write_s16(f, 0)
                 f.write(format_data)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_helper_class
 class BinItem(core.AVBObject):

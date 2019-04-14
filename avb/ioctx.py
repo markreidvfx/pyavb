@@ -8,6 +8,7 @@ from __future__ import (
 import time
 from datetime import datetime
 from struct import (pack, unpack)
+from .utils import AVBObjectRef
 
 class AVBIOContext(object):
     def __init__(self, byte_order='little'):
@@ -35,6 +36,9 @@ class AVBIOContext(object):
             self.write_string   = self.write_string_le
             self.read_datetime  = self.read_datetime_le
             self.write_datetime = self.write_datetime_le
+
+            self.read_object_ref = self.read_object_ref_le
+            self.write_object_ref = self.write_object_ref_le
 
         elif byte_order == 'big':
             self.read_u16  = self.read_u16be
@@ -195,6 +199,27 @@ class AVBIOContext(object):
     @staticmethod
     def write_datetime_le(f, value):
         AVBIOContext.write_u32le(f, AVBIOContext.datetime_to_timestamp(value))
+
+    @staticmethod
+    def read_object_ref_le(root, f):
+        index = AVBIOContext.read_u32le(f)
+        ref =  AVBObjectRef(root, index)
+        if not root.check_refs or ref.valid:
+            return ref
+        raise ValueError("bad index: %d" % index)
+
+    @staticmethod
+    def write_object_ref_le(root, f, value):
+        if value is None:
+            index = 0
+        elif root.debug_copy_refs:
+            index = value.index
+        elif value.instance_id not in root.ref_mapping:
+            raise Exception("object not written yet")
+        else:
+            index = root.ref_mapping[value.instance_id]
+
+        AVBIOContext.write_u32le(f, index)
 
     # big
 
