@@ -10,10 +10,7 @@ from . import utils
 
 from . core import AVBPropertyDef
 
-from . utils import (
-    iter_ext,
-    peek_data,
-)
+from . utils import (iter_ext, peek_data)
 
 class Setting(core.AVBObject):
     class_id = b'ASET'

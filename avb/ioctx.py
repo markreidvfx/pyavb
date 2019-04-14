@@ -34,8 +34,9 @@ class AVBIOContext(object):
             self.write_u64 = self.write_u64le
             self.read_s64  = self.read_s64le
             self.write_s64 = self.write_s64le
-            self.read_double  = self.read_doublele
-            self.write_double = self.write_doublele
+
+            self.read_double  = self.read_double_le
+            self.write_double = self.write_double_le
 
             self.read_fourcc    = self.read_fourcc_le
             self.write_fourcc   = self.write_fourcc_le
@@ -53,10 +54,12 @@ class AVBIOContext(object):
             self.write_u64 = self.write_u64be
             self.read_s64  = self.read_s64be
             self.write_s64 = self.write_s64be
-            self.read_double = self.read_doublebe
-            self.write_double = self.write_doublebe
 
-            self.read_fourcc = self.read_fourcc_be
+            self.read_double = self.read_double_be
+            self.write_double = self.write_double_be
+
+            self.read_fourcc    = self.read_fourcc_be
+            self.write_fourcc   = self.write_fourcc_be
         else:
             raise ValueError('bytes_order must be "big" or "little"')
 
@@ -346,12 +349,12 @@ class AVBIOContext(object):
         return f.write(pack(b"<q", value))
 
     @staticmethod
-    def read_doublele(f):
-        return struct.unpack(b"<d", f.read(8))[0]
+    def read_double_le(f):
+        return unpack(b"<d", f.read(8))[0]
 
     @staticmethod
-    def write_doublele(f, value):
-        f.write(struct.pack(b"<d", value))
+    def write_double_le(f, value):
+        f.write(pack(b"<d", value))
 
     @staticmethod
     def read_fourcc_le(f):
@@ -413,9 +416,9 @@ class AVBIOContext(object):
         return f.write(pack(b">q", value))
 
     @staticmethod
-    def read_doublebe(f):
-        return struct.unpack(b"<d", f.read(8))[0]
+    def read_double_be(f):
+        return unpack(b"<d", f.read(8))[0]
 
     @staticmethod
-    def write_doublebe(f, value):
-        f.write(struct.pack(b"<d", value))
+    def write_double_be(f, value):
+        f.write(pack(b"<d", value))

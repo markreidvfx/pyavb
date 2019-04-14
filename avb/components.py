@@ -10,23 +10,7 @@ from .core import AVBPropertyDef, AVBRefList
 from . import utils
 from . import mobid
 
-from . utils import (
-    read_u8, write_u8,
-    read_s8,
-    read_bool,   write_bool,
-    read_s16le,  write_s16le,
-    read_u16le,  write_u16le,
-    read_u32le,  write_u32le,
-    read_s32le,  write_s32le,
-    read_string, write_string,
-    read_doublele, write_doublele,
-    read_exp10_encoded_float, write_exp10_encoded_float,
-    read_object_ref, write_object_ref,
-    read_datetime,
-    iter_ext,
-    read_assert_tag,
-    peek_data
-)
+from . utils import (iter_ext, peek_data)
 
 
 
@@ -290,31 +274,32 @@ class Timecode(Clip):
 
     def read(self, f):
         super(Timecode, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
         # drop ??
-        self.flags = read_u32le(f)
-        self.fps = read_u16le(f)
+        self.flags = ctx.read_u32(f)
+        self.fps = ctx.read_u16(f)
 
         # unused
         f.read(6)
 
-        self.start = read_u32le(f)
-        read_assert_tag(f, 0x03)
+        self.start = ctx.read_u32(f)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(Timecode, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_u32le(f, self.flags)
-        write_u16le(f, self.fps)
+        ctx.write_u32(f, self.flags)
+        ctx.write_u16(f, self.fps)
         f.write(bytearray(6))
-        write_u32le(f, self.start)
+        ctx.write_u32(f, self.start)
 
-        write_u8(f, 0x03)
-
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class Edgecode(Clip):
@@ -330,33 +315,36 @@ class Edgecode(Clip):
 
     def read(self, f):
         super(Edgecode, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
         self.header = bytearray(f.read(8))
-        self.film_kind = read_u8(f)
-        self.code_format =  read_u8(f)
-        self.base_perf = read_u16le(f)
-        unused_a  = read_u32le(f)
-        self.start_ec = read_s32le(f)
+        self.film_kind = ctx.read_u8(f)
+        self.code_format =  ctx.read_u8(f)
+        self.base_perf = ctx.read_u16(f)
+        unused_a  = ctx.read_u32(f)
+        self.start_ec = ctx.read_s32(f)
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(Edgecode, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
         assert len(self.header) == 8
         f.write(self.header)
-        write_u8(f, self.film_kind)
-        write_u8(f, self.code_format)
-        write_u16le(f, self.base_perf)
+        ctx.write_u8(f, self.film_kind)
+        ctx.write_u8(f, self.code_format)
+        ctx.write_u16(f, self.base_perf)
         #unused
-        write_u32le(f, 0)
-        write_s32le(f, self.start_ec)
+        ctx.write_u32(f, 0)
+        ctx.write_s32(f, self.start_ec)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class TrackRef(Clip):
@@ -369,24 +357,25 @@ class TrackRef(Clip):
 
     def read(self, f):
         super(TrackRef, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        self.relative_scope = read_s16le(f)
-        self.relative_track = read_s16le(f)
+        self.relative_scope = ctx.read_s16(f)
+        self.relative_track = ctx.read_s16(f)
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(TrackRef, self).write(f)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx.write_s16(f, self.relative_scope)
+        ctx.write_s16(f, self.relative_track)
 
-        write_s16le(f, self.relative_scope)
-        write_s16le(f, self.relative_track)
-
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 
 CP_TYPE_INT = 1
@@ -425,46 +414,47 @@ class ParamClip(Clip):
 
     def read(self, f):
         super(ParamClip, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        self.interp_kind = read_s32le(f)
-        self.value_type = read_s16le(f)
+        self.interp_kind = ctx.read_s32(f)
+        self.value_type = ctx.read_s16(f)
 
         assert self.value_type in (CP_TYPE_INT, CP_TYPE_DOUBLE, CP_TYPE_REFERENCE)
 
-        point_count = read_s32le(f)
+        point_count = ctx.read_s32(f)
         assert point_count >= 0
 
         self.control_points = []
         for i in range(point_count):
             cp = ParamControlPoint.__new__(ParamControlPoint, root=self.root)
-            num = read_s32le(f)
-            den = read_s32le(f)
+            num = ctx.read_s32(f)
+            den = ctx.read_s32(f)
             cp.offset = [num, den]
-            cp.timescale = read_s32le(f)
+            cp.timescale = ctx.read_s32(f)
 
             if self.value_type == CP_TYPE_INT:
-                cp.value = read_s32le(f)
+                cp.value = ctx.read_s32(f)
             elif self.value_type == CP_TYPE_DOUBLE:
-                cp.value = read_doublele(f)
+                cp.value = ctx.read_double(f)
             elif self.value_type == CP_TYPE_REFERENCE:
-                cp.value = read_object_ref(self.root, f)
+                cp.value = ctx.read_object_ref(self.root, f)
             else:
                 raise ValueError("unknown value type: %d" % self.value_type)
 
-            pp_count = read_s16le(f)
+            pp_count = ctx.read_s16(f)
             assert pp_count >= 0
             cp.pp = []
             for j in range(pp_count):
                 pp = ParamPerPoint.__new__(ParamPerPoint, root=self.root)
-                pp.code = read_s16le(f)
-                pp.type = read_s16le(f)
+                pp.code = ctx.read_s16(f)
+                pp.type = ctx.read_s16(f)
 
                 if pp.type == CP_TYPE_DOUBLE:
-                    pp.value = read_doublele(f)
+                    pp.value = ctx.read_double(f)
                 elif pp.type == CP_TYPE_INT:
-                    pp.value  = read_s32le(f)
+                    pp.value  = ctx.read_s32(f)
                 else:
                     raise ValueError("unknown PP type: %d" % pp.type)
 
@@ -474,66 +464,67 @@ class ParamClip(Clip):
 
         for tag in iter_ext(f):
             if tag == 0x01:
-                read_assert_tag(f, 71)
-                self.extrap_kind = read_s32le(f)
+                ctx.read_assert_tag(f, 71)
+                self.extrap_kind = ctx.read_s32(f)
             elif tag == 0x02:
-                read_assert_tag(f, 71)
-                self.fields = read_s32le(f)
+                ctx.read_assert_tag(f, 71)
+                self.fields = ctx.read_s32(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(ParamClip, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_s32le(f, self.interp_kind)
-        write_s16le(f, self.value_type)
+        ctx.write_s32(f, self.interp_kind)
+        ctx.write_s16(f, self.value_type)
 
-        write_s32le(f, len(self.control_points))
+        ctx.write_s32(f, len(self.control_points))
 
         for cp in self.control_points:
-            write_s32le(f, cp.offset[0])
-            write_s32le(f, cp.offset[1])
-            write_s32le(f, cp.timescale)
+            ctx.write_s32(f, cp.offset[0])
+            ctx.write_s32(f, cp.offset[1])
+            ctx.write_s32(f, cp.timescale)
 
             if self.value_type == CP_TYPE_INT:
-                write_s32le(f, cp.value)
+                ctx.write_s32(f, cp.value)
             elif self.value_type == CP_TYPE_DOUBLE:
-                write_doublele(f, cp.value)
+                ctx.write_double(f, cp.value)
             elif self.value_type == CP_TYPE_REFERENCE:
-                write_object_ref(self.root, f, cp.value)
+                ctx.write_object_ref(self.root, f, cp.value)
             else:
                 raise ValueError("unknown value type: %d" % cp.value_type)
 
-            write_s16le(f, len(cp.pp))
+            ctx.write_s16(f, len(cp.pp))
             for pp in cp.pp:
 
-                write_s16le(f, pp.code)
-                write_s16le(f, pp.type)
+                ctx.write_s16(f, pp.code)
+                ctx.write_s16(f, pp.type)
 
                 if pp.type == CP_TYPE_DOUBLE:
-                    write_doublele(f, pp.value)
+                    ctx.write_double(f, pp.value)
                 elif pp.type == CP_TYPE_INT:
-                    write_s32le(f, pp.value)
+                    ctx.write_s32(f, pp.value)
                 else:
                     raise ValueError("unknown PP type: %d" % pp.type)
 
         if hasattr(self, 'extrap_kind'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            write_u8(f, 71)
-            write_s32le(f, self.extrap_kind)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 71)
+            ctx.write_s32(f, self.extrap_kind)
 
         if hasattr(self, 'fields'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x02)
-            write_u8(f, 71)
-            write_s32le(f, self.fields)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x02)
+            ctx.write_u8(f, 71)
+            ctx.write_s32(f, self.fields)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 class ControlPoint(core.AVBObject):
     propertydefs = [
@@ -563,69 +554,71 @@ class ControlClip(Clip):
 
     def read(self, f):
         super(ControlClip, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x03)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x03)
 
-        self.interp_kind = read_s32le(f)
-        count = read_s32le(f)
+        self.interp_kind = ctx.read_s32(f)
+        count = ctx.read_s32(f)
         self.control_points = []
         # print(self.interp_kind, count)
         #
         # print(peek_data(f).encode("hex"))
         for i in range(count):
             cp = ControlPoint.__new__(ControlPoint, root=self.root)
-            a = read_s32le(f)
-            b = read_s32le(f)
+            a = ctx.read_s32(f)
+            b = ctx.read_s32(f)
             cp.offset = [a, b]
-            cp.time_scale = read_s32le(f)
+            cp.time_scale = ctx.read_s32(f)
 
             # TODO: find sample with this False
-            has_value = read_bool(f)
+            has_value = ctx.read_bool(f)
             assert has_value == True
 
-            a = read_s32le(f)
-            b = read_s32le(f)
+            a = ctx.read_s32(f)
+            b = ctx.read_s32(f)
             cp.value = [a, b]
             cp.pp = []
 
-            pp_count = read_s16le(f)
+            pp_count = ctx.read_s16(f)
             assert pp_count >= 0
             for j in range(pp_count):
                 pp = PerPoint.__new__(PerPoint, root=self.root)
-                pp.code = read_s16le(f)
-                a = read_s32le(f)
-                b = read_s32le(f)
+                pp.code = ctx.read_s16(f)
+                a = ctx.read_s32(f)
+                b = ctx.read_s32(f)
                 pp.value = [a,b]
                 cp.pp.append(pp)
 
             self.control_points.append(cp)
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(ControlClip, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x03)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x03)
 
-        write_s32le(f, self.interp_kind)
+        ctx.write_s32(f, self.interp_kind)
 
-        write_s32le(f, len(self.control_points))
+        ctx.write_s32(f, len(self.control_points))
         for cp in self.control_points:
-            write_s32le(f, cp.offset[0])
-            write_s32le(f, cp.offset[1])
-            write_s32le(f, cp.time_scale)
+            ctx.write_s32(f, cp.offset[0])
+            ctx.write_s32(f, cp.offset[1])
+            ctx.write_s32(f, cp.time_scale)
 
-            write_bool(f, True)
-            write_s32le(f, cp.value[0])
-            write_s32le(f, cp.value[1])
+            ctx.write_bool(f, True)
+            ctx.write_s32(f, cp.value[0])
+            ctx.write_s32(f, cp.value[1])
 
-            write_s16le(f, len(cp.pp))
+            ctx.write_s16(f, len(cp.pp))
             for pp in cp.pp:
-                write_s16le(f, pp.code)
-                write_s32le(f, pp.value[0])
-                write_s32le(f, pp.value[1])
+                ctx.write_s16(f, pp.code)
+                ctx.write_s32(f, pp.value[0])
+                ctx.write_s32(f, pp.value[1])
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class Filler(Clip):
@@ -634,14 +627,16 @@ class Filler(Clip):
 
     def read(self, f):
         super(Filler, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(Filler, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
