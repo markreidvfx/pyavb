@@ -13,7 +13,11 @@ Requirements
 Installation
 ------------
 
-clone the latest development git master::
+You can install pyavb via::
+
+    pip install pyavb
+
+or clone the latest development git master::
 
     git clone https://github.com/markreidvfx/pyavb
     cd pyavb
