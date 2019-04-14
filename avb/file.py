@@ -26,7 +26,7 @@ from .utils import (
     reverse_str,
 )
 from .core import walk_references
-
+from .ioctx import AVBIOContext
 
 class AVBChunk(object):
     __slots__ = ('root', 'class_id', 'pos', 'size')
@@ -42,13 +42,14 @@ class AVBChunk(object):
 
     def hex(self):
         header = reverse_str(self.class_id)
-        size =struct.pack(b"<I", self.size)
+        size = struct.pack(b"<I", self.size)
         data =  header + size + self.read()
         return binascii.hexlify(data)
 
 def read_chunk(root, f):
-    class_id = read_fourcc(f)
-    size = read_u32le(f)
+    ctx = root.ictx
+    class_id = ctx.read_fourcc(f)
+    size = ctx.read_u32(f)
     pos = f.tell()
 
     return AVBChunk(root, class_id, pos, size)
@@ -84,6 +85,9 @@ class AVBFactory(object):
     def create_instance(self, *args, **kwargs):
         return self.from_name(self.class_name, *args, **kwargs)
 
+LE_BYTE_ORDER = b'\x06\x00'
+BE_BYTE_ORDER = b'\x00\x06'
+
 class AVBFile(object):
     def __init__(self, path=None, buffering=io.DEFAULT_BUFFER_SIZE):
 
@@ -104,8 +108,11 @@ class AVBFile(object):
 
         f = self.f
         file_bytes = f.read(2)
-        if file_bytes != utils.MAC_BYTES:
+        if file_bytes != LE_BYTE_ORDER:
             raise ValueError("Only Mac bytes supported")
+
+        ctx = AVBIOContext('little')
+        self.ictx = ctx
 
         header = f.read(len(utils.MAGIC))
         if header != utils.MAGIC:
@@ -113,25 +120,25 @@ class AVBFile(object):
 
         pos = f.tell()
 
-        assert read_fourcc(f) == b'OBJD'
-        assert read_string(f) == u'AObjDoc'
-        assert read_u8(f) == 0x04
+        assert ctx.read_fourcc(f) == b'OBJD'
+        assert ctx.read_string(f) == u'AObjDoc'
+        assert ctx.read_u8(f) == 0x04
 
-        last_save_str = read_string(f)
-        num_objects = read_u32le(f)
-        self.root_index = read_u32le(f)
+        last_save_str = ctx.read_string(f)
+        num_objects = ctx.read_u32(f)
+        self.root_index = ctx.read_u32(f)
 
-        assert read_u32le(f) == 0x49494949
+        assert ctx.read_u32(f) == 0x49494949
 
-        self.last_save = read_datetime(f)
+        self.last_save = ctx.read_datetime(f)
 
         # skip 4 bytes
         f.read(4)
 
-        assert read_fourcc(f) == b'ATob'
-        assert read_fourcc(f) == b'ATve'
+        assert ctx.read_fourcc(f) == b'ATob'
+        assert ctx.read_fourcc(f) == b'ATve'
 
-        self.creator_version = read_string(f)
+        self.creator_version = ctx.read_string(f)
 
         # Reserved data
         f.read(16)
@@ -143,8 +150,8 @@ class AVBFile(object):
 
         for i in range(num_objects):
             self.object_positions[i+1] = f.tell()
-            class_id = read_fourcc(f)
-            size = read_u32le(f)
+            class_id = ctx.read_fourcc(f)
+            size = ctx.read_u32(f)
 
             f.seek(size, os.SEEK_CUR)
 
@@ -165,35 +172,38 @@ class AVBFile(object):
         self.modified_objects[obj.instance_id] = obj
 
     def write_header(self, f):
+
+        octx = self.octx
+
         f.write(utils.MAC_BYTES)
         f.write(utils.MAGIC)
 
-        write_fourcc(f, b'OBJD')
-        write_string(f, u'AObjDoc')
-        write_u8(f, 0x04)
+        octx.write_fourcc(f, b'OBJD')
+        octx.write_string(f, u'AObjDoc')
+        octx.write_u8(f, 0x04)
         last_save_str = self.last_save.strftime(u'%Y/%m/%d %H:%M:%S')
-        write_string(f, last_save_str)
+        octx.write_string(f, last_save_str)
         pos = f.tell()
-        write_u32le(f, 0)
-        write_u32le(f, 0)
-        write_u32le(f, 0x49494949)
-        write_datetime(f, self.last_save)
-        write_u32le(f, 0)
+        octx.write_u32(f, 0)
+        octx.write_u32(f, 0)
+        octx.write_u32(f, 0x49494949)
+        octx.write_datetime(f, self.last_save)
+        octx.write_u32(f, 0)
 
-        write_fourcc(f, b'ATob')
-        write_fourcc(f, b'ATve')
+        octx.write_fourcc(f, b'ATob')
+        octx.write_fourcc(f, b'ATve')
 
         # version =
 
         s = f.tell()
         v = self.creator_version.encode('macroman')
         v = v[:30]
-        write_u16le(f, 30)
+        octx.write_u16(f, 30)
         f.write(v)
 
         # pad with 0x20
         while f.tell() - s < 32:
-            write_u8(f, 0x20)
+            octx.write_u8(f, 0x20)
         f.write(bytearray(16))
 
         return pos
@@ -204,10 +214,12 @@ class AVBFile(object):
 
         object_pos = self.object_positions[index]
 
+        ctx = self.ictx
+
         f = self.f
         f.seek(object_pos)
-        class_id = read_fourcc(f)
-        size = read_u32le(f)
+        class_id = ctx.read_fourcc(f)
+        size = ctx.read_u32(f)
         pos = f.tell()
 
         chunk = AVBChunk(self, class_id, pos, size)
@@ -260,9 +272,10 @@ class AVBFile(object):
         obj.write(buffer)
         data = buffer.getvalue()
         assert data[-1:] == b'\x03'
+        octx = self.octx
 
-        write_fourcc(f, obj.class_id)
-        write_u32le(f, len(data))
+        octx.write_fourcc(f, obj.class_id)
+        octx.write_u32(f, len(data))
         f.write(data)
 
         # chunk = self.read_chunk(obj.instance_id)
@@ -275,9 +288,11 @@ class AVBFile(object):
         #     print(binascii.hexlify(data))
         #     raise Exception()
 
-    def write(self, path):
+    def write(self, path, byte_order='little'):
         self.next_chunk_id = 0
         self.ref_mapping = {}
+        octx = AVBIOContext(byte_order)
+        self.octx = octx
 
         with io.open(path, 'wb') as f:
             count_pos = self.write_header(f)
@@ -291,8 +306,8 @@ class AVBFile(object):
 
             pos = f.tell()
             f.seek(count_pos)
-            write_u32le(f, self.next_chunk_id)
-            write_u32le(f, self.next_chunk_id)
+            octx.write_u32(f, self.next_chunk_id)
+            octx.write_u32(f, self.next_chunk_id)
             f.seek(pos)
 
     def chunks(self):

@@ -9,6 +9,7 @@ import unittest
 import avb
 
 import avb.utils
+from avb.ioctx import AVBIOContext
 
 test_file_01 = os.path.join(os.path.dirname(__file__), 'test_files', 'test_file_01.avb')
 
@@ -79,7 +80,10 @@ class TestWrite(unittest.TestCase):
 
         with avb.open(test_file_01) as f:
             f.debug_copy_refs = True
+            f.octx = AVBIOContext()
+
             with open(result_file, 'wb') as f2:
+
                 count_pos = f.write_header(f2)
                 obj_count = len(f.object_positions)
 

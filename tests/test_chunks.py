@@ -25,6 +25,8 @@ class MockFile(object):
         self.check_refs = False
         self.debug_copy_refs = True
         self.reading = True
+        self.ictx = avb.ioctx.AVBIOContext()
+        self.octx = self.ictx
 
 def read_write_chunk(path):
 
