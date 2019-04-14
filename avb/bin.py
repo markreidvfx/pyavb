@@ -11,16 +11,6 @@ from . import utils
 from . core import AVBPropertyDef
 
 from . utils import (
-    read_u8,          write_u8,
-    read_bool,        write_bool,
-    read_s16le,       write_s16le,
-    read_u16le,       write_u16le,
-    read_u32le,       write_u32le,
-    read_s32le,       write_s32le,
-    read_u64le,       write_u64le,
-    read_string,      write_string,
-    read_object_ref,  write_object_ref,
-    read_assert_tag,
     iter_ext,
     peek_data,
 )
@@ -38,10 +28,9 @@ class Setting(core.AVBObject):
 
     def read(self, f):
         super(Setting, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x06)
-
         ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x06)
 
         self.name = ctx.read_string(f)
         self.kind = ctx.read_string(f)
@@ -105,10 +94,9 @@ class BinViewSetting(Setting):
 
     def read(self, f):
         super(BinViewSetting, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 10)
-
         ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 10)
 
         self.columns = []
 
@@ -123,22 +111,22 @@ class BinViewSetting(Setting):
 
         for tag in iter_ext(f):
             if tag == 0x01:
-                read_assert_tag(f, 69)
+                ctx.read_assert_tag(f, 69)
                 num_vcid_free_columns = ctx.read_s16(f)
                 assert num_vcid_free_columns >= 0
                 self.format_descriptors = []
                 for i in range(num_vcid_free_columns):
                     d = {}
 
-                    read_assert_tag(f, 69)
+                    ctx.read_assert_tag(f, 69)
 
                     # vcid == Video Codec ID?
                     d['vcid_free_column_id'] = ctx.read_s16(f)
 
-                    read_assert_tag(f, 71)
+                    ctx.read_assert_tag(f, 71)
                     format_descriptor_size = ctx.read_s32(f)
 
-                    read_assert_tag(f, 76)
+                    ctx.read_assert_tag(f, 76)
 
                     # utf-8 seems to start with 4 null bytes
                     ctx.read_s32(f)
@@ -147,7 +135,7 @@ class BinViewSetting(Setting):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(BinViewSetting, self).write(f)
@@ -248,130 +236,133 @@ class Bin(core.AVBObject):
 
     def read(self, f):
         super(Bin, self).read(f)
-        read_assert_tag(f, 0x02)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
 
-        version = read_u8(f)
+        version = ctx.read_u8(f)
         assert version in (0x0e, 0x0f)
         if version ==  0x0f:
             self.large_bin = True
         else:
             self.large_bin = False
 
-        self.view_setting = read_object_ref(self.root, f)
-        self.uid = read_u64le(f)
+        self.view_setting = ctx.read_object_ref(self.root, f)
+        self.uid = ctx.read_u64(f)
 
         if version == 0x0e:
-            object_count = read_u16le(f)
+            object_count = ctx.read_u16(f)
         else:
             #large bin size > max u16
-            object_count = read_u32le(f)
+            object_count = ctx.read_u32(f)
 
         self.items = []
 
         for i in range(object_count):
             bin_obj = BinItem.__new__(BinItem, root=self.root)
-            bin_obj.mob = read_object_ref(self.root, f)
-            bin_obj.x = read_s16le(f)
-            bin_obj.y = read_s16le(f)
-            bin_obj.keyframe = read_s32le(f)
-            bin_obj.user_placed = read_bool(f)
+            bin_obj.mob = ctx.read_object_ref(self.root, f)
+            bin_obj.x = ctx.read_s16(f)
+            bin_obj.y = ctx.read_s16(f)
+            bin_obj.keyframe = ctx.read_s32le(f)
+            bin_obj.user_placed = ctx.read_bool(f)
             self.items.append(bin_obj)
 
-        self.display_mask = read_s32le(f)
-        self.display_mode = read_s16le(f)
+        self.display_mask = ctx.read_s32(f)
+        self.display_mode = ctx.read_s16(f)
 
         # sifted stuff for searching settings bin
         # don't care too much about it at the moment
-        self.sifted = read_bool(f)
+        self.sifted = ctx.read_bool(f)
         self.sifted_settings= []
 
         for i in range(6):
             s = SiftItem.__new__(SiftItem, root=self.root)
-            s.method = read_s16le(f)
-            s.string = read_string(f)
-            s.column = read_string(f)
+            s.method = ctx.read_s16(f)
+            s.string = ctx.read_string(f)
+            s.column = ctx.read_string(f)
             self.sifted_settings.append(s)
 
-        sort_column_count =  read_s16le(f)
+        sort_column_count = ctx.read_s16(f)
         self.sort_columns = []
         for i in range(sort_column_count):
-            direction = read_u8(f)
-            col = read_string(f)
+            direction = ctx.read_u8(f)
+            col = ctx.read_string(f)
             self.sort_columns.append([direction, col])
 
 
-        self.mac_font = read_s16le(f)
-        self.mac_font_size = read_s16le(f)
-        self.mac_image_scale = read_s16le(f)
+        self.mac_font = ctx.read_s16(f)
+        self.mac_font_size = ctx.read_s16(f)
+        self.mac_image_scale = ctx.read_s16(f)
 
-        self.home_rect = utils.read_rect(f)
+        self.home_rect = ctx.read_rect(f)
 
-        self.background_color = utils.read_rgb_color(f)
-        self.forground_color = utils.read_rgb_color(f)
+        self.background_color = ctx.read_rgb_color(f)
+        self.forground_color = ctx.read_rgb_color(f)
 
-        self.ql_image_scale = read_s16le(f)
+        self.ql_image_scale = ctx.read_s16(f)
 
-        self.attributes = read_object_ref(self.root, f)
-        self.was_iconic = read_bool(f)
-        read_assert_tag(f, 0x03)
+        self.attributes = ctx.read_object_ref(self.root, f)
+        self.was_iconic = ctx.read_bool(f)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(Bin, self).write(f)
-        write_u8(f, 0x02)
+        ctx = self.root.octx
+
+        ctx.write_u8(f, 0x02)
 
         object_count = len(self.items)
         #large bin size > max u16
         if self.large_bin or object_count > 0xffff:
-            write_u8(f,  0x0f)
+            ctx.write_u8(f,  0x0f)
         else:
-            write_u8(f,  0x0e)
+            ctx.write_u8(f,  0x0e)
 
-        write_object_ref(self.root, f, self.view_setting)
-        write_u64le(f, self.uid)
+        ctx.write_object_ref(self.root, f, self.view_setting)
+        ctx.write_u64(f, self.uid)
 
         #large bin size > max u16
         if self.large_bin or object_count > 0xffff:
-            write_u32le(f, object_count)
+            ctx.write_u32(f, object_count)
         else:
-            write_u16le(f, object_count)
+            ctx.write_u16(f, object_count)
 
         for bin_obj in self.items:
-             write_object_ref(self.root, f, bin_obj.mob)
-             write_s16le(f, bin_obj.x)
-             write_s16le(f, bin_obj.y)
-             write_s32le(f, bin_obj.keyframe)
-             write_u8(f, bin_obj.user_placed)
+             ctx.write_object_ref(self.root, f, bin_obj.mob)
+             ctx.write_s16(f, bin_obj.x)
+             ctx.write_s16(f, bin_obj.y)
+             ctx.write_s32(f, bin_obj.keyframe)
+             ctx.write_u8(f, bin_obj.user_placed)
 
-        write_s32le(f, self.display_mask)
-        write_s16le(f, self.display_mode)
-        write_bool(f, self.sifted)
+        ctx.write_s32(f, self.display_mask)
+        ctx.write_s16(f, self.display_mode)
+        ctx.write_bool(f, self.sifted)
 
         for i in range(6):
             s = self.sifted_settings[i]
-            write_s16le(f, s.method)
-            write_string(f, s.string)
-            write_string(f, s.column)
+            ctx.write_s16(f, s.method)
+            ctx.write_string(f, s.string)
+            ctx.write_string(f, s.column)
 
 
-        write_s16le(f, len(self.sort_columns))
+        ctx.write_s16(f, len(self.sort_columns))
 
         for col in self.sort_columns:
-            write_u8(f, col[0])
-            write_string(f, col[1])
+            ctx.write_u8(f, col[0])
+            ctx.write_string(f, col[1])
 
-        write_s16le(f, self.mac_font)
-        write_s16le(f, self.mac_font_size)
-        write_s16le(f, self.mac_image_scale)
+        ctx.write_s16(f, self.mac_font)
+        ctx.write_s16(f, self.mac_font_size)
+        ctx.write_s16(f, self.mac_image_scale)
 
-        utils.write_rect(f, self.home_rect)
+        ctx.write_rect(f, self.home_rect)
 
-        utils.write_rgb_color(f, self.background_color)
-        utils.write_rgb_color(f, self.forground_color)
+        ctx.write_rgb_color(f, self.background_color)
+        ctx.write_rgb_color(f, self.forground_color)
 
-        write_s16le(f, self.ql_image_scale)
-        write_object_ref(self.root, f, self.attributes)
-        write_bool(f, self.was_iconic)
-        write_u8(f, 0x03)
+        ctx.write_s16(f, self.ql_image_scale)
+        ctx.write_object_ref(self.root, f, self.attributes)
+        ctx.write_bool(f, self.was_iconic)
+        ctx.write_u8(f, 0x03)
 
     def build_mob_dict(self):
         self.mob_dict = {}

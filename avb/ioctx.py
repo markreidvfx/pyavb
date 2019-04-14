@@ -40,6 +40,11 @@ class AVBIOContext(object):
             self.read_object_ref = self.read_object_ref_le
             self.write_object_ref = self.write_object_ref_le
 
+            self.read_rect       = self.read_rect_le
+            self.write_rect      = self.write_rect_le
+            self.read_rgb_color  = self.read_rgb_color_le
+            self.write_rgb_color = self.write_rgb_color_le
+
         elif byte_order == 'big':
             self.read_u16  = self.read_u16be
             self.write_u16 = self.write_u16be
@@ -59,6 +64,13 @@ class AVBIOContext(object):
             self.read_fourcc = self.read_fourcc_be
         else:
             raise ValueError('bytes_order must be "big" or "little"')
+
+    @staticmethod
+    def read_assert_tag(f, version):
+        version_mark = AVBIOContext.read_u8(f)
+        if version_mark != version:
+            raise AssertionError("%d != %d" % (version_mark, version))
+
 
     @staticmethod
     def reverse_str(s):
@@ -220,6 +232,43 @@ class AVBIOContext(object):
             index = root.ref_mapping[value.instance_id]
 
         AVBIOContext.write_u32le(f, index)
+
+    @staticmethod
+    def read_rect_le(f):
+        version = AVBIOContext.read_s16le(f)
+        assert version == 1
+
+        a = AVBIOContext.read_s16le(f)
+        b = AVBIOContext.read_s16le(f)
+        c = AVBIOContext.read_s16le(f)
+        d = AVBIOContext.read_s16le(f)
+
+        return [a,b,c,d]
+
+    @staticmethod
+    def write_rect_le(f, v):
+        AVBIOContext.write_s16le(f, 1)
+        AVBIOContext.write_s16le(f, v[0])
+        AVBIOContext.write_s16le(f, v[1])
+        AVBIOContext.write_s16le(f, v[2])
+        AVBIOContext.write_s16le(f, v[3])
+
+    @staticmethod
+    def read_rgb_color_le(f):
+        version = AVBIOContext.read_s16le(f)
+        assert version == 1
+        r = AVBIOContext.read_u16le(f)
+        g = AVBIOContext.read_u16le(f)
+        b = AVBIOContext.read_u16le(f)
+
+        return [r,g,b]
+
+    @staticmethod
+    def write_rgb_color_le(f, v):
+        AVBIOContext.write_s16le(f, 1)
+        AVBIOContext.write_u16le(f, v[0])
+        AVBIOContext.write_u16le(f, v[1])
+        AVBIOContext.write_u16le(f, v[2])
 
     # big
 

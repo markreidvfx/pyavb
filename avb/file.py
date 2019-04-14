@@ -17,14 +17,6 @@ from weakref import WeakValueDictionary
 
 # from . attributes import read_attributes
 from . import utils
-from .utils import (
-    read_string, write_string,
-    read_u32le, write_u32le, write_u16le,
-    read_fourcc, write_fourcc,
-    read_u8, write_u8,
-    read_datetime, write_datetime,
-    reverse_str,
-)
 from .core import walk_references
 from .ioctx import AVBIOContext
 
@@ -41,7 +33,9 @@ class AVBChunk(object):
         return self.root.f.read(self.size)
 
     def hex(self):
-        header = reverse_str(self.class_id)
+        ctx = self.root.ictx
+
+        header = ctx.reverse_str(self.class_id)
         size = struct.pack(b"<I", self.size)
         data =  header + size + self.read()
         return binascii.hexlify(data)
