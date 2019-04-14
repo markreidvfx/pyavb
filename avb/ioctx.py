@@ -10,6 +10,10 @@ from datetime import datetime
 from struct import (pack, unpack)
 from .utils import AVBObjectRef
 
+exp10_pretty = {
+5994: (59940, -3),
+}
+
 class AVBIOContext(object):
     def __init__(self, byte_order='little'):
         self.byte_order = byte_order
@@ -32,13 +36,9 @@ class AVBIOContext(object):
 
             self.read_fourcc    = self.read_fourcc_le
             self.write_fourcc   = self.write_fourcc_le
-            self.read_string    = self.read_string_le
-            self.write_string   = self.write_string_le
+
             self.read_datetime  = self.read_datetime_le
             self.write_datetime = self.write_datetime_le
-
-            self.read_object_ref = self.read_object_ref_le
-            self.write_object_ref = self.write_object_ref_le
 
             self.read_rect       = self.read_rect_le
             self.write_rect      = self.write_rect_le
@@ -112,6 +112,75 @@ class AVBIOContext(object):
         else:
             AVBIOContext.write_u8(f, 0x00)
 
+    # complex data types
+
+    def read_exp10_encoded_float(self, f):
+        mantissa = self.read_s32(f)
+        exp10 = self.read_s16(f)
+
+        return float(mantissa) * pow(10, exp10)
+
+    def write_exp10_encoded_float(self, f, value):
+        exponent = 0
+        while int(value) != value:
+            if abs(value * 10) >= 0x7FFFFFFF:
+                break
+            if exponent <= -6:
+                break
+            value *= 10
+            exponent -= 1
+
+        # remap values pretty values to match seen files
+        if value in exp10_pretty:
+            self.write_s32(f, exp10_pretty[value][0])
+            self.write_s16(f, exp10_pretty[value][1])
+        else:
+            self.write_s32(f, int(value))
+            self.write_s16(f, exponent)
+
+
+    def read_string(self, f, encoding = 'macroman'):
+        size = self.read_u16(f)
+        if size >= 65535:
+            return u""
+
+        s = f.read(size)
+        s = s.strip(b'\x00')
+        return s.decode(encoding)
+
+    def write_string(self, f, s, encoding = 'macroman'):
+        s = s or b""
+        if s == b"":
+            self.write_u16(f, 0)
+            return
+
+        data = s.encode(encoding)
+        if encoding == 'utf-8':
+            data = b'\x00\x00' + data
+
+        size = len(data)
+        self.write_u16(f, size)
+        f.write(data)
+
+    def read_object_ref(self, root, f):
+        index = self.read_u32(f)
+        ref =  AVBObjectRef(root, index)
+        if not root.check_refs or ref.valid:
+            return ref
+        raise ValueError("bad index: %d" % index)
+
+    def write_object_ref(self, root, f, value):
+        if value is None:
+            index = 0
+        elif root.debug_copy_refs:
+            index = value.index
+        elif value.instance_id not in root.ref_mapping:
+            raise Exception("object not written yet")
+        else:
+            index = root.ref_mapping[value.instance_id]
+
+        self.write_u32(f, index)
+
     # little
 
     @staticmethod
@@ -180,58 +249,12 @@ class AVBIOContext(object):
         f.write(AVBIOContext.reverse_str(value))
 
     @staticmethod
-    def read_string_le(f, encoding = 'macroman'):
-        size = AVBIOContext.read_u16le(f)
-        if size >= 65535:
-            return u""
-
-        s = f.read(size)
-        s = s.strip(b'\x00')
-        return s.decode(encoding)
-
-    @staticmethod
-    def write_string_le(f, s, encoding = 'macroman'):
-        s = s or b""
-        if s == b"":
-            AVBIOContext.write_u16le(f, 0)
-            return
-
-        data = s.encode(encoding)
-        if encoding == 'utf-8':
-            data = b'\x00\x00' + data
-
-        size = len(data)
-        AVBIOContext.write_u16le(f, size)
-        f.write(data)
-
-    @staticmethod
     def read_datetime_le(f):
         return datetime.fromtimestamp(AVBIOContext.read_u32le(f))
 
     @staticmethod
     def write_datetime_le(f, value):
         AVBIOContext.write_u32le(f, AVBIOContext.datetime_to_timestamp(value))
-
-    @staticmethod
-    def read_object_ref_le(root, f):
-        index = AVBIOContext.read_u32le(f)
-        ref =  AVBObjectRef(root, index)
-        if not root.check_refs or ref.valid:
-            return ref
-        raise ValueError("bad index: %d" % index)
-
-    @staticmethod
-    def write_object_ref_le(root, f, value):
-        if value is None:
-            index = 0
-        elif root.debug_copy_refs:
-            index = value.index
-        elif value.instance_id not in root.ref_mapping:
-            raise Exception("object not written yet")
-        else:
-            index = root.ref_mapping[value.instance_id]
-
-        AVBIOContext.write_u32le(f, index)
 
     @staticmethod
     def read_rect_le(f):

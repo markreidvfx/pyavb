@@ -53,59 +53,61 @@ class Component(core.AVBObject):
         self.edit_rate = edit_rate
 
     def read(self, f):
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x03)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x03)
 
         # bob == bytes of binary or bag of bits?
-        self.left_bob =  read_object_ref(self.root, f)
-        self.right_bob =  read_object_ref(self.root, f)
+        self.left_bob  = ctx.read_object_ref(self.root, f)
+        self.right_bob = ctx.read_object_ref(self.root, f)
 
-        self.media_kind_id = read_s16le(f)
-        self.edit_rate = read_exp10_encoded_float(f)
-        self.name = read_string(f) or None
-        self.effect_id = read_string(f) or None
+        self.media_kind_id = ctx.read_s16(f)
+        self.edit_rate = ctx.read_exp10_encoded_float(f)
+        self.name = ctx.read_string(f) or None
+        self.effect_id = ctx.read_string(f) or None
 
-        self.attributes = read_object_ref(self.root, f)
-        self.session_attrs = read_object_ref(self.root, f)
+        self.attributes = ctx.read_object_ref(self.root, f)
+        self.session_attrs = ctx.read_object_ref(self.root, f)
 
-        self.precomputed = read_object_ref(self.root, f)
+        self.precomputed = ctx.read_object_ref(self.root, f)
 
         for tag in iter_ext(f):
 
             if tag == 0x01:
-                read_assert_tag(f, 72)
-                self.param_list = read_object_ref(self.root, f)
+                ctx.read_assert_tag(f, 72)
+                self.param_list = ctx.read_object_ref(self.root, f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
     def write(self, f):
-        write_u8(f, 0x02)
-        write_u8(f, 0x03)
-        write_object_ref(self.root, f, self.left_bob)
-        write_object_ref(self.root, f, self.right_bob)
-        write_s16le(f, self.media_kind_id)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x03)
+        ctx.write_object_ref(self.root, f, self.left_bob)
+        ctx.write_object_ref(self.root, f, self.right_bob)
+        ctx.write_s16(f, self.media_kind_id)
 
-        write_exp10_encoded_float(f, self.edit_rate)
+        ctx.write_exp10_encoded_float(f, self.edit_rate)
 
         if self.name:
-            write_string(f, self.name)
+            ctx.write_string(f, self.name)
         else:
-            write_u16le(f, 0xFFFF)
+            ctx.write_u16(f, 0xFFFF)
 
         if self.effect_id:
-            write_string(f, self.effect_id)
+            ctx.write_string(f, self.effect_id)
         else:
-            write_u16le(f, 0xFFFF)
+            ctx.write_u16(f, 0xFFFF)
 
-        write_object_ref(self.root, f, self.attributes)
-        write_object_ref(self.root, f, self.session_attrs)
-        write_object_ref(self.root, f, self.precomputed)
+        ctx.write_object_ref(self.root, f, self.attributes)
+        ctx.write_object_ref(self.root, f, self.session_attrs)
+        ctx.write_object_ref(self.root, f, self.precomputed)
 
         if hasattr(self, 'param_list'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            write_u8(f, 72)
-            write_object_ref(self.root, f, self.param_list)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 72)
+            ctx.write_object_ref(self.root, f, self.param_list)
 
     @property
     def media_kind(self):
@@ -163,28 +165,30 @@ class Sequence(Component):
 
     def read(self, f):
         super(Sequence, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x03)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x03)
 
-        count = read_u32le(f)
+        count = ctx.read_u32(f)
         self.components = AVBRefList.__new__(AVBRefList, root=self.root)
         for i in range(count):
-            ref = read_object_ref(self.root, f)
+            ref = ctx.read_object_ref(self.root, f)
             # print ref
             self.components.append(ref)
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(Sequence, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x03)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x03)
 
-        write_u32le(f, len(self.components))
+        ctx.write_u32(f, len(self.components))
         for c in self.components:
-            write_object_ref(self.root, f, c)
+            ctx.write_object_ref(self.root, f, c)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
     @property
     def length(self):
@@ -205,15 +209,17 @@ class Clip(Component):
 
     def read(self, f):
         super(Clip, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
-        self.length = read_u32le(f)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
+        self.length = ctx.read_u32(f)
 
     def write(self, f):
         super(Clip, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
-        write_u32le(f, self.length)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
+        ctx.write_u32(f, self.length)
 
 @utils.register_class
 class SourceClip(Clip):
@@ -231,14 +237,15 @@ class SourceClip(Clip):
 
     def read(self, f):
         super(SourceClip, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x03)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x03)
 
-        mob_id_hi = read_u32le(f)
-        mob_id_lo = read_u32le(f)
+        mob_id_hi = ctx.read_u32(f)
+        mob_id_lo = ctx.read_u32(f)
 
-        self.track_id = read_s16le(f)
-        self.start_time = read_s32le(f)
+        self.track_id = ctx.read_s16(f)
+        self.start_time = ctx.read_s32(f)
 
         for tag in iter_ext(f):
             if tag == 0x01:
@@ -246,7 +253,7 @@ class SourceClip(Clip):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(SourceClip, self).write(f)
