@@ -69,6 +69,17 @@ class AVBIOContext(object):
         if version_mark != version:
             raise AssertionError("%d != %d" % (version_mark, version))
 
+    @staticmethod
+    def iter_ext(f):
+        while True:
+            pos = f.tell()
+            tag = AVBIOContext.read_u8(f)
+            if tag != 0x01:
+                f.seek(pos)
+                break
+
+            tag = AVBIOContext.read_u8(f)
+            yield tag
 
     @staticmethod
     def reverse_str(s):

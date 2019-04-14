@@ -10,7 +10,7 @@ from .core import AVBPropertyDef, AVBRefList
 from . import utils
 from . import mobid
 
-from . utils import (iter_ext, peek_data)
+from . utils import peek_data
 
 
 
@@ -55,7 +55,7 @@ class Component(core.AVBObject):
 
         self.precomputed = ctx.read_object_ref(self.root, f)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
 
             if tag == 0x01:
                 ctx.read_assert_tag(f, 72)
@@ -231,7 +231,7 @@ class SourceClip(Clip):
         self.track_id = ctx.read_s16(f)
         self.start_time = ctx.read_s32(f)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x01:
                 self.mob_id = ctx.read_mob_id(f)
             else:
@@ -462,7 +462,7 @@ class ParamClip(Clip):
 
             self.control_points.append(cp)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x01:
                 ctx.read_assert_tag(f, 71)
                 self.extrap_kind = ctx.read_s32(f)

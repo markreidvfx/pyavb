@@ -10,7 +10,7 @@ from . import utils
 
 from . core import AVBPropertyDef
 
-from . utils import (iter_ext, peek_data)
+from . utils import peek_data
 
 class Setting(core.AVBObject):
     class_id = b'ASET'
@@ -106,7 +106,7 @@ class BinViewSetting(Setting):
             d['hidden'] = ctx.read_bool(f)
             self.columns.append(d)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x01:
                 ctx.read_assert_tag(f, 69)
                 num_vcid_free_columns = ctx.read_s16(f)
