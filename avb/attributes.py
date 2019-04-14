@@ -9,16 +9,7 @@ from . import utils
 from . import core
 from .core import AVBPropertyDef, AVBPropertyData, AVBRefList
 
-from . utils import (
-    read_u8,    write_u8,
-    read_s16le, write_s16le,
-    read_u32le, write_u32le,
-    read_s32le, write_s32le,
-    read_string, write_string,
-    read_object_ref, write_object_ref,
-    read_assert_tag,
-    peek_data,
-)
+from . utils import peek_data
 
 INT_ATTR  = 1
 STR_ATTR  = 2
@@ -61,37 +52,39 @@ class Attributes(AVBPropertyData):
         return result
 
     def read(self, f):
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        count = read_u32le(f)
+        count = ctx.read_u32(f)
 
 
         for i in range(count):
-            attr_type = read_u32le(f)
-            attr_name = read_string(f)
+            attr_type = ctx.read_u32(f)
+            attr_name = ctx.read_string(f)
 
             if attr_type == INT_ATTR:
-                self[attr_name] = read_s32le(f)
+                self[attr_name] = ctx.read_s32(f)
             elif attr_type == STR_ATTR:
-                self[attr_name] = read_string(f)
+                self[attr_name] = ctx.read_string(f)
             elif attr_type == OBJ_ATTR:
-                self[attr_name] = read_object_ref(self.root, f)
+                self[attr_name] = ctx.read_object_ref(self.root, f)
             elif attr_type == BOB_ATTR:
-                size = read_u32le(f)
+                size = ctx.read_u32(f)
                 self[attr_name] = bytearray(f.read(size))
             else:
                 raise Exception("Unkown attr name: %s type: %d" % ( attr_name, attr_type))
 
         # print("read", result)
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_u32le(f, len(self))
+        ctx.write_u32(f, len(self))
         for key, value in self.items():
             assert isinstance(key, unicode)
 
@@ -107,45 +100,47 @@ class Attributes(AVBPropertyData):
                 # assume its AVBObject for now and hope for the best :p
                 attr_type = OBJ_ATTR
 
-            write_u32le(f, attr_type)
-            write_string(f, key)
+            ctx.write_u32(f, attr_type)
+            ctx.write_string(f, key)
 
             if attr_type == INT_ATTR:
-                write_s32le(f, value)
+                ctx.write_s32(f, value)
             elif attr_type == STR_ATTR:
-                write_string(f, value)
+                ctx.write_string(f, value)
             elif attr_type == OBJ_ATTR:
-                write_object_ref(self.root, f, value)
+                ctx.write_object_ref(self.root, f, value)
             elif attr_type == BOB_ATTR:
-                write_u32le(f, len(value))
+                ctx.write_u32(f, len(value))
                 f.write(value)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class ParameterList(AVBRefList):
     class_id = b'PRLS'
     __slots__ = ()
     def read(self, f):
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        count = read_s32le(f)
+        count = ctx.read_s32(f)
         for i in range(count):
-            ref = read_object_ref(self.root, f)
+            ref = ctx.read_object_ref(self.root, f)
             self.append(ref)
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_s32le(f, len(self))
+        ctx.write_s32(f, len(self))
         for obj in self:
-            write_object_ref(self.root, f, obj)
+            ctx.write_object_ref(self.root, f, obj)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class TimeCrumbList(AVBRefList):
@@ -153,22 +148,24 @@ class TimeCrumbList(AVBRefList):
     __slots__ = ()
 
     def read(self, f):
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        count = read_s16le(f)
+        count = ctx.read_s16(f)
         for i in range(count):
-            ref = read_object_ref(self.root, f)
+            ref = ctx.read_object_ref(self.root, f)
             self.append(ref)
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_s16le(f, len(self))
+        ctx.write_s16(f, len(self))
         for obj in self:
-            write_object_ref(self.root, f, obj)
+            ctx.write_object_ref(self.root, f, obj)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
