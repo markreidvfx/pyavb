@@ -270,6 +270,18 @@ class AVBIOContext(object):
 
         self.write_uuid(f, m.material)
 
+    def read_raw_uuid(self, f):
+        if self.byte_order == 'little':
+            return UUID(bytes_le=f.read(16))
+        else:
+            return UUID(bytes_be=f.read(16))
+
+    def write_raw_uuid(self, f, value):
+        if self.byte_order == 'little':
+            f.write(value.bytes_le)
+        else:
+            f.write(value.bytes_be)
+
     def read_datetime(self, f):
         return datetime.fromtimestamp(self.read_u32(f))
 
