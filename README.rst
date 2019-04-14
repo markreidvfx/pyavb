@@ -23,6 +23,11 @@ or clone the latest development git master::
     cd pyavb
     python setup.py install
 
+Documentation
+-------------
+
+Documentation is available on `Read the Docs. <http://pyavb.readthedocs.io/>`_
+
 
 .. |python-versions| image:: https://img.shields.io/badge/python-2.7%2C%203.5%2C%203.6-blue.svg
 
