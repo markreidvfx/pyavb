@@ -512,7 +512,7 @@ class DIDDescriptor(MediaFileDescriptor):
         self.alpha_transparency = ctx.read_s32(f)
         self.uniformness = ctx.read_bool(f)
 
-        self.did_image_size = ctx.read_s32le(f)
+        self.did_image_size = ctx.read_s32(f)
 
         self.next_did_desc = ctx.read_object_ref(self.root, f)
 
@@ -650,9 +650,9 @@ class DIDDescriptor(MediaFileDescriptor):
                 self.framing_box.append([x, y])
 
                 ctx.read_assert_tag(f, 71)
-                x = ctx.read_s32le(f)
+                x = ctx.read_s32(f)
                 ctx.read_assert_tag(f, 71)
-                y = ctx.read_s32le(f)
+                y = ctx.read_s32(f)
                 self.framing_box.append([x, y])
 
                 ctx.read_assert_tag(f, 71)
@@ -708,7 +708,7 @@ class DIDDescriptor(MediaFileDescriptor):
         ctx.write_s32(f, self.aspect_ratio[0])
         ctx.write_s32(f, self.aspect_ratio[1])
 
-        ctx.write_s32le(f, len(self.line_map) * 4)
+        ctx.write_s32(f, len(self.line_map) * 4)
         for i in self.line_map:
             ctx.write_s32(f, i)
 
@@ -858,7 +858,7 @@ class DIDDescriptor(MediaFileDescriptor):
             ctx.write_s32(f, self.framing_box[3][1])
 
             ctx.write_u8(f, 71)
-            ctx.write_s32le(f, self.reformatting_option)
+            ctx.write_s32(f, self.reformatting_option)
 
         if hasattr(self, 'transfer_characteristic'):
             ctx.write_u8(f, 0x01)

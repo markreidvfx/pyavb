@@ -45,8 +45,8 @@ class Setting(core.AVBObject):
         ctx.write_string(f, self.name)
         ctx.write_string(f, self.kind)
 
-        ctx.write_s16le(f, self.attr_count)
-        ctx.write_s16le(f, self.attr_type)
+        ctx.write_s16(f, self.attr_count)
+        ctx.write_s16(f, self.attr_type)
         ctx.write_object_ref(self.root, f, self.attributes)
 
 default_bin_columns = [
@@ -257,7 +257,7 @@ class Bin(core.AVBObject):
             bin_obj.mob = ctx.read_object_ref(self.root, f)
             bin_obj.x = ctx.read_s16(f)
             bin_obj.y = ctx.read_s16(f)
-            bin_obj.keyframe = ctx.read_s32le(f)
+            bin_obj.keyframe = ctx.read_s32(f)
             bin_obj.user_placed = ctx.read_bool(f)
             self.items.append(bin_obj)
 

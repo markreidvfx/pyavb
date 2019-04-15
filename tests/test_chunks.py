@@ -60,6 +60,36 @@ def read_write_chunk(path):
             print(binascii.hexlify(write_data))
             raise
 
+        write_data_le = b''
+        write_data_be = b''
+
+        try:
+            m.octx = avb.ioctx.AVBIOContext('big')
+            r = io.BytesIO()
+            object_instance.write(r)
+            write_data_be = r.getvalue()
+            assert len(write_data_be) == len(chunk_data)
+
+            m.ictx = avb.ioctx.AVBIOContext('big')
+            m.octx = avb.ioctx.AVBIOContext('little')
+            object_instance_be = obj_class.__new__(obj_class, root=m)
+            object_instance_be.read(io.BytesIO(write_data_be))
+
+            r = io.BytesIO()
+            object_instance_be.write(r)
+            write_data_le = r.getvalue()
+            assert write_data_le == chunk_data
+
+        except:
+            print('BE/LE error:')
+            print(path)
+            print(chunk.class_id)
+            print(binascii.hexlify(chunk_data))
+            print()
+            print(binascii.hexlify(write_data_le))
+            raise
+
+
 class TestChuckDB(unittest.TestCase):
 
     def test_aifc_chunks(self):
