@@ -138,10 +138,7 @@ from __future__ import (
 import uuid
 import struct
 from .utils import (int_from_bytes, bytes_from_int,
-                    read_u8, write_u8,
-                    read_s32le, write_s32le,
-                    read_uuid, write_uuid,
-                    read_assert_tag, unpack_u16le_from, unpack_u32le_from)
+                    unpack_u16le_from, unpack_u32le_from)
 
 MOBID_STRUCT = struct.Struct(str(''.join(( '<',
    '12B',  # UInt8Array12   SMPTELabel      0
@@ -470,50 +467,6 @@ class MobID(object):
 
     def __repr__(self):
         return str(self.urn)
-
-def read_mob_id(f):
-    m = MobID()
-    read_assert_tag(f, 65)
-    smpte_label_len = read_s32le(f)
-    assert smpte_label_len == 12
-
-    m.SMPTELabel = [read_u8(f) for i in range(12)]
-
-    read_assert_tag(f, 68)
-    m.length = read_u8(f)
-
-    read_assert_tag(f, 68)
-    m.instanceHigh = read_u8(f)
-
-    read_assert_tag(f, 68)
-    m.instanceMid = read_u8(f)
-
-    read_assert_tag(f, 68)
-    m.instanceLow = read_u8(f)
-
-    m.material = read_uuid(f)
-    return m
-
-def write_mob_id(f, m):
-
-    write_u8(f, 65)
-    write_s32le(f, 12)
-    for i in m.SMPTELabel:
-        write_u8(f, i)
-
-    write_u8(f, 68)
-    write_u8(f, m.length)
-
-    write_u8(f, 68)
-    write_u8(f, m.instanceHigh)
-
-    write_u8(f, 68)
-    write_u8(f, m.instanceMid)
-
-    write_u8(f, 68)
-    write_u8(f, m.instanceLow)
-
-    write_uuid(f, m.material)
 
 if __name__ == "__main__":
 
