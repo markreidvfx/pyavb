@@ -89,8 +89,8 @@ class TestWrite(unittest.TestCase):
 
                 pos = f2.tell()
                 f2.seek(count_pos)
-                avb.utils.write_u32le(f2, obj_count-1)
-                avb.utils.write_u32le(f2, obj_count-1)
+                AVBIOContext.write_u32le(f2, obj_count-1)
+                AVBIOContext.write_u32le(f2, obj_count-1)
                 f2.seek(pos)
 
                 for i in range(1,  obj_count):
