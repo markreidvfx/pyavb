@@ -10,25 +10,8 @@ from . import utils
 from .core import AVBPropertyDef, AVBRefList
 from . import mobid
 
-from . utils import (
-    read_u8,    write_u8,
-    read_s8,    write_s8,
-    read_bool,  write_bool,
-    read_s16le, write_s16le,
-    read_u16le, write_u16le,
-    read_u32le, write_u32le,
-    read_s32le, write_s32le,
-    read_u64le, write_u64le,
-    read_string, write_string,
-    read_doublele, write_doublele,
-    read_exp10_encoded_float, write_exp10_encoded_float,
-    read_object_ref, write_object_ref,
-    read_datetime,
-    read_raw_uuid, write_raw_uuid,
-    iter_ext,
-    read_assert_tag,
-    peek_data
-)
+from . utils import peek_data
+
 
 class FileLocator(core.AVBObject):
     class_id = b'FILE'
@@ -42,52 +25,54 @@ class FileLocator(core.AVBObject):
 
     def read(self, f):
         super(FileLocator, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x02)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x02)
 
-        self.path  = read_string(f)
+        self.path = ctx.read_string(f)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x01:
-                read_assert_tag(f, 76)
-                self.path_posix = read_string(f)
+                ctx.read_assert_tag(f, 76)
+                self.path_posix = ctx.read_string(f)
             elif tag == 0x02:
-                read_assert_tag(f, 76)
-                self.path_utf8 = read_string(f, 'utf-8')
+                ctx.read_assert_tag(f, 76)
+                self.path_utf8 = ctx.read_string(f, 'utf-8')
             elif tag == 0x03:
-                read_assert_tag(f, 76)
-                self.path2_utf8 = read_string(f, 'utf-8')
+                ctx.read_assert_tag(f, 76)
+                self.path2_utf8 = ctx.read_string(f, 'utf-8')
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(FileLocator, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x02)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x02)
 
-        write_string(f, self.path)
+        ctx.write_string(f, self.path)
 
         if hasattr(self, 'path_posix'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            write_u8(f, 76)
-            write_string(f, self.path_posix)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 76)
+            ctx.write_string(f, self.path_posix)
 
         if hasattr(self, 'path_utf8'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x02)
-            write_u8(f, 76)
-            write_string(f, self.path_utf8, encoding='utf-8')
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x02)
+            ctx.write_u8(f, 76)
+            ctx.write_string(f, self.path_utf8, encoding='utf-8')
 
         if hasattr(self, 'path2_utf8'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x03)
-            write_u8(f, 76)
-            write_string(f, self.path2_utf8, encoding='utf-8')
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x03)
+            ctx.write_u8(f, 76)
+            ctx.write_string(f, self.path2_utf8, encoding='utf-8')
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class MacFileLocator(FileLocator):
@@ -105,11 +90,13 @@ class URLLocator(core.AVBObject):
 
     def read(self, f):
         super(URLLocator, self).read(f)
-        read_assert_tag(f, 0x03)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(URLLocator, self).write(f)
-        write_u8(f, 0x03)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class GraphicEffect(core.AVBObject):
@@ -121,26 +108,28 @@ class GraphicEffect(core.AVBObject):
 
     def read(self, f):
         super(GraphicEffect, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        pict_size = read_s32le(f)
+        pict_size = ctx.read_s32(f)
         assert pict_size >= 0
 
         self.pict_data = bytearray(f.read(pict_size))
         assert len(self.pict_data) == pict_size
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(GraphicEffect, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_s32le(f, len(self.pict_data))
+        ctx.write_s32(f, len(self.pict_data))
         f.write(self.pict_data)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class ShapeList(core.AVBObject):
@@ -151,25 +140,27 @@ class ShapeList(core.AVBObject):
 
     def read(self, f):
         super(ShapeList, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        data_size = read_s32le(f)
+        data_size = ctx.read_s32(f)
         assert data_size >= 0
 
         self.shape_data = bytearray(f.read(data_size))
         assert len(self.shape_data) == data_size
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(ShapeList, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_s32le(f, len(self.shape_data))
+        ctx.write_s32(f, len(self.shape_data))
         f.write(self.shape_data)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class ColorCorrectionEffect(core.AVBObject):
@@ -180,25 +171,27 @@ class ColorCorrectionEffect(core.AVBObject):
 
     def read(self, f):
         super(ColorCorrectionEffect, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        data_size = read_s16le(f)
+        data_size = ctx.read_s16(f)
         assert data_size >= 0
         #
         self.color_correction = bytearray(f.read(data_size))
         assert len(self.color_correction) == data_size
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(ColorCorrectionEffect, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_s16le(f, len(self.color_correction))
+        ctx.write_s16(f, len(self.color_correction))
         f.write(self.color_correction)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 class EffectParam(core.AVBObject):
     propertydefs = [
@@ -247,140 +240,142 @@ class EffectParamList(core.AVBObject):
 
     def read(self, f):
         super(EffectParamList, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x12)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x12)
 
-        self.orig_length = read_s32le(f)
-        self.window_offset = read_s32le(f)
+        self.orig_length = ctx.read_s32(f)
+        self.window_offset = ctx.read_s32(f)
 
-        count = read_s32le(f)
-        self.keyframe_size = read_s32le(f)
+        count = ctx.read_s32(f)
+        self.keyframe_size = ctx.read_s32(f)
         self.parameters = []
 
         for i in range(count):
             p = EffectParam.__new__(EffectParam, root=self.root)
             start = f.tell()
-            p.percent_time = read_s32le(f)
-            p.level = read_s32le(f)
-            p.pos_x = read_s32le(f)
-            p.floor_x = read_s32le(f)
-            p.ceil_x = read_s32le(f)
-            p.pos_y = read_s32le(f)
-            p.floor_y = read_s32le(f)
-            p.ceil_y = read_s32le(f)
-            p.scale_x = read_s32le(f)
-            p.scale_y = read_s32le(f)
+            p.percent_time = ctx.read_s32(f)
+            p.level = ctx.read_s32(f)
+            p.pos_x = ctx.read_s32(f)
+            p.floor_x = ctx.read_s32(f)
+            p.ceil_x = ctx.read_s32(f)
+            p.pos_y = ctx.read_s32(f)
+            p.floor_y = ctx.read_s32(f)
+            p.ceil_y = ctx.read_s32(f)
+            p.scale_x = ctx.read_s32(f)
+            p.scale_y = ctx.read_s32(f)
 
-            p.crop_left = read_s32le(f)
-            p.crop_right = read_s32le(f)
-            p.crop_top = read_s32le(f)
-            p.crop_bottom = read_s32le(f)
+            p.crop_left = ctx.read_s32(f)
+            p.crop_right = ctx.read_s32(f)
+            p.crop_top = ctx.read_s32(f)
+            p.crop_bottom = ctx.read_s32(f)
 
             p.box = []
             # boxTop
-            p.box.append(read_s32le(f))
+            p.box.append(ctx.read_s32(f))
             # boxBottom
-            p.box.append(read_s32le(f))
+            p.box.append(ctx.read_s32(f))
             # boxTop repeat??
-            p.box.append(read_s32le(f))
+            p.box.append(ctx.read_s32(f))
             # boxRight
-            p.box.append(read_s32le(f))
+            p.box.append(ctx.read_s32(f))
 
-            p.box_xscale = read_bool(f)
-            p.box_yscale = read_bool(f)
-            p.box_xpos = read_bool(f)
-            p.box_ypos = read_bool(f)
+            p.box_xscale = ctx.read_bool(f)
+            p.box_yscale = ctx.read_bool(f)
+            p.box_xpos = ctx.read_bool(f)
+            p.box_ypos = ctx.read_bool(f)
 
-            p.border_width = read_s32le(f)
-            p.border_soft = read_s32le(f)
+            p.border_width = ctx.read_s32(f)
+            p.border_soft = ctx.read_s32(f)
 
-            p.splill_gain2 = read_s16le(f)
-            p.splill_gain = read_s16le(f)
-            p.splill_soft2 = read_s16le(f)
-            p.splill_soft = read_s16le(f)
+            p.splill_gain2 = ctx.read_s16(f)
+            p.splill_gain = ctx.read_s16(f)
+            p.splill_soft2 = ctx.read_s16(f)
+            p.splill_soft = ctx.read_s16(f)
 
-            p.enable_key_flags = read_s8(f)
+            p.enable_key_flags = ctx.read_s8(f)
 
             p.colors = []
-            color_count = read_s32le(f)
+            color_count = ctx.read_s32(f)
             assert color_count >= 0
             for j in range(color_count):
-                color = read_s32le(f)
+                color = ctx.read_s32(f)
                 p.colors.append(color)
 
-            param_size = read_s32le(f)
+            param_size = ctx.read_s32(f)
             assert param_size >= 0
 
             p.user_param = bytearray(f.read(param_size))
-            p.selected = read_bool(f)
+            p.selected = ctx.read_bool(f)
 
             self.parameters.append(p)
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(EffectParamList, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x12)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x12)
 
-        write_s32le(f, self.orig_length)
-        write_s32le(f, self.window_offset)
+        ctx.write_s32(f, self.orig_length)
+        ctx.write_s32(f, self.window_offset)
 
-        write_s32le(f, len(self.parameters))
-        write_s32le(f, self.keyframe_size)
+        ctx.write_s32(f, len(self.parameters))
+        ctx.write_s32(f, self.keyframe_size)
 
         for p in self.parameters:
 
-            write_s32le(f, p.percent_time)
-            write_s32le(f, p.level)
-            write_s32le(f, p.pos_x)
-            write_s32le(f, p.floor_x)
-            write_s32le(f, p.ceil_x)
-            write_s32le(f, p.pos_y)
-            write_s32le(f, p.floor_y)
-            write_s32le(f, p.ceil_y)
-            write_s32le(f, p.scale_x)
-            write_s32le(f, p.scale_y)
+            ctx.write_s32(f, p.percent_time)
+            ctx.write_s32(f, p.level)
+            ctx.write_s32(f, p.pos_x)
+            ctx.write_s32(f, p.floor_x)
+            ctx.write_s32(f, p.ceil_x)
+            ctx.write_s32(f, p.pos_y)
+            ctx.write_s32(f, p.floor_y)
+            ctx.write_s32(f, p.ceil_y)
+            ctx.write_s32(f, p.scale_x)
+            ctx.write_s32(f, p.scale_y)
 
-            write_s32le(f, p.crop_left)
-            write_s32le(f, p.crop_right)
-            write_s32le(f, p.crop_top)
-            write_s32le(f, p.crop_bottom)
+            ctx.write_s32(f, p.crop_left)
+            ctx.write_s32(f, p.crop_right)
+            ctx.write_s32(f, p.crop_top)
+            ctx.write_s32(f, p.crop_bottom)
 
             # boxTop
-            write_s32le(f, p.box[0])
+            ctx.write_s32(f, p.box[0])
             # boxBottom
-            write_s32le(f, p.box[1])
+            ctx.write_s32(f, p.box[1])
             # boxTop repeat??
-            write_s32le(f, p.box[2])
+            ctx.write_s32(f, p.box[2])
             # boxRight
-            write_s32le(f, p.box[3])
+            ctx.write_s32(f, p.box[3])
 
-            write_bool(f, p.box_xscale)
-            write_bool(f, p.box_yscale)
-            write_bool(f, p.box_xpos)
-            write_bool(f, p.box_ypos)
+            ctx.write_bool(f, p.box_xscale)
+            ctx.write_bool(f, p.box_yscale)
+            ctx.write_bool(f, p.box_xpos)
+            ctx.write_bool(f, p.box_ypos)
 
-            write_s32le(f, p.border_width)
-            write_s32le(f, p.border_soft)
+            ctx.write_s32(f, p.border_width)
+            ctx.write_s32(f, p.border_soft)
 
-            write_s16le(f, p.splill_gain2)
-            write_s16le(f, p.splill_gain)
-            write_s16le(f, p.splill_soft2)
-            write_s16le(f, p.splill_soft)
+            ctx.write_s16(f, p.splill_gain2)
+            ctx.write_s16(f, p.splill_gain)
+            ctx.write_s16(f, p.splill_soft2)
+            ctx.write_s16(f, p.splill_soft)
 
-            write_s8(f, p.enable_key_flags)
+            ctx.write_s8(f, p.enable_key_flags)
 
-            write_s32le(f, len(p.colors))
+            ctx.write_s32(f, len(p.colors))
 
             for color in p.colors:
-                write_s32le(f, color)
+                ctx.write_s32(f, color)
 
-            write_s32le(f, len(p.user_param))
+            ctx.write_s32(f, len(p.user_param))
             f.write(p.user_param)
-            write_bool(f, p.selected)
+            ctx.write_bool(f, p.selected)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class CFUserParam(core.AVBObject):
@@ -394,39 +389,41 @@ class CFUserParam(core.AVBObject):
 
     def read(self, f):
         super(CFUserParam, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        self.byte_order = read_s16le(f)
+        self.byte_order = ctx.read_s16(f)
         assert self.byte_order == 0x4949
 
-        self.uuid = read_raw_uuid(f)
+        self.uuid = ctx.read_raw_uuid(f)
 
         # why twice?
-        value_size1 = read_s32le(f)
-        value_size2 = read_s32le(f)
+        value_size1 = ctx.read_s32(f)
+        value_size2 = ctx.read_s32(f)
 
         assert value_size2 == (value_size1 - 4)
 
         self.data = bytearray(f.read(value_size2))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(CFUserParam, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_s16le(f, 0x4949)
+        ctx.write_s16(f, 0x4949)
 
-        write_raw_uuid(f, self.uuid)
+        ctx.write_raw_uuid(f, self.uuid)
 
-        write_s32le(f, len(self.data) + 4)
-        write_s32le(f, len(self.data))
+        ctx.write_s32(f, len(self.data) + 4)
+        ctx.write_s32(f, len(self.data))
 
         f.write(self.data)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class ParameterItems(core.AVBObject):
@@ -444,67 +441,67 @@ class ParameterItems(core.AVBObject):
 
     def read(self, f):
         super(ParameterItems, self).read(f)
-        # print(peek_data(f).encode('hex'))
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x02)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x02)
 
-        self.uuid = read_raw_uuid(f)
-        self.value_type = read_s16le(f)
+        self.uuid = ctx.read_raw_uuid(f)
+        self.value_type = ctx.read_s16(f)
         if self.value_type == 1:
-            self.value = read_s32le(f)
+            self.value = ctx.read_s32(f)
         elif self.value_type == 2:
-            self.value = read_doublele(f)
+            self.value = ctx.read_double(f)
         elif self.value_type == 4:
-            self.value = read_object_ref(self.root, f)
+            self.value = ctx.read_object_ref(self.root, f)
         else:
             raise ValueError("unknown value_type: %d" % self.value_type)
 
-        self.name = read_string(f)
-        self.enable = read_bool(f)
-        self.control_track = read_object_ref(self.root, f)
+        self.name = ctx.read_string(f)
+        self.enable = ctx.read_bool(f)
+        self.control_track = ctx.read_object_ref(self.root, f)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x01:
-                read_assert_tag(f, 66)
-                self.contribs_to_sig = read_bool(f)
+                ctx.read_assert_tag(f, 66)
+                self.contribs_to_sig = ctx.read_bool(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(ParameterItems, self).write(f)
-        # print(peek_data(f).encode('hex'))
-        write_u8(f, 0x02)
-        write_u8(f, 0x02)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x02)
 
-        write_raw_uuid(f, self.uuid)
-        write_s16le(f, self.value_type)
+        ctx.write_raw_uuid(f, self.uuid)
+        ctx.write_s16(f, self.value_type)
 
         if self.value_type == 1:
-            write_s32le(f, self.value)
+            ctx.write_s32(f, self.value)
         elif self.value_type == 2:
-            write_doublele(f, self.value)
+            ctx.write_double(f, self.value)
         elif self.value_type == 4:
-            write_object_ref(self.root, f, self.value)
+            ctx.write_object_ref(self.root, f, self.value)
         else:
             raise ValueError("unknown value_type: %d" % self.value_type)
 
         if self.name:
-            write_string(f, self.name)
+            ctx.write_string(f, self.name)
         else:
-            write_u16le(f, 0xFFFF)
+            ctx.write_u16(f, 0xFFFF)
 
-        write_bool(f, self.enable)
-        write_object_ref(self.root, f, self.control_track)
+        ctx.write_bool(f, self.enable)
+        ctx.write_object_ref(self.root, f, self.control_track)
 
         if hasattr(self, 'contribs_to_sig'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            write_u8(f, 66)
-            write_bool(f, self.contribs_to_sig)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 66)
+            ctx.write_bool(f, self.contribs_to_sig)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class MSMLocator(core.AVBObject):
@@ -519,61 +516,61 @@ class MSMLocator(core.AVBObject):
 
     def read(self, f):
         super(MSMLocator, self).read(f)
-        # print(peek_data(f).encode('hex'))
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x02)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x02)
 
-        mob_id_hi = read_u32le(f)
-        mob_id_lo = read_u32le(f)
+        mob_id_hi = ctx.read_u32(f)
+        mob_id_lo = ctx.read_u32(f)
 
-        self.last_known_volume = read_string(f)
+        self.last_known_volume = ctx.read_string(f)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
 
             if tag == 0x01:
-                read_assert_tag(f, 71)
-                self.domain_type = read_s32le(f)
+                ctx.read_assert_tag(f, 71)
+                self.domain_type = ctx.read_s32(f)
             elif tag == 0x02:
-                self.mob_id = mobid.read_mob_id(f)
+                self.mob_id = ctx.read_mob_id(f)
             elif tag == 0x03:
-                read_assert_tag(f, 76)
-                self.last_known_volume_utf8 = read_string(f, 'utf-8')
+                ctx.read_assert_tag(f, 76)
+                self.last_known_volume_utf8 = ctx.read_string(f, 'utf-8')
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(MSMLocator, self).write(f)
-        # print(peek_data(f).encode('hex'))
-        write_u8(f, 0x02)
-        write_u8(f, 0x02)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x02)
 
         lo = self.mob_id.material.time_low
         hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
-        write_u32le(f, lo)
-        write_u32le(f, hi)
+        ctx.write_u32(f, lo)
+        ctx.write_u32(f, hi)
 
-        write_string(f, self.last_known_volume)
+        ctx.write_string(f, self.last_known_volume)
 
         if hasattr(self, 'domain_type'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            write_u8(f, 71)
-            write_s32le(f, self.domain_type)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 71)
+            ctx.write_s32(f, self.domain_type)
 
         if hasattr(self, 'mob_id'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x02)
-            mobid.write_mob_id(f, self.mob_id)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x02)
+            ctx.write_mob_id(f, self.mob_id)
 
         if hasattr(self, 'last_known_volume_utf8'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x03)
-            write_u8(f, 76)
-            write_string(f, self.last_known_volume_utf8, 'utf-8')
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x03)
+            ctx.write_u8(f, 76)
+            ctx.write_string(f, self.last_known_volume_utf8, 'utf-8')
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class Position(core.AVBObject):
@@ -585,38 +582,40 @@ class Position(core.AVBObject):
 
     def read(self, f):
         super(Position, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        mob_id_hi = read_u32le(f)
-        mob_id_lo = read_u32le(f)
+        mob_id_hi = ctx.read_u32(f)
+        mob_id_lo = ctx.read_u32(f)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x01:
-                self.mob_id = mobid.read_mob_id(f)
+                self.mob_id = ctx.read_mob_id(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         if self.class_id[:] ==  b'APOS':
-            read_assert_tag(f, 0x03)
+            ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(Position, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
         lo = self.mob_id.material.time_low
         hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
-        write_u32le(f, lo)
-        write_u32le(f, hi)
+        ctx.write_u32(f, lo)
+        ctx.write_u32(f, hi)
 
         if hasattr(self, 'mob_id'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            mobid.write_mob_id(f, self.mob_id)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_mob_id(f, self.mob_id)
 
         if self.class_id[:] ==  b'APOS':
-            write_u8(f, 0x03)
+            ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class BOBPosition(Position):
@@ -631,31 +630,31 @@ class BOBPosition(Position):
 
     def read(self, f):
         super(BOBPosition, self).read(f)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
-
-        self.sample_num = read_s32le(f)
-        self.length = read_s32le(f)
-        self.track_type = read_s16le(f)
-        self.track_index = read_s16le(f)
+        self.sample_num = ctx.read_s32(f)
+        self.length = ctx.read_s32(f)
+        self.track_type = ctx.read_s16(f)
+        self.track_index = ctx.read_s16(f)
 
         if self.class_id[:] ==  b'ABOB':
-            read_assert_tag(f, 0x03)
+            ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(BOBPosition, self).write(f)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
-
-        write_s32le(f, self.sample_num)
-        write_s32le(f, self.length)
-        write_s16le(f, self.track_type)
-        write_s16le(f, self.track_index)
+        ctx.write_s32(f, self.sample_num)
+        ctx.write_s32(f, self.length)
+        ctx.write_s16(f, self.track_type)
+        ctx.write_s16(f, self.track_index)
 
         if self.class_id[:] ==  b'ABOB':
-            write_u8(f, 0x03)
+            ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class DIDPosition(BOBPosition):
@@ -670,31 +669,31 @@ class DIDPosition(BOBPosition):
 
     def read(self, f):
         super(DIDPosition, self).read(f)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
-
-        self.strip = read_s32le(f)
-        self.offset = read_u64le(f)
-        self.byte_length = read_u64le(f)
-        self.spos_invalid = read_bool(f)
+        self.strip = ctx.read_s32(f)
+        self.offset = ctx.read_u64(f)
+        self.byte_length = ctx.read_u64(f)
+        self.spos_invalid = ctx.read_bool(f)
 
         if self.class_id[:] == b'DIDP':
-            read_assert_tag(f, 0x03)
+            ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(DIDPosition, self).write(f)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
-
-        write_s32le(f, self.strip)
-        write_u64le(f, self.offset)
-        write_u64le(f, self.byte_length)
-        write_bool(f, self.spos_invalid)
+        ctx.write_s32(f, self.strip)
+        ctx.write_u64(f, self.offset)
+        ctx.write_u64(f, self.byte_length)
+        ctx.write_bool(f, self.spos_invalid)
 
         if self.class_id[:] == b'DIDP':
-            write_u8(f, 0x03)
+            ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class MPGPosition(DIDPosition):
@@ -709,40 +708,42 @@ class MPGPosition(DIDPosition):
 
     def read(self, f):
         super(MPGPosition, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        self.trailing_discards = read_s16le(f)
-        self.need_seq_hdr = read_bool(f)
+        self.trailing_discards = ctx.read_s16(f)
+        self.need_seq_hdr = ctx.read_bool(f)
 
         # NOTE: I think leading_discard_fields == 2 * leader_length
-        leader_length = read_s16le(f)
-        leading_discard_fields = read_s16le(f)
+        leader_length = ctx.read_s16(f)
+        leading_discard_fields = ctx.read_s16(f)
 
         self.fields = []
         for i in range(leader_length):
-            picture_type = read_u8(f)
-            length = read_u32le(f)
+            picture_type = ctx.read_u8(f)
+            length = ctx.read_u32(f)
             self.fields.append([picture_type, length])
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(MPGPosition, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_s16le(f, self.trailing_discards)
-        write_bool(f, self.need_seq_hdr)
+        ctx.write_s16(f, self.trailing_discards)
+        ctx.write_bool(f, self.need_seq_hdr)
 
-        write_s16le(f, len(self.fields))
-        write_s16le(f, len(self.fields)*2)
+        ctx.write_s16(f, len(self.fields))
+        ctx.write_s16(f, len(self.fields)*2)
 
         for picture_type, length in self.fields:
-            write_u8(f, picture_type)
-            write_u32le(f, length)
+            ctx.write_u8(f, picture_type)
+            ctx.write_u32(f, length)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class BinRef(core.AVBObject):
@@ -757,38 +758,39 @@ class BinRef(core.AVBObject):
 
     def read(self, f):
         super(BinRef, self).read(f)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        self.uid_high = ctx.read_s32(f)
+        self.uid_low = ctx.read_s32(f)
+        self.name = ctx.read_string(f)
 
-        self.uid_high = read_s32le(f)
-        self.uid_low = read_s32le(f)
-        self.name = read_string(f)
-
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x01:
-                read_assert_tag(f, 76)
-                self.name_utf8 = read_string(f,'utf-8')
+                ctx.read_assert_tag(f, 76)
+                self.name_utf8 = ctx.read_string(f,'utf-8')
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(BinRef, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_s32le(f, self.uid_high)
-        write_s32le(f, self.uid_low)
-        write_string(f, self.name)
+        ctx.write_s32(f, self.uid_high)
+        ctx.write_s32(f, self.uid_low)
+        ctx.write_string(f, self.name)
 
-        write_u8(f, 0x01)
-        write_u8(f, 0x01)
-        write_u8(f, 76)
-        write_string(f, self.name_utf8, 'utf-8')
+        ctx.write_u8(f, 0x01)
+        ctx.write_u8(f, 0x01)
+        ctx.write_u8(f, 76)
+        ctx.write_string(f, self.name_utf8, 'utf-8')
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class MobRef(core.AVBObject):
@@ -801,41 +803,43 @@ class MobRef(core.AVBObject):
 
     def read(self, f):
         super(MobRef, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        mob_hi = read_u32le(f)
-        mob_lo = read_u32le(f)
-        self.position = read_s32le(f)
+        mob_hi = ctx.read_u32(f)
+        mob_lo = ctx.read_u32(f)
+        self.position = ctx.read_s32(f)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x01:
-                self.mob_id = mobid.read_mob_id(f)
+                self.mob_id = ctx.read_mob_id(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         if self.class_id[:] == b'MCMR':
-            read_assert_tag(f, 0x03)
+            ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(MobRef, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
         lo = self.mob_id.material.time_low
         hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
 
-        write_u32le(f, lo)
-        write_u32le(f, hi)
-        write_s32le(f, self.position)
+        ctx.write_u32(f, lo)
+        ctx.write_u32(f, hi)
+        ctx.write_s32(f, self.position)
 
         if hasattr(self, 'mob_id'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            mobid.write_mob_id(f, self.mob_id)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_mob_id(f, self.mob_id)
 
         if self.class_id[:] == b'MCMR':
-            write_u8(f, 0x03)
+            ctx.write_u8(f, 0x03)
 
 # also called a TimeCrumb
 @utils.register_class
@@ -851,54 +855,54 @@ class Marker(MobRef):
 
     def read(self, f):
         super(Marker, self).read(f)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x03)
 
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x03)
-
-        self.comp_offset = read_s32le(f)
-        self.attributes = read_object_ref(self.root, f)
+        self.comp_offset = ctx.read_s32(f)
+        self.attributes = ctx.read_object_ref(self.root, f)
         # print(self.comp_offset, self.attributes)
 
-        version = read_s16le(f)
+        version = ctx.read_s16(f)
         assert version == 1
 
         self.color = []
-        self.color.append(read_u16le(f))
-        self.color.append(read_u16le(f))
-        self.color.append(read_u16le(f))
+        self.color.append(ctx.read_u16(f))
+        self.color.append(ctx.read_u16(f))
+        self.color.append(ctx.read_u16(f))
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
 
             if tag == 0x01:
-                read_assert_tag(f, 66)
-                self.handled_codes = read_bool(f)
+                ctx.read_assert_tag(f, 66)
+                self.handled_codes = ctx.read_bool(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(Marker, self).write(f)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x03)
 
-        write_u8(f, 0x02)
-        write_u8(f, 0x03)
-
-        write_s32le(f, self.comp_offset)
-        write_object_ref(self.root, f, self.attributes)
+        ctx.write_s32(f, self.comp_offset)
+        ctx.write_object_ref(self.root, f, self.attributes)
 
         #version
-        write_s16le(f, 1)
+        ctx.write_s16(f, 1)
 
         for c in self.color:
-            write_u16le(f, c)
+            ctx.write_u16(f, c)
 
         if hasattr(self, 'handled_codes'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            write_u8(f, 66)
-            write_bool(f ,self.handled_codes)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 66)
+            ctx.write_bool(f ,self.handled_codes)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class TrackerManager(core.AVBObject):
@@ -911,23 +915,25 @@ class TrackerManager(core.AVBObject):
 
     def read(self, f):
         super(TrackerManager, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        self.data_slots = read_object_ref(self.root, f)
-        self.param_slots = read_object_ref(self.root, f)
+        self.data_slots = ctx.read_object_ref(self.root, f)
+        self.param_slots = ctx.read_object_ref(self.root, f)
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(TrackerManager, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_object_ref(self.root, f, self.data_slots)
-        write_object_ref(self.root, f, self.param_slots)
+        ctx.write_object_ref(self.root, f, self.data_slots)
+        ctx.write_object_ref(self.root, f, self.param_slots)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class TrackerDataSlot(core.AVBObject):
@@ -940,41 +946,43 @@ class TrackerDataSlot(core.AVBObject):
 
     def read(self, f):
         super(TrackerDataSlot, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        count = read_s32le(f)
+        count = ctx.read_s32(f)
         self.tracker_data = AVBRefList.__new__(AVBRefList, root=self.root)
         for i in range(count):
-            ref = read_object_ref(self.root, f)
+            ref = ctx.read_object_ref(self.root, f)
             self.tracker_data.append(ref)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x01:
-                read_assert_tag(f, 66)
-                self.track_fg = read_bool(f)
+                ctx.read_assert_tag(f, 66)
+                self.track_fg = ctx.read_bool(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(TrackerDataSlot, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_s32le(f, len(self.tracker_data))
+        ctx.write_s32(f, len(self.tracker_data))
 
         for track in self.tracker_data:
-            write_object_ref(self.root, f, track)
+            ctx.write_object_ref(self.root, f, track)
 
         if hasattr(self, 'track_fg'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            write_u8(f, 66)
-            write_bool(f, self.track_fg)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 66)
+            ctx.write_bool(f, self.track_fg)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class TrackerParameterSlot(core.AVBObject):
@@ -987,34 +995,36 @@ class TrackerParameterSlot(core.AVBObject):
 
     def read(self, f):
         super(TrackerParameterSlot, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
-        size = read_s16le(f)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
+        size = ctx.read_s16(f)
         assert size >= 0
         self.settings = bytearray(f.read(size))
 
-        count = read_s32le(f)
+        count = ctx.read_s32(f)
         assert count >= 0
         self.params = AVBRefList.__new__(AVBRefList, root=self.root)
         for i in range(count):
-            ref = read_object_ref(self.root, f)
+            ref = ctx.read_object_ref(self.root, f)
             self.params.append(ref)
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(TrackerParameterSlot, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_s16le(f, len(self.settings))
+        ctx.write_s16(f, len(self.settings))
         f.write(self.settings)
 
-        write_s32le(f, len(self.params))
+        ctx.write_s32(f, len(self.params))
         for p in self.params:
-            write_object_ref(self.root, f, p)
+            ctx.write_object_ref(self.root, f, p)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class TrackerData(core.AVBObject):
@@ -1034,98 +1044,97 @@ class TrackerData(core.AVBObject):
 
     def read(self, f):
         super(TrackerData, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        setting_size = read_s16le(f)
+        setting_size = ctx.read_s16(f)
         self.settings = bytearray(f.read(setting_size))
-        self.clip_version = read_u32le(f)
+        self.clip_version = ctx.read_u32(f)
 
-        count = read_s16le(f)
+        count = ctx.read_s16(f)
         self.clips = AVBRefList.__new__(AVBRefList, root=self.root)
         for i in range(count):
-            ref = read_object_ref(self.root, f)
+            ref = ctx.read_object_ref(self.root, f)
             self.clips.append(ref)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x01:
-                read_assert_tag(f, 72)
-                self.offset_tracking = read_u32le(f)
+                ctx.read_assert_tag(f, 72)
+                self.offset_tracking = ctx.read_u32(f)
             elif tag == 0x02:
-                read_assert_tag(f, 72)
-                self.smoothing = read_u32le(f)
+                ctx.read_assert_tag(f, 72)
+                self.smoothing = ctx.read_u32(f)
             elif tag == 0x03:
-                read_assert_tag(f, 72)
-                self.jitter_removal = read_u32le(f)
+                ctx.read_assert_tag(f, 72)
+                self.jitter_removal = ctx.read_u32(f)
             elif tag == 0x04:
-                read_assert_tag(f, 75)
-                self.filter_amount = read_doublele(f)
+                ctx.read_assert_tag(f, 75)
+                self.filter_amount = ctx.read_double(f)
             elif tag == 0x05:
-                read_assert_tag(f, 72)
-                ref = read_object_ref(self.root, f)
-                self.clip5 = ref
+                ctx.read_assert_tag(f, 72)
+                self.clip5 = ctx.read_object_ref(self.root, f)
             elif tag == 0x06:
-                read_assert_tag(f, 72)
-                ref = read_object_ref(self.root, f)
-                self.clip6 = ref
+                ctx.read_assert_tag(f, 72)
+                self.clip6 = ctx.read_object_ref(self.root, f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(TrackerData, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_s16le(f, len(self.settings))
+        ctx.write_s16(f, len(self.settings))
         f.write(self.settings)
 
-        write_u32le(f, self.clip_version)
+        ctx.write_u32(f, self.clip_version)
 
-        write_s16le(f, len(self.clips))
+        ctx.write_s16(f, len(self.clips))
 
         for clip in self.clips:
-            write_object_ref(self.root, f, clip)
-
+            ctx.write_object_ref(self.root, f, clip)
 
         if hasattr(self, 'offset_tracking'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            write_u8(f, 72)
-            write_u32le(f, self.offset_tracking)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 72)
+            ctx.write_u32(f, self.offset_tracking)
 
         if hasattr(self, 'smoothing'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x02)
-            write_u8(f, 72)
-            write_u32le(f, self.smoothing)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x02)
+            ctx.write_u8(f, 72)
+            ctx.write_u32(f, self.smoothing)
 
         if hasattr(self, 'jitter_removal'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x03)
-            write_u8(f, 72)
-            write_u32le(f, self.jitter_removal)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x03)
+            ctx.write_u8(f, 72)
+            ctx.write_u32(f, self.jitter_removal)
 
         if hasattr(self, 'filter_amount'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x04)
-            write_u8(f, 75)
-            write_doublele(f, self.filter_amount)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x04)
+            ctx.write_u8(f, 75)
+            ctx.write_double(f, self.filter_amount)
 
         if hasattr(self, 'clip5'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x05)
-            write_u8(f, 72)
-            write_object_ref(self.root, f, self.clip5)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x05)
+            ctx.write_u8(f, 72)
+            ctx.write_object_ref(self.root, f, self.clip5)
 
         if hasattr(self, 'clip6'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x06)
-            write_u8(f, 72)
-            write_object_ref(self.root, f, self.clip6)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x06)
+            ctx.write_u8(f, 72)
+            ctx.write_object_ref(self.root, f, self.clip6)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 
 @utils.register_class
@@ -1138,21 +1147,23 @@ class TrackerParameter(core.AVBObject):
 
     def read(self, f):
         super(TrackerParameter, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
-        size = read_s16le(f)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
+        size = ctx.read_s16(f)
         assert size >= 0
         self.settings = bytearray(f.read(size))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
 
     def write(self, f):
         super(TrackerParameter, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_s16le(f, len(self.settings))
+        ctx.write_s16(f, len(self.settings))
         f.write(self.settings)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
