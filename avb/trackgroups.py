@@ -11,9 +11,7 @@ from .core import AVBPropertyDef, AVBRefList
 from .components import Component
 from . import utils
 from . import mobid
-
 from . utils import peek_data
-
 
 TRACK_LABEL_FLAG            = 1 << 0
 TRACK_ATTRIBUTES_FLAG       = 1 << 1

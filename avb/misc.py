@@ -9,9 +9,7 @@ from . import core
 from . import utils
 from .core import AVBPropertyDef, AVBRefList
 from . import mobid
-
 from . utils import peek_data
-
 
 class FileLocator(core.AVBObject):
     class_id = b'FILE'

@@ -8,7 +8,6 @@ from __future__ import (
 from . import utils
 from . import core
 from .core import AVBPropertyDef, AVBPropertyData, AVBRefList
-
 from . utils import peek_data
 
 INT_ATTR  = 1

@@ -9,10 +9,7 @@ from . import core
 from .core import AVBPropertyDef, AVBRefList
 from . import utils
 from . import mobid
-
 from . utils import peek_data
-
-
 
 class Component(core.AVBObject):
     class_id = b'COMP'

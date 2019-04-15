@@ -9,7 +9,6 @@ from io import BytesIO
 from . import core
 from . import utils
 from .core import AVBPropertyDef, AVBRefList
-
 from . utils import peek_data
 
 @utils.register_class

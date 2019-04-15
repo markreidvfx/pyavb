@@ -8,10 +8,7 @@ from __future__ import (
 import struct
 from io import BytesIO
 import os
-import decimal
 from uuid import UUID, uuid4
-from datetime import datetime
-import time
 from binascii import hexlify, unhexlify
 
 class AVBObjectRef(object):

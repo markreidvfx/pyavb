@@ -7,9 +7,7 @@ from __future__ import (
 
 from . import core
 from . import utils
-
 from . core import AVBPropertyDef
-
 from . utils import peek_data
 
 class Setting(core.AVBObject):

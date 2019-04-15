@@ -15,7 +15,6 @@ import traceback
 import array
 from weakref import WeakValueDictionary
 
-# from . attributes import read_attributes
 from . import utils
 from .core import walk_references
 from .ioctx import AVBIOContext
