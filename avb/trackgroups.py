@@ -12,24 +12,8 @@ from .components import Component
 from . import utils
 from . import mobid
 
-from . utils import (
-    read_u8, write_u8,
-    read_s8, write_s8,
-    read_bool,  write_bool,
-    read_s16le, write_s16le,
-    read_u16le, write_u16le,
-    read_u32le, write_u32le,
-    read_s32le, write_s32le,
-    read_s64le, write_s64le,
-    read_string, write_string,
-    read_doublele, write_doublele,
-    read_exp10_encoded_float,
-    read_object_ref, write_object_ref,
-    read_datetime, write_datetime,
-    iter_ext,
-    read_assert_tag,
-    peek_data
-)
+from . utils import peek_data
+
 
 TRACK_LABEL_FLAG            = 1 << 0
 TRACK_ATTRIBUTES_FLAG       = 1 << 1
@@ -119,14 +103,15 @@ class TrackGroup(Component):
 
     def read(self, f):
         super(TrackGroup, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x08)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x08)
 
-        self.mc_mode = read_u8(f)
-        self.length = read_s32le(f)
-        self.num_scalars = read_s32le(f)
+        self.mc_mode = ctx.read_u8(f)
+        self.length = ctx.read_s32(f)
+        self.num_scalars = ctx.read_s32(f)
 
-        track_count = read_s32le(f)
+        track_count = ctx.read_s32(f)
         self.tracks = []
         # print("tracks:", track_count)
         # really annoying, tracks can have variable lengths!!
@@ -134,37 +119,37 @@ class TrackGroup(Component):
         for i in range(track_count):
             # print(peek_data(f).encode("hex"))
             track = Track.__new__(Track, root=self.root)
-            flags = read_u16le(f)
+            flags = ctx.read_u16(f)
 
             if flags & TRACK_LABEL_FLAG:
-                track.index = read_s16le(f)
+                track.index = ctx.read_s16(f)
 
             if flags & TRACK_ATTRIBUTES_FLAG:
-                track.attributes = read_object_ref(self.root, f)
+                track.attributes = ctx.read_object_ref(self.root, f)
 
             if flags & TRACK_SESSION_ATTR_FLAG:
-                track.session_attr = read_object_ref(self.root, f)
+                track.session_attr = ctx.read_object_ref(self.root, f)
 
             if flags & TRACK_COMPONENT_FLAG:
-                track.component = read_object_ref(self.root, f)
+                track.component = ctx.read_object_ref(self.root, f)
 
             if flags & TRACK_FILLER_PROXY_FLAG:
-                track.filler_proxy = read_object_ref(self.root, f)
+                track.filler_proxy = ctx.read_object_ref(self.root, f)
 
             if flags & TRACK_BOB_DATA_FLAG:
-                track.bob_data = read_object_ref(self.root, f)
+                track.bob_data = ctx.read_object_ref(self.root, f)
 
             if flags & TRACK_CONTROL_CODE_FLAG:
-                track.control_code = read_s16le(f)
+                track.control_code = ctx.read_s16(f)
 
             if flags & TRACK_CONTROL_SUB_CODE_FLAG:
-                track.control_sub_code = read_s16le(f)
+                track.control_sub_code = ctx.read_s16(f)
 
             if flags & TRACK_START_POS_FLAG:
-                track.start_pos = read_s32le(f)
+                track.start_pos = ctx.read_s32(f)
 
             if flags & TRACK_READ_ONLY_FLAG:
-                track.read_only = read_bool(f)
+                track.read_only = ctx.read_bool(f)
 
             if flags & TRACK_UNKNOWN_FLAGS:
                 raise ValueError("Unknown Track Flag: %d" % flags)
@@ -173,71 +158,72 @@ class TrackGroup(Component):
 
             self.tracks.append(track)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x01:
                 for i in range(track_count):
-                    read_assert_tag(f, 69)
-                    self.tracks[i].lock_number =  read_s16le(f)
+                    ctx.read_assert_tag(f, 69)
+                    self.tracks[i].lock_number = ctx.read_s16(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
     def write(self, f):
         super(TrackGroup, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x08)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x08)
 
-        write_u8(f, self.mc_mode)
-        write_s32le(f, self.length)
-        write_s32le(f, self.num_scalars)
+        ctx.write_u8(f, self.mc_mode)
+        ctx.write_s32(f, self.length)
+        ctx.write_s32(f, self.num_scalars)
 
-        write_s32le(f, len(self.tracks))
+        ctx.write_s32(f, len(self.tracks))
 
         for track in self.tracks:
             flags = track.flags
             if flags & TRACK_UNKNOWN_FLAGS:
                 raise ValueError("Unknown Track Flag: %d" % flags)
 
-            write_u16le(f, flags)
+            ctx.write_u16(f, flags)
             if flags & TRACK_LABEL_FLAG:
-                write_s16le(f, track.index)
+                ctx.write_s16(f, track.index)
 
             if flags & TRACK_ATTRIBUTES_FLAG:
-                write_object_ref(self.root, f, track.attributes)
+                ctx.write_object_ref(self.root, f, track.attributes)
 
             if flags & TRACK_SESSION_ATTR_FLAG:
-                write_object_ref(self.root, f, track.session_attr)
+                ctx.write_object_ref(self.root, f, track.session_attr)
 
             if flags & TRACK_COMPONENT_FLAG:
-                write_object_ref(self.root, f, track.component)
+                ctx.write_object_ref(self.root, f, track.component)
 
             if flags & TRACK_FILLER_PROXY_FLAG:
-                write_object_ref(self.root, f, track.filler_proxy)
+                ctx.write_object_ref(self.root, f, track.filler_proxy)
 
             if flags & TRACK_BOB_DATA_FLAG:
-                write_object_ref(self.root, f, track.bob_data)
+                ctx.write_object_ref(self.root, f, track.bob_data)
 
             if flags & TRACK_CONTROL_CODE_FLAG:
-                write_s16le(f, track.control_code)
+                ctx.write_s16(f, track.control_code)
 
             if flags & TRACK_CONTROL_SUB_CODE_FLAG:
-                write_s16le(f, track.control_sub_code)
+                ctx.write_s16(f, track.control_sub_code)
 
             if flags & TRACK_START_POS_FLAG:
-                write_s32le(f, track.start_pos)
+                ctx.write_s32(f, track.start_pos)
 
             if flags & TRACK_READ_ONLY_FLAG:
-                write_bool(f, track.read_only)
+                ctx.write_bool(f, track.read_only)
 
         if self.tracks:
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
 
             for i in range(len(self.tracks)):
-                write_u8(f, 69)
+                ctx.write_u8(f, 69)
                 if hasattr(self.tracks[i], 'lock_number'):
-                    write_s16le(f, self.tracks[i].lock_number)
+                    ctx.write_s16(f, self.tracks[i].lock_number)
                 else:
-                    write_s16le(f, 0)
+                    ctx.write_s16(f, 0)
 
 
 @utils.register_class
@@ -262,62 +248,64 @@ class TrackEffect(TrackGroup):
 
     def read(self, f):
         super(TrackEffect, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x06)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x06)
 
-        self.left_length = read_s32le(f)
-        self.right_length = read_s32le(f)
+        self.left_length = ctx.read_s32(f)
+        self.right_length = ctx.read_s32(f)
 
-        self.info_version = read_s16le(f)
-        self.info_current = read_s32le(f)
-        self.info_smooth = read_s32le(f)
-        self.info_color_item = read_s16le(f)
-        self.info_quality = read_s16le(f)
-        self.info_is_reversed = read_s8(f)
-        self.info_aspect_on = read_bool(f)
+        self.info_version = ctx.read_s16(f)
+        self.info_current = ctx.read_s32(f)
+        self.info_smooth = ctx.read_s32(f)
+        self.info_color_item = ctx.read_s16(f)
+        self.info_quality = ctx.read_s16(f)
+        self.info_is_reversed = ctx.read_s8(f)
+        self.info_aspect_on = ctx.read_bool(f)
 
-        self.keyframes = read_object_ref(self.root, f)
-        self.info_force_software = read_bool(f)
-        self.info_never_hardware = read_bool(f)
+        self.keyframes = ctx.read_object_ref(self.root, f)
+        self.info_force_software = ctx.read_bool(f)
+        self.info_never_hardware = ctx.read_bool(f)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x02:
-                read_assert_tag(f, 72)
-                self.trackman = read_object_ref(self.root, f)
+                ctx.read_assert_tag(f, 72)
+                self.trackman = ctx.read_object_ref(self.root, f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
         if self.class_id[:] == b'TKFX':
-            read_assert_tag(f, 0x03)
+            ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(TrackEffect, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x06)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x06)
 
-        write_s32le(f, self.left_length)
-        write_s32le(f, self.right_length)
+        ctx.write_s32(f, self.left_length)
+        ctx.write_s32(f, self.right_length)
 
-        write_s16le(f, self.info_version)
-        write_s32le(f, self.info_current)
-        write_s32le(f, self.info_smooth)
-        write_s16le(f, self.info_color_item)
-        write_s16le(f, self.info_quality)
-        write_s8(f, self.info_is_reversed)
-        write_bool(f, self.info_aspect_on)
+        ctx.write_s16(f, self.info_version)
+        ctx.write_s32(f, self.info_current)
+        ctx.write_s32(f, self.info_smooth)
+        ctx.write_s16(f, self.info_color_item)
+        ctx.write_s16(f, self.info_quality)
+        ctx.write_s8(f, self.info_is_reversed)
+        ctx.write_bool(f, self.info_aspect_on)
 
-        write_object_ref(self.root, f, self.keyframes)
-        write_bool(f, self.info_force_software)
-        write_bool(f, self.info_never_hardware)
+        ctx.write_object_ref(self.root, f, self.keyframes)
+        ctx.write_bool(f, self.info_force_software)
+        ctx.write_bool(f, self.info_never_hardware)
 
         if hasattr(self, 'trackman'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x02)
-            write_u8(f, 72)
-            write_object_ref(self.root, f, self.trackman)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x02)
+            ctx.write_u8(f, 72)
+            ctx.write_object_ref(self.root, f, self.trackman)
 
         if self.class_id[:] == b'TKFX':
-            write_u8(f, 0x03)
+            ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class PanVolumeEffect(TrackEffect):
@@ -335,52 +323,54 @@ class PanVolumeEffect(TrackEffect):
 
     def read(self, f):
         super(PanVolumeEffect, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x05)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x05)
 
-        self.level = read_s32le(f)
-        self.pan = read_s32le(f)
+        self.level = ctx.read_s32(f)
+        self.pan = ctx.read_s32(f)
 
-        self.suppress_validation = read_bool(f)
-        self.level_set = read_bool(f)
-        self.pan_set = read_bool(f)
+        self.suppress_validation = ctx.read_bool(f)
+        self.level_set = ctx.read_bool(f)
+        self.pan_set = ctx.read_bool(f)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x01:
-                read_assert_tag(f, 71)
-                self.supports_seperate_gain = read_s32le(f)
+                ctx.read_assert_tag(f, 71)
+                self.supports_seperate_gain = ctx.read_s32(f)
             elif tag == 0x02:
-                read_assert_tag(f, 71)
-                self.is_trim_gain_effect = read_s32le(f)
+                ctx.read_assert_tag(f, 71)
+                self.is_trim_gain_effect = ctx.read_s32(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(PanVolumeEffect, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x05)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x05)
 
-        write_s32le(f, self.level)
-        write_s32le(f, self.pan)
+        ctx.write_s32(f, self.level)
+        ctx.write_s32(f, self.pan)
 
-        write_bool(f, self.suppress_validation)
-        write_bool(f, self.level_set)
-        write_bool(f, self.pan_set)
+        ctx.write_bool(f, self.suppress_validation)
+        ctx.write_bool(f, self.level_set)
+        ctx.write_bool(f, self.pan_set)
 
         if hasattr(self, 'supports_seperate_gain'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            write_u8(f, 71)
-            write_s32le(f, self.supports_seperate_gain)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 71)
+            ctx.write_s32(f, self.supports_seperate_gain)
         if hasattr(self, 'is_trim_gain_effect'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x02)
-            write_u8(f, 71)
-            write_s32le(f, self.is_trim_gain_effect)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x02)
+            ctx.write_u8(f, 71)
+            ctx.write_s32(f, self.is_trim_gain_effect)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_helper_class
 class ASPIPlugin(core.AVBObject):
@@ -427,23 +417,24 @@ class AudioSuitePluginEffect(TrackEffect):
 
     def read(self, f):
         super(AudioSuitePluginEffect, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
         self.plugins = []
 
-        number_of_plugins = read_s32le(f)
+        number_of_plugins = ctx.read_s32(f)
 
         #TODO: find sample with multiple plugins
         assert number_of_plugins == 1
 
         plugin = ASPIPlugin.__new__(ASPIPlugin, root=self.root)
-        plugin.name = read_string(f)
-        plugin.manufacturer_id = read_u32le(f)
-        plugin.product_id = read_u32le(f)
-        plugin.plugin_id = read_u32le(f)
+        plugin.name = ctx.read_string(f)
+        plugin.manufacturer_id = ctx.read_u32(f)
+        plugin.product_id = ctx.read_u32(f)
+        plugin.plugin_id = ctx.read_u32(f)
         # print(peek_data(f).encode("hex"))
-        num_of_chunks = read_s32le(f)
+        num_of_chunks = ctx.read_s32(f)
 
         #TODO: find sample with multiple chunks
         # print('chunks', num_of_chunks)
@@ -451,17 +442,17 @@ class AudioSuitePluginEffect(TrackEffect):
         plugin.chunks = []
         for i in range(num_of_chunks):
 
-            chunk_size = read_s32le(f)
+            chunk_size = ctx.read_s32(f)
             assert chunk_size >= 0
 
             chunk = ASPIPluginChunk.__new__(ASPIPluginChunk, root=self.root)
-            chunk.version = read_s32le(f)
-            chunk.manufacturer_id = read_u32le(f)
-            chunk.product_id = read_u32le(f)
-            chunk.plugin_id = read_u32le(f)
+            chunk.version = ctx.read_s32(f)
+            chunk.manufacturer_id = ctx.read_u32(f)
+            chunk.product_id = ctx.read_u32(f)
+            chunk.plugin_id = ctx.read_u32(f)
 
-            chunk.chunk_id = read_u32le(f)
-            chunk.name = read_string(f)
+            chunk.chunk_id = ctx.read_u32(f)
+            chunk.name = ctx.read_string(f)
 
             chunk.data = bytearray(f.read(chunk_size))
 
@@ -472,37 +463,37 @@ class AudioSuitePluginEffect(TrackEffect):
         # print(peek_data(f).encode("hex"))
 
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x01:
                 # not sure what is used for. skiping
-                read_assert_tag(f, 71)
-                mob_hi = read_s32le(f)
-                read_assert_tag(f, 71)
-                mob_lo = read_s32le(f)
+                ctx.read_assert_tag(f, 71)
+                mob_hi = ctx.read_s32(f)
+                ctx.read_assert_tag(f, 71)
+                mob_lo = ctx.read_s32(f)
             elif tag == 0x02:
-                read_assert_tag(f, 77)
-                self.mark_in = read_s64le(f)
+                ctx.read_assert_tag(f, 77)
+                self.mark_in = ctx.read_s64(f)
             elif tag == 0x03:
-                read_assert_tag(f, 77)
-                self.mark_out = read_s64le(f)
+                ctx.read_assert_tag(f, 77)
+                self.mark_out = ctx.read_s64(f)
             elif tag == 0x04:
-                read_assert_tag(f, 72)
-                self.tracks_to_affect = read_s32le(f)
+                ctx.read_assert_tag(f, 72)
+                self.tracks_to_affect = ctx.read_s32(f)
             elif tag == 0x05:
-                read_assert_tag(f, 71)
-                self.rendering_mode = read_s32le(f)
+                ctx.read_assert_tag(f, 71)
+                self.rendering_mode = ctx.read_s32(f)
             elif tag == 0x06:
-                read_assert_tag(f, 71)
-                self.padding_secs = read_s32le(f)
+                ctx.read_assert_tag(f, 71)
+                self.padding_secs = ctx.read_s32(f)
             elif tag == 0x08:
-                self.mob_id = mobid.read_mob_id(f)
+                self.mob_id = ctx.read_mob_id(f)
 
             elif tag == 0x09:
-                read_assert_tag(f, 72)
-                preset_path_length = read_u32le(f)
+                ctx.read_assert_tag(f, 72)
+                preset_path_length = ctx.read_u32(f)
                 if preset_path_length > 0:
-                    read_assert_tag(f, 65)
-                    length = read_u32le(f)
+                    ctx.read_assert_tag(f, 65)
+                    length = ctx.read_u32(f)
                     assert preset_path_length == length
                     self.preset_path = bytearray(f.read(length))
                 else:
@@ -510,90 +501,91 @@ class AudioSuitePluginEffect(TrackEffect):
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(AudioSuitePluginEffect, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_s32le(f, len(self.plugins))
+        ctx.write_s32(f, len(self.plugins))
         for plugin in self.plugins:
-            write_string(f, plugin.name)
-            write_u32le(f, plugin.manufacturer_id)
-            write_u32le(f, plugin.product_id)
-            write_u32le(f, plugin.plugin_id)
+            ctx.write_string(f, plugin.name)
+            ctx.write_u32(f, plugin.manufacturer_id)
+            ctx.write_u32(f, plugin.product_id)
+            ctx.write_u32(f, plugin.plugin_id)
 
-            write_s32le(f, len(plugin.chunks))
+            ctx.write_s32(f, len(plugin.chunks))
 
             for chunk in plugin.chunks:
 
-                write_s32le(f, len(chunk.data))
+                ctx.write_s32(f, len(chunk.data))
 
-                write_s32le(f, chunk.version)
-                write_u32le(f, chunk.manufacturer_id)
-                write_u32le(f, chunk.product_id)
-                write_u32le(f, chunk.plugin_id)
+                ctx.write_s32(f, chunk.version)
+                ctx.write_u32(f, chunk.manufacturer_id)
+                ctx.write_u32(f, chunk.product_id)
+                ctx.write_u32(f, chunk.plugin_id)
 
-                write_u32le(f, chunk.chunk_id)
-                write_string(f, chunk.name)
+                ctx.write_u32(f, chunk.chunk_id)
+                ctx.write_string(f, chunk.name)
 
                 f.write(chunk.data)
 
         if hasattr(self, 'mob_id'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
 
             mob_lo = self.mob_id.material.time_low
             mob_hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
-            write_u8(f, 71)
-            write_s32le(f, mob_lo)
-            write_u8(f, 71)
-            write_s32le(f, mob_hi)
+            ctx.write_u8(f, 71)
+            ctx.write_s32(f, mob_lo)
+            ctx.write_u8(f, 71)
+            ctx.write_s32(f, mob_hi)
 
         # NOTE: out of order to match seen files
         if hasattr(self, 'mob_id'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x08)
-            mobid.write_mob_id(f, self.mob_id)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x08)
+            ctx.write_mob_id(f, self.mob_id)
 
         if hasattr(self, 'mark_in'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x02)
-            write_u8(f, 77)
-            write_s64le(f, self.mark_in)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x02)
+            ctx.write_u8(f, 77)
+            ctx.write_s64(f, self.mark_in)
         if hasattr(self, 'mark_out'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x03)
-            write_u8(f, 77)
-            write_s64le(f, self.mark_out)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x03)
+            ctx.write_u8(f, 77)
+            ctx.write_s64(f, self.mark_out)
         if hasattr(self, 'tracks_to_affect'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x04)
-            write_u8(f, 72)
-            write_s32le(f, self.tracks_to_affect)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x04)
+            ctx.write_u8(f, 72)
+            ctx.write_s32(f, self.tracks_to_affect)
         if hasattr(self, 'rendering_mode'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x05)
-            write_u8(f, 71)
-            write_s32le(f, self.rendering_mode)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x05)
+            ctx.write_u8(f, 71)
+            ctx.write_s32(f, self.rendering_mode)
         if hasattr(self, 'padding_secs'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x06)
-            write_u8(f, 71)
-            write_s32le(f, self.padding_secs)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x06)
+            ctx.write_u8(f, 71)
+            ctx.write_s32(f, self.padding_secs)
         if hasattr(self, 'preset_path'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x09)
-            write_u8(f, 72)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x09)
+            ctx.write_u8(f, 72)
             # yes its twice for some reason
-            write_u32le(f, len(self.preset_path))
+            ctx.write_u32(f, len(self.preset_path))
             if len(self.preset_path) > 0:
-                write_u8(f, 65)
-                write_u32le(f, len(self.preset_path))
+                ctx.write_u8(f, 65)
+                ctx.write_u32(f, len(self.preset_path))
                 f.write(self.preset_path)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_helper_class
 class EqualizerBand(core.AVBObject):
@@ -618,44 +610,46 @@ class EqualizerMultiBand(TrackEffect):
 
     def read(self, f):
         super(EqualizerMultiBand, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x05)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x05)
 
-        num_bands = read_s32le(f)
+        num_bands = ctx.read_s32(f)
         assert num_bands >= 0
 
         self.bands = []
         for i in range(num_bands):
             band = EqualizerBand.__new__(EqualizerBand, root=self.root)
-            band.type = read_s32le(f)
-            band.freq = read_s32le(f)
-            band.gain = read_s32le(f)
-            band.q = read_s32le(f)
-            band.enable = read_bool(f)
+            band.type = ctx.read_s32(f)
+            band.freq = ctx.read_s32(f)
+            band.gain = ctx.read_s32(f)
+            band.q = ctx.read_s32(f)
+            band.enable = ctx.read_bool(f)
             self.bands.append(band)
 
-        self.effect_enable = read_bool(f)
-        self.filter_name = read_string(f)
+        self.effect_enable = ctx.read_bool(f)
+        self.filter_name = ctx.read_string(f)
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(EqualizerMultiBand, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x05)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x05)
 
-        write_s32le(f, len(self.bands))
+        ctx.write_s32(f, len(self.bands))
         for band in self.bands:
-            write_s32le(f, band.type)
-            write_s32le(f, band.freq)
-            write_s32le(f, band.gain)
-            write_s32le(f, band.q)
-            write_bool(f, band.enable)
+            ctx.write_s32(f, band.type)
+            ctx.write_s32(f, band.freq)
+            ctx.write_s32(f, band.gain)
+            ctx.write_s32(f, band.q)
+            ctx.write_bool(f, band.enable)
 
-        write_bool(f, self.effect_enable)
-        write_string(f, self.filter_name)
+        ctx.write_bool(f, self.effect_enable)
+        ctx.write_string(f, self.filter_name)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 class TimeWarp(TrackGroup):
     class_id = b'WARP'
@@ -666,15 +660,17 @@ class TimeWarp(TrackGroup):
 
     def read(self, f):
         super(TimeWarp, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x02)
-        self.phase_offset = read_s32le(f)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x02)
+        self.phase_offset = ctx.read_s32(f)
 
     def write(self, f):
         super(TimeWarp, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x02)
-        write_s32le(f, self.phase_offset)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x02)
+        ctx.write_s32(f, self.phase_offset)
 
 @utils.register_class
 class CaptureMask(TimeWarp):
@@ -687,23 +683,25 @@ class CaptureMask(TimeWarp):
 
     def read(self, f):
         super(CaptureMask, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        self.is_double = read_bool(f)
-        self.mask_bits = read_u32le(f)
+        self.is_double = ctx.read_bool(f)
+        self.mask_bits = ctx.read_u32(f)
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(CaptureMask, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_bool(f, self.is_double)
-        write_u32le(f, self.mask_bits)
+        ctx.write_bool(f, self.is_double)
+        ctx.write_u32(f, self.mask_bits)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class StrobeEffect(TimeWarp):
@@ -715,18 +713,19 @@ class StrobeEffect(TimeWarp):
 
     def read(self, f):
         super(StrobeEffect, self).read(f)
-        # print(peek_data(f).encode("hex"))
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
-        self.strobe_value = read_s32le(f)
-        read_assert_tag(f, 0x03)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
+        self.strobe_value = ctx.read_s32(f)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(StrobeEffect, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
-        write_s32le(f, self.strobe_value)
-        write_u8(f, 0x03)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
+        ctx.write_s32(f, self.strobe_value)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class MotionEffect(TimeWarp):
@@ -741,54 +740,56 @@ class MotionEffect(TimeWarp):
 
     def read(self, f):
         super(MotionEffect, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x03)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x03)
 
-        num = read_s32le(f)
-        den = read_s32le(f)
+        num = ctx.read_s32(f)
+        den = ctx.read_s32(f)
         self.speed_ratio = [num, den]
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
 
             if tag == 0x01:
-                read_assert_tag(f, 75)
-                self.offset_adjust = read_doublele(f)
+                ctx.read_assert_tag(f, 75)
+                self.offset_adjust = ctx.read_double(f)
             elif tag == 0x02:
-                read_assert_tag(f, 72)
-                self.source_param_list = read_object_ref(self.root, f)
+                ctx.read_assert_tag(f, 72)
+                self.source_param_list = ctx.read_object_ref(self.root, f)
             elif tag == 0x03:
-                read_assert_tag(f, 66)
-                self.new_source_calculation = read_bool(f)
+                ctx.read_assert_tag(f, 66)
+                self.new_source_calculation = ctx.read_bool(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(MotionEffect, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x03)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x03)
 
-        write_s32le(f, self.speed_ratio[0])
-        write_s32le(f, self.speed_ratio[1])
+        ctx.write_s32(f, self.speed_ratio[0])
+        ctx.write_s32(f, self.speed_ratio[1])
 
         if hasattr(self, 'offset_adjust'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            write_u8(f, 75)
-            write_doublele(f, self.offset_adjust)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 75)
+            ctx.write_double(f, self.offset_adjust)
         if hasattr(self, 'source_param_list'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x02)
-            write_u8(f, 72)
-            write_object_ref(self.root, f, self.source_param_list)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x02)
+            ctx.write_u8(f, 72)
+            ctx.write_object_ref(self.root, f, self.source_param_list)
         if hasattr(self, 'new_source_calculation'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x03)
-            write_u8(f, 66)
-            write_bool(f, self.new_source_calculation)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x03)
+            ctx.write_u8(f, 66)
+            ctx.write_bool(f, self.new_source_calculation)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class Repeat(TimeWarp):
@@ -797,17 +798,19 @@ class Repeat(TimeWarp):
 
     def read(self, f):
         super(Repeat, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(Repeat, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class EssenceGroup(TrackGroup):
@@ -819,30 +822,32 @@ class EssenceGroup(TrackGroup):
 
     def read(self, f):
         super(EssenceGroup, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x01:
-                read_assert_tag(f, 71)
-                self.rep_set_type = read_s32le(f)
+                ctx.read_assert_tag(f, 71)
+                self.rep_set_type = ctx.read_s32(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(EssenceGroup, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
         if hasattr(self, 'rep_set_type'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            write_u8(f, 71)
-            write_s32le(f, self.rep_set_type)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 71)
+            ctx.write_s32(f, self.rep_set_type)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class TransitionEffect(TrackGroup):
@@ -867,72 +872,74 @@ class TransitionEffect(TrackGroup):
 
     def read(self, f):
         super(TransitionEffect, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        self.cutpoint = read_s32le(f)
+        self.cutpoint = ctx.read_s32(f)
 
         # the rest is the same as TKFX
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x05)
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x05)
 
-        self.left_length = read_s32le(f)
-        self.right_length = read_s32le(f)
+        self.left_length = ctx.read_s32(f)
+        self.right_length = ctx.read_s32(f)
 
-        self.info_version = read_s16le(f)
-        self.info_current = read_s32le(f)
-        self.info_smooth = read_s32le(f)
-        self.info_color_item = read_s16le(f)
-        self.info_quality = read_s16le(f)
-        self.info_is_reversed = read_s8(f)
-        self.info_aspect_on = read_bool(f)
+        self.info_version = ctx.read_s16(f)
+        self.info_current = ctx.read_s32(f)
+        self.info_smooth = ctx.read_s32(f)
+        self.info_color_item = ctx.read_s16(f)
+        self.info_quality = ctx.read_s16(f)
+        self.info_is_reversed = ctx.read_s8(f)
+        self.info_aspect_on = ctx.read_bool(f)
 
-        self.keyframes = read_object_ref(self.root, f)
-        self.info_force_software = read_bool(f)
-        self.info_never_hardware = read_bool(f)
+        self.keyframes = ctx.read_object_ref(self.root, f)
+        self.info_force_software = ctx.read_bool(f)
+        self.info_never_hardware = ctx.read_bool(f)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
             if tag == 0x01:
-                read_assert_tag(f, 72)
-                self.trackman = read_object_ref(self.root, f)
+                ctx.read_assert_tag(f, 72)
+                self.trackman = ctx.read_object_ref(self.root, f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(TransitionEffect, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_s32le(f, self.cutpoint)
+        ctx.write_s32(f, self.cutpoint)
 
         # the rest is the same as TKFX
-        write_u8(f, 0x02)
-        write_u8(f, 0x05)
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x05)
 
-        write_s32le(f, self.left_length)
-        write_s32le(f, self.right_length)
+        ctx.write_s32(f, self.left_length)
+        ctx.write_s32(f, self.right_length)
 
-        write_s16le(f, self.info_version)
-        write_s32le(f, self.info_current)
-        write_s32le(f, self.info_smooth)
-        write_s16le(f, self.info_color_item)
-        write_s16le(f, self.info_quality)
-        write_s8(f, self.info_is_reversed)
-        write_bool(f, self.info_aspect_on)
+        ctx.write_s16(f, self.info_version)
+        ctx.write_s32(f, self.info_current)
+        ctx.write_s32(f, self.info_smooth)
+        ctx.write_s16(f, self.info_color_item)
+        ctx.write_s16(f, self.info_quality)
+        ctx.write_s8(f, self.info_is_reversed)
+        ctx.write_bool(f, self.info_aspect_on)
 
-        write_object_ref(self.root, f, self.keyframes)
-        write_bool(f, self.info_force_software)
-        write_bool(f, self.info_never_hardware)
+        ctx.write_object_ref(self.root, f, self.keyframes)
+        ctx.write_bool(f, self.info_force_software)
+        ctx.write_bool(f, self.info_never_hardware)
 
         if hasattr(self, 'trackman'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            write_u8(f, 72)
-            write_object_ref(self.root, f, self.trackman)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 72)
+            ctx.write_object_ref(self.root, f, self.trackman)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
 @utils.register_class
 class Selector(TrackGroup):
@@ -945,25 +952,27 @@ class Selector(TrackGroup):
 
     def read(self, f):
         super(Selector, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x01)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
 
-        self.is_ganged = read_bool(f)
-        self.selected = read_u16le(f)
+        self.is_ganged = ctx.read_bool(f)
+        self.selected = ctx.read_u16(f)
 
         assert self.selected < len(self.tracks)
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(Selector, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x01)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
 
-        write_bool(f, self.is_ganged)
-        write_u16le(f, self.selected)
+        ctx.write_bool(f, self.is_ganged)
+        ctx.write_u16(f, self.selected)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
     def components(self):
         for track in self.tracks:
@@ -1004,56 +1013,58 @@ class Composition(TrackGroup):
 
     def read(self, f):
         super(Composition, self).read(f)
-        read_assert_tag(f, 0x02)
-        read_assert_tag(f, 0x02)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x02)
 
-        mob_id_lo = read_u32le(f)
-        mob_id_hi = read_u32le(f)
-        self.last_modified = read_datetime(f)
+        mob_id_lo = ctx.read_u32(f)
+        mob_id_hi = ctx.read_u32(f)
+        self.last_modified = ctx.read_datetime(f)
 
-        self.mob_type_id = read_u8(f)
-        self.usage_code =  read_s32le(f)
-        self.descriptor = read_object_ref(self.root, f)
+        self.mob_type_id = ctx.read_u8(f)
+        self.usage_code =  ctx.read_s32(f)
+        self.descriptor = ctx.read_object_ref(self.root, f)
 
-        for tag in iter_ext(f):
+        for tag in ctx.iter_ext(f):
 
             if tag == 0x01:
-                read_assert_tag(f, 71)
-                self.creation_time = read_datetime(f)
+                ctx.read_assert_tag(f, 71)
+                self.creation_time = ctx.read_datetime(f)
             elif tag == 0x02:
-                self.mob_id = mobid.read_mob_id(f)
+                self.mob_id = ctx.read_mob_id(f)
             else:
                 raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
 
-        read_assert_tag(f, 0x03)
+        ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(Composition, self).write(f)
-        write_u8(f, 0x02)
-        write_u8(f, 0x02)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x02)
 
         lo = self.mob_id.material.time_low
         hi = self.mob_id.material.time_mid + (self.mob_id.material.time_hi_version << 16)
-        write_u32le(f, lo)
-        write_u32le(f, hi)
-        write_datetime(f, self.last_modified)
+        ctx.write_u32(f, lo)
+        ctx.write_u32(f, hi)
+        ctx.write_datetime(f, self.last_modified)
 
-        write_u8(f, self.mob_type_id)
-        write_s32le(f, self.usage_code)
-        write_object_ref(self.root, f, self.descriptor)
+        ctx.write_u8(f, self.mob_type_id)
+        ctx.write_s32(f, self.usage_code)
+        ctx.write_object_ref(self.root, f, self.descriptor)
 
         if hasattr(self, 'creation_time'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x01)
-            write_u8(f, 71)
-            write_datetime(f, self.creation_time)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 71)
+            ctx.write_datetime(f, self.creation_time)
 
         if hasattr(self, 'mob_id'):
-            write_u8(f, 0x01)
-            write_u8(f, 0x02)
-            mobid.write_mob_id(f, self.mob_id)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x02)
+            ctx.write_mob_id(f, self.mob_id)
 
-        write_u8(f, 0x03)
+        ctx.write_u8(f, 0x03)
 
     @property
     def usage(self):
