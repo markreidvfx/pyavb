@@ -171,37 +171,45 @@ class AVBFile(object):
 
     def write_header(self, f):
 
-        octx = self.octx
+        ctx = self.octx
 
-        f.write(LE_BYTE_ORDER)
+        if ctx.byte_order == 'little':
+            f.write(LE_BYTE_ORDER)
+        else:
+            f.write(BE_BYTE_ORDER)
+
         f.write(MAGIC)
-
-        octx.write_fourcc(f, b'OBJD')
-        octx.write_string(f, u'AObjDoc')
-        octx.write_u8(f, 0x04)
+        ctx.write_fourcc(f, b'OBJD')
+        ctx.write_string(f, u'AObjDoc')
+        ctx.write_u8(f, 0x04)
         last_save_str = self.last_save.strftime(u'%Y/%m/%d %H:%M:%S')
-        octx.write_string(f, last_save_str)
+        ctx.write_string(f, last_save_str)
         pos = f.tell()
-        octx.write_u32(f, 0)
-        octx.write_u32(f, 0)
-        octx.write_u32(f, 0x49494949)
-        octx.write_datetime(f, self.last_save)
-        octx.write_u32(f, 0)
+        ctx.write_u32(f, 0)
+        ctx.write_u32(f, 0)
 
-        octx.write_fourcc(f, b'ATob')
-        octx.write_fourcc(f, b'ATve')
+        if ctx.byte_order == 'little':
+            ctx.write_u32(f, 0x49494949)
+        else:
+            ctx.write_u32(f, 0x4D4D4D4D)
+
+        ctx.write_datetime(f, self.last_save)
+        ctx.write_u32(f, 0)
+
+        ctx.write_fourcc(f, b'ATob')
+        ctx.write_fourcc(f, b'ATve')
 
         # version =
 
         s = f.tell()
         v = self.creator_version.encode('macroman')
         v = v[:30]
-        octx.write_u16(f, 30)
+        ctx.write_u16(f, 30)
         f.write(v)
 
         # pad with 0x20
         while f.tell() - s < 32:
-            octx.write_u8(f, 0x20)
+            ctx.write_u8(f, 0x20)
         f.write(bytearray(16))
 
         return pos
@@ -270,10 +278,10 @@ class AVBFile(object):
         obj.write(buffer)
         data = buffer.getvalue()
         assert data[-1:] == b'\x03'
-        octx = self.octx
+        ctx = self.octx
 
-        octx.write_fourcc(f, obj.class_id)
-        octx.write_u32(f, len(data))
+        ctx.write_fourcc(f, obj.class_id)
+        ctx.write_u32(f, len(data))
         f.write(data)
 
         # chunk = self.read_chunk(obj.instance_id)
@@ -289,8 +297,8 @@ class AVBFile(object):
     def write(self, path, byte_order='little'):
         self.next_chunk_id = 0
         self.ref_mapping = {}
-        octx = AVBIOContext(byte_order)
-        self.octx = octx
+        ctx = AVBIOContext(byte_order)
+        self.octx = ctx
 
         with io.open(path, 'wb') as f:
             count_pos = self.write_header(f)
@@ -304,8 +312,8 @@ class AVBFile(object):
 
             pos = f.tell()
             f.seek(count_pos)
-            octx.write_u32(f, self.next_chunk_id)
-            octx.write_u32(f, self.next_chunk_id)
+            ctx.write_u32(f, self.next_chunk_id)
+            ctx.write_u32(f, self.next_chunk_id)
             f.seek(pos)
 
     def chunks(self):
