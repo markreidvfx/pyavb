@@ -107,13 +107,13 @@ class AVBFile(object):
         elif file_bytes == BE_BYTE_ORDER:
             ctx = AVBIOContext('big')
         else:
-            raise ValueError("unknown byte order supported")
+            raise ValueError("not a avb file")
 
         self.ictx = ctx
 
         header = f.read(len(MAGIC))
         if header != MAGIC:
-            raise ValueError("not avb file")
+            raise ValueError("not a avb file")
 
         pos = f.tell()
 
