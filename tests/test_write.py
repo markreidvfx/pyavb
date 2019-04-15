@@ -75,6 +75,16 @@ class TestWrite(unittest.TestCase):
             with avb.open(result_file) as b:
                 compare(a.content, b.content)
 
+    def test_rewrite_all(self):
+
+        result_file = os.path.join(result_dir, 'rewrite_be.avb')
+        with avb.open(test_file_01) as f:
+            f.write(result_file, byte_order='big')
+
+        with avb.open(test_file_01) as a:
+            with avb.open(result_file) as b:
+                compare(a.content, b.content)
+
     def test_rewrite(self):
         result_file = os.path.join(result_dir, 'rewrite.avb')
 
