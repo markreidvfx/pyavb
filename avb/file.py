@@ -102,10 +102,13 @@ class AVBFile(object):
 
         f = self.f
         file_bytes = f.read(2)
-        if file_bytes != LE_BYTE_ORDER:
-            raise ValueError("Only Mac bytes supported")
+        if file_bytes == LE_BYTE_ORDER:
+            ctx = AVBIOContext('little')
+        elif file_bytes == BE_BYTE_ORDER:
+            ctx = AVBIOContext('big')
+        else:
+            raise ValueError("unknown byte order supported")
 
-        ctx = AVBIOContext('little')
         self.ictx = ctx
 
         header = f.read(len(MAGIC))
@@ -122,7 +125,8 @@ class AVBFile(object):
         num_objects = ctx.read_u32(f)
         self.root_index = ctx.read_u32(f)
 
-        assert ctx.read_u32(f) == 0x49494949
+        v  = ctx.read_u32(f)
+        assert v in (0x49494949, 0x4D4D4D4D)
 
         self.last_save = ctx.read_datetime(f)
 

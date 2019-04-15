@@ -209,7 +209,7 @@ class AVBIOContext(object):
         if self.byte_order == 'little':
             return UUID(bytes_le=data)
         else:
-            return UUID(bytes_be=data)
+            return UUID(bytes=data)
 
     def write_uuid(self, f, value):
         self.write_u8(f, 72)
@@ -224,7 +224,7 @@ class AVBIOContext(object):
         if self.byte_order == 'little':
             f.write(value.bytes_le[8:])
         else:
-            f.write(value.bytes_be[8:])
+            f.write(value.bytes[8:])
 
     def read_mob_id(self, f):
         m = MobID()
@@ -274,13 +274,13 @@ class AVBIOContext(object):
         if self.byte_order == 'little':
             return UUID(bytes_le=f.read(16))
         else:
-            return UUID(bytes_be=f.read(16))
+            return UUID(bytes=f.read(16))
 
     def write_raw_uuid(self, f, value):
         if self.byte_order == 'little':
             f.write(value.bytes_le)
         else:
-            f.write(value.bytes_be)
+            f.write(value.bytes)
 
     def read_datetime(self, f):
         return datetime.fromtimestamp(self.read_u32(f))
@@ -445,3 +445,12 @@ class AVBIOContext(object):
     @staticmethod
     def write_double_be(f, value):
         f.write(pack(b"<d", value))
+
+    @staticmethod
+    def read_fourcc_be(f):
+        return f.read(4)
+
+    @staticmethod
+    def write_fourcc_be(f, value):
+        assert len(value) == 4
+        f.write(value)
