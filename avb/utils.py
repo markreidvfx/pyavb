@@ -14,14 +14,6 @@ from datetime import datetime
 import time
 from binascii import hexlify, unhexlify
 
-MAGIC=b'Domain'
-
-MAC_BYTES =  b'\x06\x00'
-PC_BYTES  =  b'\x00\x06'
-
-MODE_PC  = 1
-MODE_MAC = 0
-
 class AVBObjectRef(object):
     __slots__ = ('root', 'index')
     def __init__(self, root, index):

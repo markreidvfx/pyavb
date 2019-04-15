@@ -81,6 +81,7 @@ class AVBFactory(object):
 
 LE_BYTE_ORDER = b'\x06\x00'
 BE_BYTE_ORDER = b'\x00\x06'
+MAGIC=b'Domain'
 
 class AVBFile(object):
     def __init__(self, path=None, buffering=io.DEFAULT_BUFFER_SIZE):
@@ -108,8 +109,8 @@ class AVBFile(object):
         ctx = AVBIOContext('little')
         self.ictx = ctx
 
-        header = f.read(len(utils.MAGIC))
-        if header != utils.MAGIC:
+        header = f.read(len(MAGIC))
+        if header != MAGIC:
             raise ValueError("not avb file")
 
         pos = f.tell()
@@ -169,8 +170,8 @@ class AVBFile(object):
 
         octx = self.octx
 
-        f.write(utils.MAC_BYTES)
-        f.write(utils.MAGIC)
+        f.write(LE_BYTE_ORDER)
+        f.write(MAGIC)
 
         octx.write_fourcc(f, b'OBJD')
         octx.write_string(f, u'AObjDoc')
