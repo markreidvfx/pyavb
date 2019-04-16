@@ -14,6 +14,7 @@ from . utils import peek_data
 @utils.register_class
 class MediaDescriptor(core.AVBObject):
     class_id = b'MDES'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('mob_kind',       'OMFI:MDES:MobKind',         'int8',         0),
         AVBPropertyDef('locator',        'OMFI:MDES:Locator',         'reference', None),
@@ -242,6 +243,8 @@ class WaveDescriptor(MediaFileDescriptor):
     propertydefs = MediaFileDescriptor.propertydefs + [
         AVBPropertyDef('summary',   'OMFI:WAVD:Summary',   'bytes'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(WaveDescriptor, self).read(f)
         ctx = self.root.ictx
@@ -273,6 +276,8 @@ class AIFCDescriptor(MediaFileDescriptor):
         AVBPropertyDef('summary',   'OMFI:AIFD:Summary',   'bytes'),
         AVBPropertyDef('data_pos',  'OMFI:AIFD:MC:DataPos', 'int32'),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(AIFCDescriptor, self).read(f)
         ctx = self.root.ictx

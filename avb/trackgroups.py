@@ -28,6 +28,7 @@ TRACK_UNKNOWN_FLAGS         = 0xFC00
 
 @utils.register_helper_class
 class Track(core.AVBObject):
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('index',            'OMFI:TRAK:LabelNumber',    'int16'),
         AVBPropertyDef('attributes',       'OMFI:TRAK:Attributes',     'reference'),
@@ -87,6 +88,7 @@ class Track(core.AVBObject):
 @utils.register_class
 class TrackGroup(Component):
     class_id = b'TRKG'
+    propertydefs_dict = {}
     propertydefs = Component.propertydefs + [
         AVBPropertyDef('mc_mode',     'OMFI:TRKG:MC:Mode',     'int8',    0),
         AVBPropertyDef('length',      'OMFI:TRKG:GroupLength',  'int32',  0),
@@ -227,6 +229,7 @@ class TrackGroup(Component):
 @utils.register_class
 class TrackEffect(TrackGroup):
     class_id = b'TKFX'
+    propertydefs_dict = {}
     propertydefs = TrackGroup.propertydefs + [
         AVBPropertyDef('left_length',         'OMFI:TKFX:MC:LeftLength',            'int32'),
         AVBPropertyDef('right_length',        'OMFI:TKFX:MC:RightLength',           'int32'),
@@ -308,6 +311,7 @@ class TrackEffect(TrackGroup):
 @utils.register_class
 class PanVolumeEffect(TrackEffect):
     class_id = b'PVOL'
+    propertydefs_dict = {}
     propertydefs = TrackEffect.propertydefs + [
         AVBPropertyDef('level',                  'OMFI:PVOL:MC:Level',               'int32'),
         AVBPropertyDef('pan',                    'OMFI:PVOL:MC:Pan',                 'int32'),
@@ -372,6 +376,7 @@ class PanVolumeEffect(TrackEffect):
 
 @utils.register_helper_class
 class ASPIPlugin(core.AVBObject):
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('name',             'OMFI:ASPI:plugInName',             'string'),
         AVBPropertyDef('manufacturer_id',  'OMFI:ASPI:plugInfManufacturerID',  'uint32'),
@@ -387,6 +392,7 @@ class ASPIPlugin(core.AVBObject):
 
 @utils.register_helper_class
 class ASPIPluginChunk(core.AVBObject):
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('version',         'OMFI:ASPI:chunkfVersion',         'int32'),
         AVBPropertyDef('manufacturer_id', 'OMFI:ASPI:plugInfManufacturerID', 'uint32'),
@@ -401,6 +407,7 @@ class ASPIPluginChunk(core.AVBObject):
 @utils.register_class
 class AudioSuitePluginEffect(TrackEffect):
     class_id = b'ASPI'
+    propertydefs_dict = {}
     propertydefs = TrackEffect.propertydefs + [
         AVBPropertyDef('plugins',          'OMFI:ASPI:plugIns',                         'list'),
         AVBPropertyDef('mob_id',           'MobID',                                     'MobID'),
@@ -587,6 +594,7 @@ class AudioSuitePluginEffect(TrackEffect):
 
 @utils.register_helper_class
 class EqualizerBand(core.AVBObject):
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('type',   'OMFI:EQBD:AV:BandType',   'int32'),
         AVBPropertyDef('freq',   'OMFI:EQBD:AV:BandFreq',   'int32'),
@@ -599,6 +607,7 @@ class EqualizerBand(core.AVBObject):
 @utils.register_class
 class EqualizerMultiBand(TrackEffect):
     class_id = b'EQMB'
+    propertydefs_dict = {}
     propertydefs = TrackEffect.propertydefs + [
         AVBPropertyDef('bands',         'OMFI:EQBD:AV:Bands',        'list'),
         AVBPropertyDef('effect_enable', 'OMFI:EQMB:AV:EffectEnable', 'bool'),
@@ -651,6 +660,7 @@ class EqualizerMultiBand(TrackEffect):
 
 class TimeWarp(TrackGroup):
     class_id = b'WARP'
+    propertydefs_dict = {}
     propertydefs = TrackGroup.propertydefs + [
         AVBPropertyDef('phase_offset', 'OMFI:WARP:PhaseOffset', 'int32'),
     ]
@@ -673,6 +683,7 @@ class TimeWarp(TrackGroup):
 @utils.register_class
 class CaptureMask(TimeWarp):
     class_id = b'MASK'
+    propertydefs_dict = {}
     propertydefs = TimeWarp.propertydefs + [
         AVBPropertyDef('is_double', 'OMFI:MASK:IsDouble', 'bool'),
         AVBPropertyDef('mask_bits', 'OMFI:MASK:MaskBits', 'int32'),
@@ -704,6 +715,7 @@ class CaptureMask(TimeWarp):
 @utils.register_class
 class StrobeEffect(TimeWarp):
     class_id = b'STRB'
+    propertydefs_dict = {}
     propertydefs = TimeWarp.propertydefs + [
         AVBPropertyDef('strobe_value',  'OMFI:STRB:MC:StrobeVal',  'int32'),
     ]
@@ -728,6 +740,7 @@ class StrobeEffect(TimeWarp):
 @utils.register_class
 class MotionEffect(TimeWarp):
     class_id = b'SPED'
+    propertydefs_dict = {}
     propertydefs = TimeWarp.propertydefs + [
         AVBPropertyDef('speed_ratio',            'OMFI:SPED:Rate',                 'rational'),
         AVBPropertyDef('offset_adjust',          'OMIF:SPED:OffsetAdjust',         'double'),
@@ -792,6 +805,7 @@ class MotionEffect(TimeWarp):
 @utils.register_class
 class Repeat(TimeWarp):
     class_id = b'REPT'
+    propertydefs_dict = {}
     __slots__ = ()
 
     def read(self, f):
@@ -813,6 +827,7 @@ class Repeat(TimeWarp):
 @utils.register_class
 class EssenceGroup(TrackGroup):
     class_id = b'RSET'
+    propertydefs_dict = {}
     propertydefs = TrackGroup.propertydefs + [
         AVBPropertyDef('rep_set_type', 'OMFI:RSET:repSetType', 'int32'),
     ]
@@ -850,6 +865,7 @@ class EssenceGroup(TrackGroup):
 @utils.register_class
 class TransitionEffect(TrackGroup):
     class_id = b'TNFX'
+    propertydefs_dict = {}
     propertydefs = TrackGroup.propertydefs + [
         AVBPropertyDef('cutpoint',            'OMFI:TRAN:CutPoint',                   'int32'),
         AVBPropertyDef('left_length',         'OMFI:TNFX:MC:LeftLength',              'int32'),
@@ -942,6 +958,7 @@ class TransitionEffect(TrackGroup):
 @utils.register_class
 class Selector(TrackGroup):
     class_id = b'SLCT'
+    propertydefs_dict = {}
     propertydefs = TrackGroup.propertydefs + [
         AVBPropertyDef('is_ganged', 'OMFI:SLCT:IsGanged',      'bool'),
         AVBPropertyDef('selected',  'OMFI:SLCT:SelectedTrack', 'int16'),
@@ -979,6 +996,7 @@ class Selector(TrackGroup):
 @utils.register_class
 class Composition(TrackGroup):
     class_id = b'CMPO'
+    propertydefs_dict = {}
     propertydefs = TrackGroup.propertydefs + [
         AVBPropertyDef('last_modified', 'OMFI:MOBJ:LastModified',  'int32',        0),
         AVBPropertyDef('mob_type_id',   '__OMFI:MOBJ:MobType',     'int8',         2),

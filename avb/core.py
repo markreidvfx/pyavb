@@ -145,7 +145,7 @@ def walk_references(obj):
 
 class AVBObject(object):
     propertydefs = []
-    propertydefs_dict = {}
+    propertydefs_dict = None
     class_id = None
     __slots__ = ('root', 'property_data', 'instance_id', '__weakref__')
 

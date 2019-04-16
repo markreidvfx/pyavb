@@ -12,6 +12,7 @@ from . utils import peek_data
 
 class Setting(core.AVBObject):
     class_id = b'ASET'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('name',       'name',       'string'),
         AVBPropertyDef('kind',       'kind',       'string'),
@@ -72,6 +73,7 @@ default_bin_columns = [
 @utils.register_class
 class BinViewSetting(Setting):
     class_id = b'BVst'
+    propertydefs_dict = {}
     propertydefs = Setting.propertydefs + [
         AVBPropertyDef('columns',              'Columns',          'list'),
         AVBPropertyDef('format_descriptors',   'FormatDescriptor', 'list'),
@@ -170,7 +172,7 @@ class BinViewSetting(Setting):
 
 @utils.register_helper_class
 class BinItem(core.AVBObject):
-
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('mob',         'Composition',  'reference'),
         AVBPropertyDef('x',           'Xpos',         'int16',    -30000),
@@ -182,6 +184,7 @@ class BinItem(core.AVBObject):
 
 @utils.register_helper_class
 class SiftItem(core.AVBObject):
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('method', 'SiftMethod', 'int16' ,       1),
         AVBPropertyDef('string', 'SiftString', 'string',     u''),
@@ -192,6 +195,7 @@ class SiftItem(core.AVBObject):
 @utils.register_class
 class Bin(core.AVBObject):
     class_id = b'ABIN'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('large_bin',         'large_bin',      'bool',     False), #custom
         AVBPropertyDef('view_setting',   'binviewsetting', 'reference'),

@@ -13,6 +13,7 @@ from . utils import peek_data
 
 class FileLocator(core.AVBObject):
     class_id = b'FILE'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('path',        'OMFI:FL:PathName',       'string'),
         AVBPropertyDef('path_posix',  'OMFI:FL:POSIXPathName',  'string'),
@@ -75,16 +76,19 @@ class FileLocator(core.AVBObject):
 @utils.register_class
 class MacFileLocator(FileLocator):
     class_id = b'FILE'
+    propertydefs_dict = {}
     __slots__ = ()
 
 @utils.register_class
 class WinFileLocator(FileLocator):
     class_id = b'WINF'
+    propertydefs_dict = {}
     __slots__ = ()
 
 @utils.register_class
 class URLLocator(core.AVBObject):
     class_id = b'URLL'
+    propertydefs_dict = {}
     __slots__ = ()
 
     def read(self, f):
@@ -100,6 +104,7 @@ class URLLocator(core.AVBObject):
 @utils.register_class
 class GraphicEffect(core.AVBObject):
     class_id = b'GRFX'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('pict_data', 'OMFI:MC:GRFX:PictData', 'bytes'),
     ]
@@ -133,6 +138,7 @@ class GraphicEffect(core.AVBObject):
 @utils.register_class
 class ShapeList(core.AVBObject):
     class_id = b'SHLP'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('shape_data', 'ShapeList', 'bytes'),
     ]
@@ -164,6 +170,7 @@ class ShapeList(core.AVBObject):
 @utils.register_class
 class ColorCorrectionEffect(core.AVBObject):
     class_id = b'CCFX'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('color_correction', 'OMFI:FXPS:colorCorrection', 'bytes'),
     ]
@@ -195,6 +202,7 @@ class ColorCorrectionEffect(core.AVBObject):
 
 @utils.register_helper_class
 class EffectParam(core.AVBObject):
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('percent_time',     'OMFI:FXPS:percentTime',         'int32'),
         AVBPropertyDef('level',            'OMFI:FXPS:level',               'int32'),
@@ -231,6 +239,7 @@ class EffectParam(core.AVBObject):
 @utils.register_class
 class EffectParamList(core.AVBObject):
     class_id = b'FXPS'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('orig_length',   'OMFI:FXPS:originalLength',   'int32'),
         AVBPropertyDef('window_offset', 'OMFI:FXPS:omFXwindowOffset', 'int32'),
@@ -381,6 +390,7 @@ class EffectParamList(core.AVBObject):
 @utils.register_class
 class CFUserParam(core.AVBObject):
     class_id = b'AVUP'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('byte_order', 'OMFI:AVUP:ByteOrder', 'uint16'),
         AVBPropertyDef('uuid',       'OMFI:AVUP:TypeID',    'UUID'),
@@ -429,6 +439,7 @@ class CFUserParam(core.AVBObject):
 @utils.register_class
 class ParameterItems(core.AVBObject):
     class_id = b'PRIT'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('uuid',            'OMFI:PRIT:GUID',                   'UUID'),
         AVBPropertyDef('value_type',      'OMFI:PRIT:ValueType',              'int16'),
@@ -507,6 +518,7 @@ class ParameterItems(core.AVBObject):
 @utils.register_class
 class MSMLocator(core.AVBObject):
     class_id = b'MSML'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('last_known_volume',        'OMFI:MSML:LastKnownVolume',      'string'),
         AVBPropertyDef('domain_type',              'OMFI:MSML:DomainType',           'int32'),
@@ -576,6 +588,7 @@ class MSMLocator(core.AVBObject):
 @utils.register_class
 class Position(core.AVBObject):
     class_id = b'APOS'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('mob_id', "MobID", 'MobID'),
     ]
@@ -621,6 +634,7 @@ class Position(core.AVBObject):
 @utils.register_class
 class BOBPosition(Position):
     class_id = b'ABOB'
+    propertydefs_dict = {}
     propertydefs = Position.propertydefs + [
         AVBPropertyDef('sample_num',  "__OMFI:MSBO:sampleNum",   'int32'),
         AVBPropertyDef('length',      "__OMFI:MSBO:length",      'int32'),
@@ -660,6 +674,7 @@ class BOBPosition(Position):
 @utils.register_class
 class DIDPosition(BOBPosition):
     class_id = b'DIDP'
+    propertydefs_dict = {}
     propertydefs = BOBPosition.propertydefs + [
         AVBPropertyDef('strip',        "_Strip",       'int32'),
         AVBPropertyDef('offset',       "_Offset",      'uint64'),
@@ -699,6 +714,7 @@ class DIDPosition(BOBPosition):
 @utils.register_class
 class MPGPosition(DIDPosition):
     class_id = b'MPGP'
+    propertydefs_dict = {}
     propertydefs = DIDPosition.propertydefs + [
      AVBPropertyDef('trailing_discards',    '_trailingDiscards',      'int16'),
      AVBPropertyDef('need_seq_hdr',          '_needSeqHdr',            'Boolean'),
@@ -749,6 +765,7 @@ class MPGPosition(DIDPosition):
 @utils.register_class
 class BinRef(core.AVBObject):
     class_id = b'MCBR'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('uid_high',  'OMFI:MCBR:MC:binID.high',  'int32'),
         AVBPropertyDef('uid_low',   'OMFI:MCBR:MC:binID.low',   'int32'),
@@ -796,6 +813,7 @@ class BinRef(core.AVBObject):
 @utils.register_class
 class MobRef(core.AVBObject):
     class_id = b'MCMR'
+    propertydefs_dict = {}
     propertydefs = [
             AVBPropertyDef('position',      'OMFI:MCMR:MC:Position', 'int32'),
             AVBPropertyDef('mob_id',        'MobID', 'MobID'),
@@ -846,6 +864,7 @@ class MobRef(core.AVBObject):
 @utils.register_class
 class Marker(MobRef):
     class_id = b'TMBC'
+    propertydefs_dict = {}
     propertydefs = MobRef.propertydefs + [
         AVBPropertyDef('comp_offset',   'OMFI:TMBC:MC:CompOffset',             'int32'),
         AVBPropertyDef('attributes',    'OMFI:TMBC:MC:Attributes',             'reference'),
@@ -908,6 +927,7 @@ class Marker(MobRef):
 @utils.register_class
 class TrackerManager(core.AVBObject):
     class_id = b'TKMN'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('data_slots',  'OMFI:TKMN:TrackerDataSlots',  'reference'),
         AVBPropertyDef('param_slots', 'OMFI:TKMN:TrackedParamSlots', 'reference'),
@@ -939,6 +959,7 @@ class TrackerManager(core.AVBObject):
 @utils.register_class
 class TrackerDataSlot(core.AVBObject):
     class_id = b'TKDS'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('tracker_data',  'OMFI:TKDS:TrackerData',      'ref_list'),
         AVBPropertyDef('track_fg',      'OMFI:TKDAS:TrackForeground', 'bool'),
@@ -988,6 +1009,7 @@ class TrackerDataSlot(core.AVBObject):
 @utils.register_class
 class TrackerParameterSlot(core.AVBObject):
     class_id = b'TKPS'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('settings', 'OMFI:TKPS:EffectSettings', 'bytes'),
         AVBPropertyDef('params',   'OMFI:TKPS:TrackedParam',   'ref_list'),
@@ -1030,6 +1052,7 @@ class TrackerParameterSlot(core.AVBObject):
 @utils.register_class
 class TrackerData(core.AVBObject):
     class_id = b'TKDA'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('settings',        'OMFI:TKDA:TrackerSettings',            'bytes'),
         AVBPropertyDef('clip_version',    'OMFI:TKDA:TrackerClipVersion',         'uint32'),
@@ -1141,6 +1164,7 @@ class TrackerData(core.AVBObject):
 @utils.register_class
 class TrackerParameter(core.AVBObject):
     class_id = b'TKPA'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('settings', 'OMFI:TKPA:ParamSettings','bytes'),
     ]

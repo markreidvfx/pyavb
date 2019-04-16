@@ -13,6 +13,7 @@ from . utils import peek_data
 
 class Component(core.AVBObject):
     class_id = b'COMP'
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('left_bob',      '__OMFI:CPNT:LeftBob',    'reference', None),
         AVBPropertyDef('right_bob',     '__OMFI:CPNT:RightBob',   'reference', None),
@@ -135,6 +136,7 @@ class Component(core.AVBObject):
 @utils.register_class
 class Sequence(Component):
     class_id = b"SEQU"
+    propertydefs_dict = {}
     propertydefs = Component.propertydefs + [
         AVBPropertyDef('components', 'OMFI:SEQU:Sequence', 'ref_list'),
     ]
@@ -183,6 +185,7 @@ class Sequence(Component):
 
 class Clip(Component):
     class_id = b'CLIP'
+    propertydefs_dict = {}
     propertydefs = Component.propertydefs + [
         AVBPropertyDef('length', 'OMFI:CLIP:Length', 'int32', 0),
     ]
@@ -205,6 +208,7 @@ class Clip(Component):
 @utils.register_class
 class SourceClip(Clip):
     class_id = b'SCLP'
+    propertydefs_dict = {}
     propertydefs = Clip.propertydefs + [
         AVBPropertyDef('track_id',   'OMFI:SCLP:SourceTrack',     'int16', 0),
         AVBPropertyDef('start_time', 'OMFI:SCLP:SourcePosition',  'int32', 0),
@@ -262,6 +266,7 @@ class SourceClip(Clip):
 @utils.register_class
 class Timecode(Clip):
     class_id = b'TCCP'
+    propertydefs_dict = {}
     propertydefs = Clip.propertydefs + [
         AVBPropertyDef('flags', 'OMFI:TCCP:Flags',   'int32',  0),
         AVBPropertyDef('fps',   'OMFI:TCCP:FPS',     'int32', 25),
@@ -301,6 +306,7 @@ class Timecode(Clip):
 @utils.register_class
 class Edgecode(Clip):
     class_id = b'ECCP'
+    propertydefs_dict = {}
     propertydefs = Clip.propertydefs + [
         AVBPropertyDef('header',      'OMFI:ECCP:Header',      'bytes'),
         AVBPropertyDef('film_kind',   'OMFI:ECCP:FilmKind',   'uint8'),
@@ -346,6 +352,7 @@ class Edgecode(Clip):
 @utils.register_class
 class TrackRef(Clip):
     class_id = b'TRKR'
+    propertydefs_dict = {}
     propertydefs = Clip.propertydefs + [
         AVBPropertyDef('relative_scope', 'OMFI:TRKR:RelativeScope', 'int16',  0),
         AVBPropertyDef('relative_track', 'OMFI:TRKR:RelativeTrack', 'int16', -1),
@@ -381,6 +388,7 @@ CP_TYPE_REFERENCE = 4
 
 @utils.register_helper_class
 class ParamControlPoint(core.AVBObject):
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('offset',    'OMFI:PRCL:Offset',     'rational'),
         AVBPropertyDef('timescale', 'OMFI:PRCL:TimeScale',  'int32'),
@@ -392,6 +400,7 @@ class ParamControlPoint(core.AVBObject):
 # not sure hwat PP's stands for
 @utils.register_helper_class
 class ParamPerPoint(core.AVBObject):
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('code',  'OMFI:PRCL:PPCode',  'int16'),
         AVBPropertyDef('type',  'OMFI:PRCL:PPType',  'int16'),
@@ -401,6 +410,7 @@ class ParamPerPoint(core.AVBObject):
 
 @utils.register_class
 class ParamClip(Clip):
+    propertydefs_dict = {}
     class_id = b'PRCL'
     propertydefs = Clip.propertydefs + [
         AVBPropertyDef('interp_kind',    'OMFI:PRCL:InterpKind',    'int32'),
@@ -527,6 +537,7 @@ class ParamClip(Clip):
 
 @utils.register_helper_class
 class ControlPoint(core.AVBObject):
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('offset',     'OMFI:CTRL:Offset',    'rational'),
         AVBPropertyDef('time_scale', 'OMFI:CTRL:TimeScale', 'int32'),
@@ -537,6 +548,7 @@ class ControlPoint(core.AVBObject):
 
 @utils.register_helper_class
 class PerPoint(core.AVBObject):
+    propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('code',    'OMFI:CTRL:PPCode',  'int16'),
         AVBPropertyDef('value',   'OMFI:CTRL:PP',      'rational'),
@@ -546,6 +558,7 @@ class PerPoint(core.AVBObject):
 
 @utils.register_class
 class ControlClip(Clip):
+    propertydefs_dict = {}
     class_id = b'CTRL'
     propertydefs = Clip.propertydefs + [
         AVBPropertyDef('interp_kind',    'OMFI:CTRL:InterpKin',    'int32'),
@@ -623,6 +636,7 @@ class ControlClip(Clip):
 
 @utils.register_class
 class Filler(Clip):
+    propertydefs_dict = {}
     class_id = b'FILL'
     __slots__ = ()
 
