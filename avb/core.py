@@ -197,38 +197,38 @@ class AVBObject(object):
         s = "%s.%s"  % (self.__class__.__module__,
                                 self.__class__.__name__)
 
-        if hasattr(self, 'class_id') and self.class_id:
+        if 'class_id' in self.property_data and self.class_id:
             s = str(self.class_id) + " " + s
 
-        if hasattr(self, 'name') and self.name:
+        if 'name' in self.property_data and self.name:
             s += " " + self.name
 
-        if hasattr(self, 'mob_type') and self.mob_type:
+        if 'mob_type' in self.property_data and self.mob_type:
             s += " " + self.mob_type
 
-        if hasattr(self, 'effect_id') and self.effect_id:
+        if 'effect_id' in self.property_data and self.effect_id:
 
             s += " " + self.effect_id
 
-        if hasattr(self, 'media_kind') and self.media_kind:
+        if 'media_kind' in self.property_data and self.media_kind:
             s += " "  + str(self.media_kind)
 
-        if hasattr(self, 'length'):
+        if 'length' in self.property_data:
             s += " len: " + str(self.length)
 
-        if hasattr(self, 'track_id'):
+        if 'track_id' in self.property_data:
             s += ' track_id: ' + str(self.track_id)
 
-        if hasattr(self, 'start_time'):
+        if 'start_time' in self.property_data:
             s += ' start_time: ' + str(self.start_time)
 
-        if hasattr(self, 'mob_id'):
+        if 'mob_id' in self.property_data:
             s += " " + str(self.mob_id)
 
-        if hasattr(self, 'uuid'):
+        if 'uuid' in self.property_data:
             s += " " + str(self.uuid)
 
-        if hasattr(self, 'value'):
+        if 'value' in self.property_data:
             s += " " + str(self.value)
 
         return '<%s at 0x%x>' % (s, id(self))
