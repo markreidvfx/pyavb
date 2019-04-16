@@ -103,8 +103,13 @@ def register_class(classobj):
     AVBClaseID_dict[classobj.class_id] = classobj
     AVBClassName_dict[classobj.__name__] = classobj
 
+    for pdef in classobj.propertydefs:
+        classobj.propertydefs_dict[pdef.name] = pdef
+
     return classobj
 
 def register_helper_class(classobj):
     AVBClassName_dict[classobj.__name__] = classobj
+    for pdef in classobj.propertydefs:
+        classobj.propertydefs_dict[pdef.name] = pdef
     return classobj

@@ -145,6 +145,7 @@ def walk_references(obj):
 
 class AVBObject(object):
     propertydefs = []
+    propertydefs_dict = {}
     class_id = None
     __slots__ = ('root', 'property_data', 'instance_id', '__weakref__')
 
@@ -170,12 +171,11 @@ class AVBObject(object):
                 return item
 
     def __setattr__(self, name, value):
-        if name != 'root':
-            for item in self.propertydefs:
-                if name == item.name:
-                    self.property_data[name] = value
-                    self.mark_modified()
-                    return
+        pdef = self.propertydefs_dict.get(name, None)
+        if pdef:
+            self.property_data[name] = value
+            self.mark_modified()
+            return
 
         super(AVBObject, self).__setattr__(name, value)
 
