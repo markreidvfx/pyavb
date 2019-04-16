@@ -381,7 +381,7 @@ class AVBIOContext(object):
 
     @staticmethod
     def read_fourcc_le(f):
-        return AVBIOContext.reverse_str(f.read(4))
+        return f.read(4)[::-1]
 
     @staticmethod
     def write_fourcc_le(f, value):
