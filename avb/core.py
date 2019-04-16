@@ -77,7 +77,7 @@ class AVBRefList(list):
         self.mark_modified()
 
     def pop(self, i=-1):
-        result = elf.deref(super(AVBRefList, self).pop(i))
+        result = self.deref(super(AVBRefList, self).pop(i))
         self.mark_modified()
         return result
 
@@ -85,7 +85,7 @@ class AVBRefList(list):
         super(AVBRefList, self)
         self.mark_modified()
 
-    def sort(key=None, reverse=False):
+    def sort(self, key=None, reverse=False):
         super(AVBRefList, self)
         self.mark_modified()
 
