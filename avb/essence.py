@@ -990,6 +990,8 @@ class MPGIDescriptor(CDCIDescriptor):
         AVBPropertyDef('max_gop_length',   "OMFI:MPGI:omMPGIMaxGOPLength", "uint16"),
         AVBPropertyDef('sequence_hdr',     "OMFI:MPGI:SequenceHdr",        "bytes"),
     ]
+    __slots__ = ()
+
     def read(self, f):
         super(MPGIDescriptor, self).read(f)
         ctx = self.root.ictx
@@ -1040,6 +1042,7 @@ class JPEGDescriptor(CDCIDescriptor):
         AVBPropertyDef('quantization_tables',     "OMFI:JPED:QuantizationTables",    "bytes"),
         AVBPropertyDef('image_start_align',       "OMFI:JPED:ImageStartAlignment",   "int32"),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(JPEGDescriptor, self).read(f)

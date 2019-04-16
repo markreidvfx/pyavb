@@ -85,6 +85,7 @@ class WinFileLocator(FileLocator):
 @utils.register_class
 class URLLocator(core.AVBObject):
     class_id = b'URLL'
+    __slots__ = ()
 
     def read(self, f):
         super(URLLocator, self).read(f)
@@ -166,6 +167,7 @@ class ColorCorrectionEffect(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('color_correction', 'OMFI:FXPS:colorCorrection', 'bytes'),
     ]
+    __slots__ = ()
 
     def read(self, f):
         super(ColorCorrectionEffect, self).read(f)
