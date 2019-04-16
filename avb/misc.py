@@ -191,6 +191,7 @@ class ColorCorrectionEffect(core.AVBObject):
 
         ctx.write_u8(f, 0x03)
 
+@utils.register_helper_class
 class EffectParam(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('percent_time',     'OMFI:FXPS:percentTime',         'int32'),

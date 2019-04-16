@@ -379,6 +379,7 @@ CP_TYPE_INT = 1
 CP_TYPE_DOUBLE = 2
 CP_TYPE_REFERENCE = 4
 
+@utils.register_helper_class
 class ParamControlPoint(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('offset',    'OMFI:PRCL:Offset',     'rational'),
@@ -389,6 +390,7 @@ class ParamControlPoint(core.AVBObject):
     __slots__ = ()
 
 # not sure hwat PP's stands for
+@utils.register_helper_class
 class ParamPerPoint(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('code',  'OMFI:PRCL:PPCode',  'int16'),
@@ -523,6 +525,7 @@ class ParamClip(Clip):
 
         ctx.write_u8(f, 0x03)
 
+@utils.register_helper_class
 class ControlPoint(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('offset',     'OMFI:CTRL:Offset',    'rational'),
@@ -532,6 +535,7 @@ class ControlPoint(core.AVBObject):
     ]
     __slots__ = ()
 
+@utils.register_helper_class
 class PerPoint(core.AVBObject):
     propertydefs = [
         AVBPropertyDef('code',    'OMFI:CTRL:PPCode',  'int16'),
