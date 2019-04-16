@@ -9,7 +9,7 @@ Welcome to pyavb's documentation!
 Overview
 --------
 
-pyavb is a python module for the reading and writing Avid Bin Files (AVB) files.
+pyavb is a python module for reading and writing Avid Bin Files (AVB) files.
 
 Installation
 ------------

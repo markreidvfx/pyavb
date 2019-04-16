@@ -3,7 +3,7 @@
 pyavb
 =====
 
-A python module for the reading and writing Avid Bin Files (AVB) files.
+A python module for reading and writing Avid Bin Files (AVB) files.
 
 Requirements
 ------------
