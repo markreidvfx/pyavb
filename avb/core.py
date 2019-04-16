@@ -135,16 +135,17 @@ def walk_references(obj):
                 for sub_v in walk_references(item):
                     yield sub_v
 
-        if hasattr(v, 'class_id'):
+        if hasattr(v, 'class_id') and v.class_id:
             for sub_v in walk_references(v):
                 yield sub_v
 
-    if hasattr(obj, 'class_id'):
+    if hasattr(obj, 'class_id') and obj.class_id:
         yield obj
 
 
 class AVBObject(object):
     propertydefs = []
+    class_id = None
     __slots__ = ('root', 'property_data', 'instance_id', '__weakref__')
 
     def __new__(cls, *args, **kwargs):
@@ -193,24 +194,28 @@ class AVBObject(object):
     def write(self, f):
         pass
 
+    @property
+    def media_kind(self):
+        return None
+
     def __repr__(self):
         s = "%s.%s"  % (self.__class__.__module__,
                                 self.__class__.__name__)
 
-        if 'class_id' in self.property_data and self.class_id:
+        if self.class_id:
             s = str(self.class_id) + " " + s
 
         if 'name' in self.property_data and self.name:
             s += " " + self.name
 
-        if 'mob_type' in self.property_data and self.mob_type:
+        if self.class_id == b'CMPO' and self.mob_type:
             s += " " + self.mob_type
 
         if 'effect_id' in self.property_data and self.effect_id:
 
             s += " " + self.effect_id
 
-        if 'media_kind' in self.property_data and self.media_kind:
+        if self.class_id and self.media_kind:
             s += " "  + str(self.media_kind)
 
         if 'length' in self.property_data:

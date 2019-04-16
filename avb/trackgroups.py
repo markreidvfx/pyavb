@@ -51,34 +51,34 @@ class Track(core.AVBObject):
     @property
     def flags(self):
         flags = 0
-        if hasattr(self, 'index'):
+        if 'index' in self.property_data:
             flags |= TRACK_LABEL_FLAG
 
-        if hasattr(self, 'attributes'):
+        if 'attributes' in self.property_data:
             flags |= TRACK_ATTRIBUTES_FLAG
 
-        if hasattr(self, 'session_attr'):
+        if 'session_attr' in self.property_data:
             flags |= TRACK_SESSION_ATTR_FLAG
 
-        if hasattr(self, 'component'):
+        if 'component' in self.property_data:
             flags |= TRACK_COMPONENT_FLAG
 
-        if hasattr(self, 'filler_proxy'):
+        if 'filler_proxy' in self.property_data:
             flags |= TRACK_FILLER_PROXY_FLAG
 
-        if hasattr(self, 'bob_data'):
+        if 'bob_data' in self.property_data:
             flags |= TRACK_BOB_DATA_FLAG
 
-        if hasattr(self, 'control_code'):
+        if 'control_code' in self.property_data:
             flags |= TRACK_CONTROL_CODE_FLAG
 
-        if hasattr(self, 'control_sub_code'):
+        if 'control_sub_code' in self.property_data:
             flags |= TRACK_CONTROL_SUB_CODE_FLAG
 
-        if hasattr(self, 'start_pos'):
+        if 'start_pos' in self.property_data:
             flags |= TRACK_START_POS_FLAG
 
-        if hasattr(self, 'read_only'):
+        if 'read_only' in self.property_data:
             flags |= TRACK_READ_ONLY_FLAG
 
         return flags

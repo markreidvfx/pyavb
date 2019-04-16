@@ -64,7 +64,7 @@ class AVBFactory(object):
         # obj = classobj(None, *args, **kwargs)
         obj = classobj.__new__(classobj)
         obj.root = self.root
-        if hasattr(obj, 'class_id'):
+        if obj.class_id:
             self.root.next_object_id += 1
             obj.instance_id = self.root.next_object_id
 
