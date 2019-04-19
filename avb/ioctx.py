@@ -96,7 +96,8 @@ class AVBIOContext(object):
 
     @staticmethod
     def read_u8(f):
-        return unpack(b"B", f.read(1))[0]
+        (result, ) = unpack(b"B", f.read(1))
+        return result
 
     @staticmethod
     def write_u8(f, value):
@@ -104,7 +105,8 @@ class AVBIOContext(object):
 
     @staticmethod
     def read_s8(f):
-        return unpack(b"b", f.read(1))[0]
+        (result, ) = unpack(b"b", f.read(1))
+        return result
 
     @staticmethod
     def write_s8(f, value):
@@ -325,7 +327,8 @@ class AVBIOContext(object):
 
     @staticmethod
     def read_u16le(f):
-        return unpack(b"<H", f.read(2))[0]
+        (result, ) = unpack(b"<H", f.read(2))
+        return result
 
     @staticmethod
     def write_u16le(f, value):
@@ -333,7 +336,8 @@ class AVBIOContext(object):
 
     @staticmethod
     def read_s16le(f):
-        return unpack(b"<h", f.read(2))[0]
+        (result, ) = unpack(b"<h", f.read(2))
+        return result
 
     @staticmethod
     def write_s16le(f, value):
@@ -341,7 +345,8 @@ class AVBIOContext(object):
 
     @staticmethod
     def read_u32le(f):
-        return unpack(b"<I", f.read(4))[0]
+        (result, ) = unpack(b"<I", f.read(4))
+        return result
 
     @staticmethod
     def write_u32le(f, value):
@@ -349,7 +354,8 @@ class AVBIOContext(object):
 
     @staticmethod
     def read_s32le(f):
-        return unpack(b"<i", f.read(4))[0]
+        (result, ) = unpack(b"<i", f.read(4))
+        return result
 
     @staticmethod
     def write_s32le(f, value):
@@ -392,7 +398,8 @@ class AVBIOContext(object):
 
     @staticmethod
     def read_u16be(f):
-        return unpack(b">H", f.read(2))[0]
+        (result, ) = unpack(b">H", f.read(2))
+        return result
 
     @staticmethod
     def write_u16be(f, value):
@@ -400,7 +407,8 @@ class AVBIOContext(object):
 
     @staticmethod
     def read_s16be(f):
-        return unpack(b">h", f.read(2))[0]
+        (result, ) = unpack(b">h", f.read(2))
+        return result
 
     @staticmethod
     def write_s16be(f, value):
@@ -408,7 +416,8 @@ class AVBIOContext(object):
 
     @staticmethod
     def read_u32be(f):
-        return unpack(b">I", f.read(4))[0]
+        (result, ) = unpack(b">I", f.read(4))
+        return result
 
     @staticmethod
     def write_u32be(f, value):
@@ -416,7 +425,8 @@ class AVBIOContext(object):
 
     @staticmethod
     def read_s32be(f):
-        return unpack(b">i", f.read(4))[0]
+        (result, ) = unpack(b">i", f.read(4))
+        return result
 
     @staticmethod
     def write_s32be(f, value):
