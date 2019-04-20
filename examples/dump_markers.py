@@ -76,7 +76,7 @@ def print_marker(pos, marker, track):
     print(line.format(user, frames_to_timecode(pos), track_name, color.lower(), comment))
 
 def get_component_markers(c):
-    if not hasattr(c, 'attributes'):
+    if 'attributes' not in c.property_data:
         return []
 
     attributes = c.attributes or {}
@@ -88,7 +88,7 @@ def get_component_markers(c):
 
     elif isinstance(c, avb.trackgroups.TrackGroup):
         for track in c.tracks:
-            if not hasattr(track, 'component'):
+            if 'component' not in track.property_data:
                 continue
 
             more_markers = get_component_markers(track.component)
