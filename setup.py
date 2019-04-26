@@ -2,6 +2,8 @@ import sys
 import os
 from setuptools import setup
 import setuptools.command.build_py
+from Cython.Build import cythonize
+from distutils.extension import Extension
 
 PROJECT_METADATA = {
     "version": "0.1.0.dev2",
@@ -16,6 +18,14 @@ __author__ = "{author}"
 __author_email__ = "{author_email}"
 __license__ = "{license}"
 """
+
+sourcefiles = [
+"avb/_ext.pyx",
+]
+extensions = [Extension("avb._ext",
+                        sourcefiles,
+                        language="c++",
+)]
 
 
 class AddMetadata(setuptools.command.build_py.build_py):
@@ -79,6 +89,7 @@ setup(
     ],
 
     cmdclass={'build_py': AddMetadata},
+    ext_modules = cythonize(extensions),
 
     **PROJECT_METADATA
 )

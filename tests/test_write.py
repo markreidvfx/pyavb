@@ -48,8 +48,8 @@ def compare(a, b):
 
         a_value = a_property_data[key]
         b_value = b_property_data[key]
-
-        assert type(a_value) == type(b_value)
+        if type(a_value) != type(b_value):
+            raise AssertionError( "{} {} != {}".format(key, type(a_value),  type(b_value)))
 
         if isinstance(a_value, (avb.core.AVBObject, dict)):
             compare(a_value, b_value)
@@ -60,7 +60,10 @@ def compare(a, b):
                 compare(a_value[i], b_value[i])
 
         else:
-            assert a_value == b_value
+            if a_value != b_value:
+                if isinstance(a_value,  avb.utils.AVBObjectRef):
+                    print("!!!", a_value.index, b_value.index)
+                raise AssertionError( "{} {} != {}".format(key, a_value,  b_value))
 
 
 class TestWrite(unittest.TestCase):
@@ -71,8 +74,8 @@ class TestWrite(unittest.TestCase):
         with avb.open(test_file_01) as f:
             f.write(result_file)
 
-        with avb.open(test_file_01) as a:
-            with avb.open(result_file) as b:
+        with avb.open(test_file_01, use_ext=False) as a:
+            with avb.open(result_file, use_ext=False) as b:
                 compare(a.content, b.content)
 
     def test_rewrite_all_be(self):
@@ -81,8 +84,8 @@ class TestWrite(unittest.TestCase):
         with avb.open(test_file_01) as f:
             f.write(result_file, byte_order='big')
 
-        with avb.open(test_file_01) as a:
-            with avb.open(result_file) as b:
+        with avb.open(test_file_01, use_ext=False) as a:
+            with avb.open(result_file, use_ext=False) as b:
                 compare(a.content, b.content)
 
     def test_rewrite(self):

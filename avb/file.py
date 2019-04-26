@@ -19,6 +19,12 @@ from . import utils
 from .core import walk_references
 from .ioctx import AVBIOContext
 
+
+try:
+    from ._ext import READERS
+except:
+    READERS = {}
+
 class AVBChunk(object):
     __slots__ = ('root', 'class_id', 'pos', 'size')
     def __init__(self, root, class_id, pos, size):
@@ -83,7 +89,7 @@ BE_BYTE_ORDER = b'\x00\x06'
 MAGIC=b'Domain'
 
 class AVBFile(object):
-    def __init__(self, path=None, buffering=io.DEFAULT_BUFFER_SIZE):
+    def __init__(self, path=None, buffering=io.DEFAULT_BUFFER_SIZE, use_ext=True):
 
         self.check_refs = True
         self.debug_copy_refs = False
@@ -102,8 +108,11 @@ class AVBFile(object):
 
         f = self.f
         file_bytes = f.read(2)
+        self.fast_readers = {}
         if file_bytes == LE_BYTE_ORDER:
             ctx = AVBIOContext('little')
+            if use_ext:
+                self.fast_readers = READERS
         elif file_bytes == BE_BYTE_ORDER:
             ctx = AVBIOContext('big')
         else:
@@ -253,10 +262,15 @@ class AVBFile(object):
                 if chunk.class_id == b'ATTR':
                     object_instance.__init__(object_instance)
 
-                r = io.BytesIO(data)
-                object_instance.read(r)
-                # print(len(r.read()))
-                assert len(r.read()) == 0
+                reader = self.fast_readers.get(chunk.class_id, None)
+
+                if reader:
+                    reader(self, object_instance, data)
+                else:
+                    r = io.BytesIO(data)
+                    object_instance.read(r)
+                    # print(len(r.read()))
+                    assert len(r.read()) == 0
                 self.object_cache[index] = object_instance
                 object_instance.instance_id = index
                 return object_instance

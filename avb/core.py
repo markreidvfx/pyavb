@@ -94,6 +94,9 @@ class AVBRefList(list):
         self.mark_modified()
 
     def deref(self, value):
+        if isinstance(value, int):
+            return utils.AVBObjectRef(self.root, value).value
+
         if isinstance(value, utils.AVBObjectRef):
             return value.value
         return value

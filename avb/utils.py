@@ -43,7 +43,7 @@ class AVBObjectRef(object):
     def __repr__(self):
         s = "%s.%s"  % (self.__class__.__module__,
                                 self.__class__.__name__)
-        if self.index and self.valid:
+        if self.root and self.index and self.valid:
             chunk = self.root.read_chunk(self.index)
             s += " %s idx: %d pos: %d" % (chunk.class_id, self.index, chunk.pos)
         return '<%s at 0x%x>' % (s, id(self))

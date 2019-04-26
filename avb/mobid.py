@@ -334,6 +334,11 @@ class MobID(object):
             return self.bytes_le == other.bytes_le
         return NotImplemented
 
+    def __ne__(self, other):
+        if isinstance(other, MobID):
+            return self.bytes_le != other.bytes_le
+        return NotImplemented
+
     def __lt__(self, other):
         if isinstance(other, MobID):
             return self.int < other.int
