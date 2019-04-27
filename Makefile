@@ -7,6 +7,11 @@ test: python-version
 	@python setup.py build_ext --inplace
 	@python -m unittest discover tests -v
 
+test-travis:
+	$(TRAVIS_PYTHON_VERSION) --version
+	$(TRAVIS_PYTHON_VERSION) setup.py build_ext --inplace
+	$(TRAVIS_PYTHON_VERSION) -m unittest discover tests -v
+
 python-version:
 	@python --version
 

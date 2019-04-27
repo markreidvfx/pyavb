@@ -8,9 +8,9 @@ python:
 env:
   - PYAVB_BUILD_EXT=0
   - PYAVB_BUILD_EXT=1
-install: pip install cython
+install: pip install cython nose
 script:
-  - make test
+  - make test-travis
 deploy:
   on:
     tags: true
