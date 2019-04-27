@@ -8,7 +8,12 @@ python-version:
 	@python --version
 
 clean:
-	rm */*.pyc */*/*.pyc
+	- rm -rf build
+	- find avb -name '*.so' -delete
+	- find avb -name '*.dylib' -delete
+	- find avb -name '*.pyd' -delete
+	- find avb -name '*.dll' -delete
+	- find avb -name '*.pyc' -delete
 
 doc:
 	@make -C docs html
