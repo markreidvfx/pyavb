@@ -309,7 +309,7 @@ static inline void add_bool(Properties *p, const char* name, bool value)
     p->bools.push_back(d);
 }
 
-int read_mob_id(Properties *p, Buffer *f, const char* name)
+static inline int read_mob_id(Properties *p, Buffer *f, const char* name)
 {
     MobIDData mob_id;
     mob_id.name = name;
@@ -367,7 +367,7 @@ int read_mob_id(Properties *p, Buffer *f, const char* name)
     return 0;
 }
 
-int add_raw_uuid(Properties *p, const char * name, Buffer *f)
+static inline int add_raw_uuid(Properties *p, const char * name, Buffer *f)
 {
     p->uuids.push_back(BytesData());
     BytesData *d = &p->uuids[p->uuids.size()-1];
@@ -381,7 +381,7 @@ int add_raw_uuid(Properties *p, const char * name, Buffer *f)
 }
 
 
-int read_comp(Buffer *f, Properties *p)
+static int read_comp(Buffer *f, Properties *p)
 {
     read_assert_tag(f, 0x02);
     read_assert_tag(f, 0x03);
@@ -416,7 +416,7 @@ int read_comp(Buffer *f, Properties *p)
     return 0;
 }
 
-int read_sequence(Buffer *f, Properties *p)
+static int read_sequence(Buffer *f, Properties *p)
 {
     read_comp(f, p);
     read_assert_tag(f, 0x02);
@@ -435,7 +435,7 @@ int read_sequence(Buffer *f, Properties *p)
 
     return 0;
 }
-int read_clip(Buffer *f, Properties *p)
+static int read_clip(Buffer *f, Properties *p)
 {
     read_comp(f, p);
     read_assert_tag(f, 0x02);
@@ -445,7 +445,7 @@ int read_clip(Buffer *f, Properties *p)
     return 0;
 }
 
-int read_filler(Buffer *f, Properties *p)
+static int read_filler(Buffer *f, Properties *p)
 {
     read_clip(f, p);
     read_assert_tag(f, 0x02);
@@ -455,7 +455,7 @@ int read_filler(Buffer *f, Properties *p)
     return 0;
 }
 
-int read_sourceclip(Buffer *f, Properties *p)
+static int read_sourceclip(Buffer *f, Properties *p)
 {
     read_clip(f, p);
     read_assert_tag(f, 0x02);
@@ -486,7 +486,7 @@ int read_sourceclip(Buffer *f, Properties *p)
     return 0;
 }
 
-int read_paramclip(Buffer *f, Properties *p)
+static int read_paramclip(Buffer *f, Properties *p)
 {
     read_clip(f, p);
     read_assert_tag(f, 0x02);
@@ -567,7 +567,7 @@ int read_paramclip(Buffer *f, Properties *p)
     return 0;
 }
 
-int read_paramitem(Buffer *f, Properties *p)
+static int read_paramitem(Buffer *f, Properties *p)
 {
     read_assert_tag(f, 0x02);
     read_assert_tag(f, 0x02);
@@ -623,7 +623,7 @@ int read_trackref(Buffer *f, Properties *p)
     return 0;
 }
 
-int read_trackgroup(Buffer *f, Properties *p)
+static int read_trackgroup(Buffer *f, Properties *p)
 {
     read_comp(f, p);
     read_assert_tag(f, 0x02);
@@ -701,7 +701,7 @@ int read_trackgroup(Buffer *f, Properties *p)
     return 0;
 }
 
-int read_trackeffect(Buffer *f, Properties *p)
+static int read_trackeffect(Buffer *f, Properties *p)
 {
     read_trackgroup(f, p);
     read_assert_tag(f, 0x02);
@@ -738,7 +738,7 @@ int read_trackeffect(Buffer *f, Properties *p)
     return 0;
 }
 
-int read_selector(Buffer *f, Properties *p)
+static int read_selector(Buffer *f, Properties *p)
 {
     read_trackgroup(f, p);
     read_assert_tag(f, 0x02);
@@ -752,7 +752,7 @@ int read_selector(Buffer *f, Properties *p)
     return 0;
 }
 
-int read_composition(Buffer *f, Properties *p)
+static int read_composition(Buffer *f, Properties *p)
 {
     read_trackgroup(f, p);
     read_assert_tag(f, 0x02);
@@ -789,7 +789,93 @@ int read_composition(Buffer *f, Properties *p)
     return 0;
 }
 
-int read_attributes(Buffer *f, std::vector<AttrData> &d)
+static int read_media_descriptor(Buffer *f,  Properties *p)
+{
+    read_assert_tag(f, 0x02);
+    read_assert_tag(f, 0x03);
+
+    add_uint(p, "mob_kind", read_u8(f));
+    add_object_ref(p, "locator", read_u32le(f));
+    add_bool(p, "intermediate", read_bool(f));
+    add_object_ref(p, "physical_media", read_u32le(f));
+
+    while (iter_ext(f)) {
+        uint8_t tag = read_u8(f);
+
+        if(tag == 0x01) {
+            read_assert_tag(f, 65);
+            uint32_t uuid_len = read_u32le(f);
+            if (uuid_len != 16) {
+                cerr << "bad uuid len: " << (uint32_t)uuid_len << "\n";
+                return -1;
+            }
+            add_raw_uuid(p, "uuid",f);
+            break;
+        } else if (tag== 0x02) {
+            read_assert_tag(f, 65);
+            vector<uint8_t> data;
+            read_data32(f, data);
+            break;
+        } else if (tag == 0x03 ) {
+            read_assert_tag(f, 72);
+            add_object_ref(p, "attributes", read_u32le(f));
+            break;
+        } else {
+            cerr << "unknown ext tag: " << (uint32_t)tag << "\n";
+            return -1;
+        }
+
+    }
+    return 0;
+}
+
+static int read_media_file_descriptor(Buffer *f,  Properties *p)
+{
+    read_media_descriptor(f, p);
+    read_assert_tag(f, 0x02);
+    read_assert_tag(f, 0x03);
+
+    add_double(p, "edit_rate", read_exp10_encoded_float(f));
+    add_int(p, "length",      (int32_t)read_u32le(f));
+    add_int(p, "is_omfi",     (int16_t)read_u16le(f));
+    add_int(p, "data_offset", (int32_t)read_u32le(f));
+
+    return 0;
+}
+
+static int read_did_descriptor(Buffer *f,  Properties *p)
+{
+    read_media_file_descriptor(f, p);
+    read_assert_tag(f, 0x02);
+    read_assert_tag(f, 0x02);
+
+    add_int(p, "stored_height",      (int32_t)read_u32le(f));
+    add_int(p, "stored_width",       (int32_t)read_u32le(f));
+
+    add_int(p, "sampled_height",     (int32_t)read_u32le(f));
+    add_int(p, "sampled_width",      (int32_t)read_u32le(f));
+
+    add_int(p, "sampled_x_offset",   (int32_t)read_u32le(f));
+    add_int(p, "sampled_y_offset",   (int32_t)read_u32le(f));
+
+    add_int(p, "display_height",     (int32_t)read_u32le(f));
+    add_int(p, "display_width",      (int32_t)read_u32le(f));
+
+    add_int(p, "display_x_offset",   (int32_t)read_u32le(f));
+    add_int(p, "display_y_offset",   (int32_t)read_u32le(f));
+
+    add_int(p, "frame_layout",       (int16_t)read_u16le(f));
+    return 0;
+}
+
+static int read_cdci_descriptor(Buffer *f, Properties *p)
+{
+    read_did_descriptor(f, p);
+    return 1;
+}
+
+
+static int read_attributes(Buffer *f, std::vector<AttrData> &d)
 {
 
     read_assert_tag(f, 0x02);

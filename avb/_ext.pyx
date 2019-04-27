@@ -133,6 +133,7 @@ cdef extern from "_ext_core.cpp" nogil:
     cdef int read_trackeffect(Buffer *f, Properties *p) except+
     cdef int read_selector(Buffer *f, Properties *p) except+
     cdef int read_composition(Buffer *f, Properties *p) except+
+    cdef int read_cdci_descriptor(Buffer *f, Properties *p) except+
 
 
 cdef class AVBPropertyData(dict):
@@ -153,24 +154,18 @@ cdef class AVBPropertyData(dict):
         return self.deref(super(AVBPropertyData, self).get(*args, **kwargs))
 
 cdef void refs2dict(object root, dict d, Properties* p):
-    cdef bytes name
     cdef UIntData item
-
     for item in p.refs:
-        name = <bytes> item.name
-        # d[name.decode('utf-8')] = item.data
-        d[name.decode('utf-8')] = AVBObjectRef(root, item.data)
+        d[item.name.decode('utf-8')] = AVBObjectRef(root, item.data)
 
 cdef void reflist2dict(object root, dict d, Properties* p):
-    cdef bytes name
     cdef RefListData item
     cdef uint32_t i
 
     for item in p.reflists:
-        name = <bytes> item.name
         reflist = core.AVBRefList.__new__(core.AVBRefList, root=root)
         reflist.extend(item.data)
-        d[name.decode('utf-8')] = reflist
+        d[item.name.decode('utf-8')] = reflist
 
 cdef void controlpoints2dict(object root, dict d, Properties* p):
 
@@ -195,7 +190,6 @@ cdef void controlpoints2dict(object root, dict d, Properties* p):
             obj_class = utils.AVBClassName_dict['ControlPoint']
             pp_obj_class = utils.AVBClassName_dict['PerPoint']
 
-        name = <bytes>item.name
         control_point_list = []
         for cp in item.data:
 
@@ -228,103 +222,81 @@ cdef void controlpoints2dict(object root, dict d, Properties* p):
             py_cp = obj_class.__new__(obj_class, root=root)
             py_cp.property_data = cpdata
             control_point_list.append(py_cp)
-        d[name.decode("utf-8")] = control_point_list
+
+        d[item.name.decode("utf-8")] = control_point_list
 
 
 cdef void int_usigned2dict(dict d, Properties* p):
-    cdef bytes name
     cdef UIntData item
-
     for item in p.int_unsigned:
-        name = <bytes> item.name
-        d[name.decode('utf-8')] = item.data
+        d[item.name.decode('utf-8')] = item.data
 
 cdef void dates2dict(dict d, Properties* p):
-    cdef bytes name
     cdef UIntData item
-
     for item in p.dates:
-        name = <bytes> item.name
-        d[name.decode('utf-8')] = datetime.fromtimestamp(item.data)
+        d[item.name.decode('utf-8')] = datetime.fromtimestamp(item.data)
 
 cdef void int_signed2dict(dict d, Properties* p):
-    cdef bytes name
     cdef IntData item
-
     for item in p.int_signed:
-        name = <bytes> item.name
-        d[name.decode('utf-8')] = item.data
+        d[item.name.decode('utf-8')] = item.data
 
 cdef void doubles2dict(dict d, Properties *p):
-    cdef bytes name
     cdef DoubleData item
     for item in p.doubles:
         name = <bytes> item.name
-        d[name.decode('utf-8')] = item.data
+        d[item.name.decode('utf-8')] = item.data
 
 cdef void bools2dict(dict d,  Properties *p):
-    cdef bytes name
     cdef BoolData item
     for item in p.bools:
-        name = <bytes> item.name
-        d[name.decode('utf-8')] = item.data
+        d[item.name.decode('utf-8')] = item.data
 
 cdef void uuid2dict(dict d, Properties *p):
-
-    cdef bytes name
     cdef bytes data
 
     cdef BytesData item
     cdef uint8_t *ptr
 
     for item in p.uuids:
-        name = <bytes> item.name
         ptr = &item.data[0]
         data = <bytes> ptr[:16]
 
-        d[name.decode('utf-8')] = uuid.UUID(bytes_le=data)
+        d[item.name.decode('utf-8')] = uuid.UUID(bytes_le=data)
 
 cdef void mob_id2dict(dict d, Properties *p):
 
-    cdef bytes name
     cdef bytes data
     cdef MobIDData item
 
     for item in p.mob_ids:
-        name = <bytes> item.name
         data = <bytes> item.data[:32]
 
-        d[name.decode('utf-8')] = MobID(bytes_le=data)
+        d[item.name.decode('utf-8')] = MobID(bytes_le=data)
 
 cdef void strings2dict(dict d, Properties *p):
     cdef const char * ptr
 
-    cdef bytes data
-    cdef bytes name
     cdef StringData item
     cdef size_t data_size;
 
     for item in p.strings:
-        name = <bytes> item.name
         data_size = item.data.size()
 
         if data_size > 0:
             ptr = <const char *>&item.data[0]
-            data = <bytes>ptr[:data_size]
-            d[name.decode('utf-8')] = data.decode("macroman")
+            d[item.name.decode('utf-8')] = ptr[:data_size].decode("macroman")
         else:
-            d[name.decode('utf-8')] = u""
+            d[item.name.decode('utf-8')] = u""
 
 cdef void children2dict(object root, dict d, Properties *p):
     cdef ChildData item
     cdef Properties child_properties
 
-    cdef bytes name
     cdef list plist
     cdef dict pdata
 
     for item in p.children:
-        name = <bytes> item.name
         plist = []
 
         for child_properties in item.data:
@@ -334,7 +306,7 @@ cdef void children2dict(object root, dict d, Properties *p):
             object_instance.property_data = pdata
             plist.append(object_instance)
 
-        d[name.decode('utf-8')] = plist
+        d[item.name.decode('utf-8')] = plist
 
 cdef dict process_poperties(object root, Properties *p):
     cdef dict result = AVBPropertyData()
@@ -363,7 +335,7 @@ def read_attr_data(root, object_instance, const unsigned char[:] data):
     buf.end = &data[-1]
     cdef AttrData item
     cdef vector[AttrData] d
-    cdef bytes item_name
+
     cdef bytes item_data
     cdef object value
 
@@ -374,9 +346,7 @@ def read_attr_data(root, object_instance, const unsigned char[:] data):
         read_attributes(&buf, d)
 
     for item in d:
-        data_size = item.name.size()
-        ptr =  <const char *>&item.name[0]
-        item_name = <bytes> ptr[:data_size]
+
         value = None
 
         if item.type == INT_ATTR:
@@ -385,8 +355,7 @@ def read_attr_data(root, object_instance, const unsigned char[:] data):
         elif item.type == STR_ATTR:
             data_size = item.data.size()
             ptr =  <const char *>&item.data[0]
-            item_data = <bytes> ptr[:data_size]
-            value = item_data.decode('macroman')
+            value = ptr[:data_size].decode('macroman')
 
         elif item.type == OBJ_ATTR:
             value = utils.AVBObjectRef(root, item.value)
@@ -397,8 +366,9 @@ def read_attr_data(root, object_instance, const unsigned char[:] data):
             item_data = <bytes> ptr[:data_size]
             value = bytearray(item_data)
 
-
-        object_instance[item_name.decode('macroman')] = value
+        data_size = item.name.size()
+        ptr =  <const char *>&item.name[0]
+        object_instance[ptr[:data_size].decode('macroman')] = value
 
 # @cython.boundscheck(False)
 def read_fourcc_le(object f):
@@ -414,6 +384,19 @@ def read_fourcc_le(object f):
     cdef bytes result = <bytes> ptr[:4]
     return result
 
+# cdef print_property_sizes(Properties *p):
+#     print("refs",           p.refs.size())
+#     print("int_unsigned",   p.int_unsigned.size())
+#     print("int_signed",     p.int_signed.size())
+#     print("bools",          p.bools.size())
+#     print("dates",          p.dates.size())
+#     print("doubles",        p.doubles.size())
+#     print("uuids",          p.uuids.size())
+#     print("strings",        p.strings.size())
+#     print("mob_ids",        p.mob_ids.size())
+#     print("reflists",       p.reflists.size())
+#     print("children",       p.children.size())
+#     print("control_points", p.control_points.size())
 
 def read_sequence_data(root, object_instance, const unsigned char[:] data):
     cdef Buffer buf
@@ -451,8 +434,11 @@ def read_paramclip_data(root, object_instance, const unsigned char[:] data):
 
     cdef Properties p
     with nogil:
+        p.refs.reserve(6)
+        p.int_signed.reserve(5)
         read_paramclip(&buf, &p)
 
+    # print_property_sizes(&p)
     cdef dict result = process_poperties(root, &p)
 
     object_instance.property_data = result
@@ -521,12 +507,30 @@ def read_composition_data(root, object_instance, const unsigned char[:] data):
 
     cdef Properties p
     with nogil:
+        p.refs.reserve(7)
+        p.int_signed.reserve(4)
+        p.strings.reserve(2)
         read_composition(&buf, &p)
 
+    # print_property_sizes(&p)
     cdef dict result = process_poperties(root, &p)
 
     object_instance.property_data = result
 
+def read_cdci_descriptor_data(root, object_instance, const unsigned char[:] data):
+    cdef Buffer buf
+    buf.root = &data[0]
+    buf.ptr =  &data[0]
+    buf.end = &data[-1]
+
+    cdef Properties p
+    with nogil:
+        read_cdci_descriptor(&buf, &p)
+
+    # print_property_sizes(&p)
+    cdef dict result = process_poperties(root, &p)
+
+    object_instance.property_data = result
 def read_trackeffect_data(root, object_instance, const unsigned char[:] data):
     cdef Buffer buf
     buf.root = &data[0]
@@ -544,6 +548,7 @@ def read_trackeffect_data(root, object_instance, const unsigned char[:] data):
 READERS = {
 b'CMPO': read_composition_data,
 b'TKFX': read_trackeffect_data,
+# b'CDCI': read_cdci_descriptor_data,
 b'SLCT': reads_selector_data,
 b"SEQU": read_sequence_data,
 b'FILL': read_filler_data,
