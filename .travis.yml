@@ -10,7 +10,7 @@ env:
   - PYAVB_BUILD_EXT=1
 install: pip install cython nose
 script:
-  - make test-travis
+  - make test
 deploy:
   on:
     tags: true
