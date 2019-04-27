@@ -38,6 +38,16 @@ enum AttrType {
     BOB_ATTR = 4,
 };
 
+enum ControlPointValueType {
+    CP_TYPE_INT = 1,
+    CP_TYPE_DOUBLE = 2,
+    CP_TYPE_REFERENCE = 4,
+};
+
+enum ControlPointType {
+    ParamControlPointType,
+};
+
 enum PropertyType {
     TRKG,
     TRACK,
@@ -71,6 +81,35 @@ struct IntData64 {
 struct BoolData {
     const char *name;
     int data;
+};
+
+struct BytesData {
+    const char *name;
+    vector<uint8_t> data;
+};
+
+struct PerPoint {
+    int16_t code;
+    ControlPointValueType type;
+    uint32_t value;
+    double double_value;
+};
+
+struct ControlPoint {
+    int32_t offset_num;
+    int32_t offset_den;
+    int32_t timescale;
+
+    uint32_t value;
+    double double_value;
+    vector<PerPoint> pp;
+};
+
+struct ControlPointData {
+    const char *name;
+    ControlPointType type;
+    ControlPointValueType value_type;
+    vector<ControlPoint> data;
 };
 
 struct StringData {
@@ -115,6 +154,8 @@ struct Properties {
     vector<RefListData> reflists;
     vector<ChildData> children;
     vector<MobIDData > mob_ids;
+    vector<BytesData> uuids;
+    vector<ControlPointData> control_points;
 };
 
 static inline uint8_t read_u8(Buffer *f)
@@ -149,6 +190,19 @@ static inline uint32_t read_u32le(Buffer *f)
     value =  read_u16le(f);
     value |= read_u16le(f) << 16;
     return value;
+}
+
+static inline uint64_t read_u64le(Buffer *f)
+{
+    uint64_t value1 = read_u32le(f);
+    uint64_t value2 = read_u32le(f);
+    return value1 | value2 << 32;
+}
+
+static inline double read_double_le(Buffer *f)
+{
+    uint64_t value = read_u64le(f);
+    return *(double*)&value;
 }
 
 static inline double read_exp10_encoded_float(Buffer *f)
@@ -188,13 +242,6 @@ static inline void add_string(Properties *p, Buffer *f, const char* name, String
     s.name = name;
     s.type = t;
     read_data16(f, s.data);
-    // int size = read_u16le(f);
-    // if (size < 65535) {
-    //     s.data.reserve(size);
-    //     for(int i =0; i < size; i++) {
-    //         s.data.push_back(read_u8(f));
-    //     }
-    // }
 }
 
 static inline bool iter_ext(Buffer *f) {
@@ -262,8 +309,6 @@ static inline void add_bool(Properties *p, const char* name, bool value)
     p->bools.push_back(d);
 }
 
-
-
 int read_mob_id(Properties *p, Buffer *f, const char* name)
 {
     MobIDData mob_id;
@@ -319,6 +364,19 @@ int read_mob_id(Properties *p, Buffer *f, const char* name)
     }
 
     p->mob_ids.push_back(mob_id);
+
+    return 0;
+}
+
+int add_raw_uuid(Properties *p, const char * name, Buffer *f)
+{
+    p->uuids.push_back(BytesData());
+    BytesData *d = &p->uuids[p->uuids.size()-1];
+    d->name = name;
+    d->data.resize(16);
+    for(int i =0; i < 16; i++) {
+        d->data[i] = read_u8(f);
+    }
 
     return 0;
 }
@@ -424,6 +482,143 @@ int read_sourceclip(Buffer *f, Properties *p)
         }
     }
 
+    read_assert_tag(f, 0x03);
+
+    return 0;
+}
+
+int read_paramclip(Buffer *f, Properties *p)
+{
+    read_clip(f, p);
+    read_assert_tag(f, 0x02);
+    read_assert_tag(f, 0x01);
+
+    add_int(p, "interp_kind", (int32_t)read_u32le(f));
+
+    ControlPointValueType value_type = (ControlPointValueType)read_u16le(f);
+    add_int(p, "value_type", value_type);
+
+    uint32_t point_count = read_u32le(f);
+
+    p->control_points.resize(1);
+    ControlPointData *cp_data = &p->control_points[0];
+    cp_data->name = "control_points";
+    cp_data->type = ParamControlPointType;
+    cp_data->value_type = value_type;
+    cp_data->data.resize(point_count);
+
+    for (int i=0; i < point_count; i++) {
+        ControlPoint *cp = &cp_data->data[i];
+        cp->offset_num = (int32_t)read_u32le(f);
+        cp->offset_den = (int32_t)read_u32le(f);
+        cp->timescale =  (int32_t)read_u32le(f);
+
+        switch (value_type) {
+            case CP_TYPE_INT:
+                cp->value = read_u32le(f);
+                break;
+            case CP_TYPE_DOUBLE:
+                cp->double_value = read_double_le(f);
+                break;
+            case CP_TYPE_REFERENCE:
+                cp->value = read_u32le(f);
+                break;
+            default:
+                cerr << "unknown value_type: " << (uint32_t)value_type << "\n";
+                return -1;
+        }
+
+        int16_t pp_count = read_u16le(f);
+        cp->pp.resize(pp_count);
+        for(int j = 0; j < pp_count; j++) {
+            PerPoint *pp = &cp->pp[0];
+            pp->code = read_u16le(f);
+            pp->type = (ControlPointValueType)read_u16le(f);
+            switch (pp->type) {
+                case CP_TYPE_INT:
+                    cp->value = read_u32le(f);
+                    break;
+                case CP_TYPE_DOUBLE:
+                    cp->double_value = read_double_le(f);
+                    break;
+                default:
+                    cerr << "unknown value_type: " << (uint32_t)pp->type << "\n";
+                    return -1;
+            }
+        }
+    }
+    while (iter_ext(f)) {
+        uint8_t tag = read_u8(f);
+        switch (tag) {
+            case 0x01:
+                read_assert_tag(f, 71);
+                add_int(p, "extrap_kind", (int32_t)read_u32le(f));
+                break;
+            case 0x02:
+                read_assert_tag(f, 71);
+                add_int(p, "fields", (int32_t)read_u32le(f));
+                break;
+            default:
+                cerr << "unknown ext tag: " << tag << "\n";
+                return -1;
+        }
+    }
+    read_assert_tag(f, 0x03);
+
+    return 0;
+}
+
+int read_paramitem(Buffer *f, Properties *p)
+{
+    read_assert_tag(f, 0x02);
+    read_assert_tag(f, 0x02);
+    add_raw_uuid(p, "uuid", f);
+
+    int16_t value_type = read_u16le(f);
+    add_int(p, "value_type", value_type);
+    switch (value_type) {
+        case 1:
+            add_int(p, "value", (int32_t)read_u32le(f));
+            break;
+        case 2:
+            add_double(p, "value", read_double_le(f));
+            break;
+        case 4:
+            add_object_ref(p, "value", read_u32le(f));
+            break;
+        default:
+            cerr << "unknown value_type: " << (uint32_t)value_type << "\n";
+            return -1;
+    }
+
+    add_string(p, f, "name", MACROMAN);
+    add_bool(p, "enable", read_bool(f));
+    add_object_ref(p, "control_track", read_u32le(f));
+
+    while (iter_ext(f)) {
+        uint8_t tag = read_u8(f);
+        switch (tag) {
+            case 0x01:
+                read_assert_tag(f, 66);
+                add_bool(p, "contribs_to_sig", read_bool(f));
+                break;
+            default:
+                cerr << "unknown ext tag: " << tag << "\n";
+                return -1;
+        }
+    }
+    read_assert_tag(f, 0x03);
+    return 0;
+}
+
+int read_trackref(Buffer *f, Properties *p)
+{
+    read_clip(f, p);
+    read_assert_tag(f, 0x02);
+    read_assert_tag(f, 0x01);
+
+    add_int(p, "relative_scope", (int16_t)read_u16le(f));
+    add_int(p, "relative_track", (int16_t)read_u16le(f));
     read_assert_tag(f, 0x03);
 
     return 0;

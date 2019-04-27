@@ -185,8 +185,6 @@ class AVBObject(object):
     def __getattr__(self, name):
         v = self.property_data.get(name, sentinel)
         if v is not sentinel:
-            if isinstance(v, utils.AVBObjectRef):
-                return v.value
             return v
 
         raise AttributeError("'%s' has no attribute '%s'" % (self.__class__.__name__, name))

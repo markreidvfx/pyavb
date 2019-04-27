@@ -2,11 +2,12 @@
 
 from libcpp.vector cimport vector
 from libcpp.map cimport map
-from libc.stdint cimport (uint8_t, uint32_t, int32_t)
+from libc.stdint cimport (uint8_t, int16_t, uint32_t, int32_t)
 from cython.operator cimport dereference as deref, preincrement as inc
 cimport cython
 
 from datetime import datetime
+import uuid
 
 from .utils import AVBObjectRef
 from . import utils
@@ -33,6 +34,14 @@ cdef extern from "_ext_core.cpp" nogil:
         OBJ_ATTR,
         BOB_ATTR,
 
+    cdef enum ControlPointType:
+        ParamControlPointType,
+
+    cdef enum ControlPointValueType:
+        CP_TYPE_INT,
+        CP_TYPE_DOUBLE,
+        CP_TYPE_REFERENCE,
+
     cdef struct UIntData:
         const char *name
         uint32_t data
@@ -54,6 +63,10 @@ cdef extern from "_ext_core.cpp" nogil:
         StringType type
         vector[uint8_t] data
 
+    cdef struct BytesData:
+        const char *name;
+        vector[uint8_t] data
+
     cdef struct RefListData:
         const char *name
         vector[uint32_t] data
@@ -61,6 +74,26 @@ cdef extern from "_ext_core.cpp" nogil:
     cdef struct MobIDData:
         const char *name;
         uint8_t data[32]
+
+    cdef struct PerPoint:
+        int16_t code;
+        ControlPointValueType type
+        uint32_t value;
+        double double_value;
+
+    cdef struct ControlPoint:
+        int32_t offset_num;
+        int32_t offset_den;
+        int32_t timescale;
+        uint32_t value;
+        double double_value;
+        vector[PerPoint] pp;
+
+    cdef struct ControlPointData:
+        const char *name
+        ControlPointType type
+        ControlPointValueType value_type
+        vector[ControlPoint] data
 
     cdef struct AttrData:
         vector[uint8_t] name
@@ -81,21 +114,43 @@ cdef extern from "_ext_core.cpp" nogil:
         vector[BoolData]   bools
         vector[UIntData]   dates
         vector[DoubleData] doubles
+        vector[BytesData]  uuids
         vector[StringData] strings
         vector[MobIDData]  mob_ids
         vector[RefListData] reflists
         vector[ChildData]  children;
+        vector[ControlPointData] control_points
 
     cdef int read_attributes(Buffer *f, vector[AttrData] &d)
 
     cdef int read_comp(Buffer *f, Properties *p) except+
     cdef int read_sequence(Buffer *f, Properties *p) except+
     cdef int read_sourceclip(Buffer *f, Properties *p) except+
+    cdef int read_paramclip(Buffer *f, Properties *p) except+
+    cdef int read_paramitem(Buffer *f, Properties *p) except+
+    cdef int read_trackref(Buffer *f, Properties *p) except+
     cdef int read_filler(Buffer *f, Properties *p) except+
     cdef int read_trackeffect(Buffer *f, Properties *p) except+
     cdef int read_selector(Buffer *f, Properties *p) except+
     cdef int read_composition(Buffer *f, Properties *p) except+
 
+
+cdef class AVBPropertyData(dict):
+
+    def deref(self, value):
+        if isinstance(value, utils.AVBObjectRef):
+            return value.value
+        return value
+
+    def __getitem__(self, key):
+        return self.deref(super(AVBPropertyData, self).__getitem__(key))
+
+    def items(self):
+        for key, value in super(AVBPropertyData, self).items():
+            yield key, self.deref(value)
+
+    def get(self, *args, **kwargs):
+        return self.deref(super(AVBPropertyData, self).get(*args, **kwargs))
 
 cdef void refs2dict(object root, dict d, Properties* p):
     cdef bytes name
@@ -116,6 +171,65 @@ cdef void reflist2dict(object root, dict d, Properties* p):
         reflist = core.AVBRefList.__new__(core.AVBRefList, root=root)
         reflist.extend(item.data)
         d[name.decode('utf-8')] = reflist
+
+cdef void controlpoints2dict(object root, dict d, Properties* p):
+
+    cdef ControlPointData item
+    cdef ControlPoint cp
+    cdef PerPoint pp
+    cdef bytes name
+    cdef list control_point_list
+    cdef list pp_list
+
+    cdef object obj_class
+    cdef object pp_obj_class
+
+    cdef AVBPropertyData cpdata
+    cdef AVBPropertyData ppdata
+
+    for item in p.control_points:
+        if item.type == ParamControlPointType:
+            obj_class = utils.AVBClassName_dict['ParamControlPoint']
+            pp_obj_class = utils.AVBClassName_dict['ParamPerPoint']
+        else:
+            obj_class = utils.AVBClassName_dict['ControlPoint']
+            pp_obj_class = utils.AVBClassName_dict['PerPoint']
+
+        name = <bytes>item.name
+        control_point_list = []
+        for cp in item.data:
+
+            cpdata = AVBPropertyData()
+            cpdata['offset'] = (cp.offset_num, cp.offset_den)
+            cpdata['timescale'] = cp.timescale
+
+            if item.value_type == CP_TYPE_INT:
+                cpdata['value'] = cp.value
+            elif item.value_type == CP_TYPE_DOUBLE:
+                cpdata['value'] =cp.double_value
+            elif item.value_type == CP_TYPE_REFERENCE:
+                cpdata['value'] = utils.AVBObjectRef(root, cp.value)
+
+            pp_list = []
+            for pp in cp.pp:
+                ppdata = AVBPropertyData()
+                ppdata['code'] = pp.code
+                ppdata['type'] = pp.type
+                if pp.type == CP_TYPE_DOUBLE:
+                    ppdata['value'] = pp.double_value
+                elif pp.type == CP_TYPE_INT:
+                    ppdata['value'] = pp.value
+
+                py_pp = pp_obj_class.__new__(pp_obj_class, root=root)
+                py_pp.property_data = ppdata
+                pp_list.append(py_pp)
+
+            cpdata['pp'] = pp_list
+            py_cp = obj_class.__new__(obj_class, root=root)
+            py_cp.property_data = cpdata
+            control_point_list.append(py_cp)
+        d[name.decode("utf-8")] = control_point_list
+
 
 cdef void int_usigned2dict(dict d, Properties* p):
     cdef bytes name
@@ -154,6 +268,21 @@ cdef void bools2dict(dict d,  Properties *p):
     for item in p.bools:
         name = <bytes> item.name
         d[name.decode('utf-8')] = item.data
+
+cdef void uuid2dict(dict d, Properties *p):
+
+    cdef bytes name
+    cdef bytes data
+
+    cdef BytesData item
+    cdef uint8_t *ptr
+
+    for item in p.uuids:
+        name = <bytes> item.name
+        ptr = &item.data[0]
+        data = <bytes> ptr[:16]
+
+        d[name.decode('utf-8')] = uuid.UUID(bytes_le=data)
 
 cdef void mob_id2dict(dict d, Properties *p):
 
@@ -208,7 +337,7 @@ cdef void children2dict(object root, dict d, Properties *p):
         d[name.decode('utf-8')] = plist
 
 cdef dict process_poperties(object root, Properties *p):
-    cdef dict result = {}
+    cdef dict result = AVBPropertyData()
 
     refs2dict(root, result, p)
     reflist2dict(root, result, p)
@@ -217,8 +346,11 @@ cdef dict process_poperties(object root, Properties *p):
     doubles2dict(result, p)
     strings2dict(result, p)
     bools2dict(result, p)
+    uuid2dict(result, p)
     mob_id2dict(result, p)
     dates2dict(result, p)
+    if p.control_points.size():
+        controlpoints2dict(root, result, p)
     children2dict(root, result, p)
 
     return result
@@ -295,7 +427,7 @@ def read_sequence_data(root, object_instance, const unsigned char[:] data):
 
     cdef dict result = process_poperties(root, &p)
 
-    object_instance.property_data.update(result)# = core.AVBPropertyData(result)
+    object_instance.property_data = result
 
 def read_sourceclip_data(root, object_instance, const unsigned char[:] data):
     cdef Buffer buf
@@ -309,7 +441,49 @@ def read_sourceclip_data(root, object_instance, const unsigned char[:] data):
 
     cdef dict result = process_poperties(root, &p)
 
-    object_instance.property_data = core.AVBPropertyData(result)
+    object_instance.property_data = result
+
+def read_paramclip_data(root, object_instance, const unsigned char[:] data):
+    cdef Buffer buf
+    buf.root = &data[0]
+    buf.ptr =  &data[0]
+    buf.end = &data[-1]
+
+    cdef Properties p
+    with nogil:
+        read_paramclip(&buf, &p)
+
+    cdef dict result = process_poperties(root, &p)
+
+    object_instance.property_data = result
+
+def read_paramitem_data(root, object_instance, const unsigned char[:] data):
+    cdef Buffer buf
+    buf.root = &data[0]
+    buf.ptr =  &data[0]
+    buf.end = &data[-1]
+
+    cdef Properties p
+    with nogil:
+        read_paramitem(&buf, &p)
+
+    cdef dict result = process_poperties(root, &p)
+
+    object_instance.property_data = result
+
+def read_trackref_data(root, object_instance, const unsigned char[:] data):
+    cdef Buffer buf
+    buf.root = &data[0]
+    buf.ptr =  &data[0]
+    buf.end = &data[-1]
+
+    cdef Properties p
+    with nogil:
+        read_trackref(&buf, &p)
+
+    cdef dict result = process_poperties(root, &p)
+
+    object_instance.property_data = result
 
 def read_filler_data(root, object_instance, const unsigned char[:] data):
     cdef Buffer buf
@@ -323,7 +497,7 @@ def read_filler_data(root, object_instance, const unsigned char[:] data):
 
     cdef dict result = process_poperties(root, &p)
 
-    object_instance.property_data.update(result)
+    object_instance.property_data = result
 
 def reads_selector_data(root, object_instance, const unsigned char[:] data):
     cdef Buffer buf
@@ -337,7 +511,7 @@ def reads_selector_data(root, object_instance, const unsigned char[:] data):
 
     cdef dict result = process_poperties(root, &p)
 
-    object_instance.property_data.update(result)
+    object_instance.property_data = result
 
 def read_composition_data(root, object_instance, const unsigned char[:] data):
     cdef Buffer buf
@@ -351,7 +525,7 @@ def read_composition_data(root, object_instance, const unsigned char[:] data):
 
     cdef dict result = process_poperties(root, &p)
 
-    object_instance.property_data.update(result)
+    object_instance.property_data = result
 
 def read_trackeffect_data(root, object_instance, const unsigned char[:] data):
     cdef Buffer buf
@@ -365,7 +539,7 @@ def read_trackeffect_data(root, object_instance, const unsigned char[:] data):
 
     cdef dict result = process_poperties(root, &p)
 
-    object_instance.property_data.update(result)
+    object_instance.property_data = result
 
 READERS = {
 b'CMPO': read_composition_data,
@@ -374,5 +548,8 @@ b'SLCT': reads_selector_data,
 b"SEQU": read_sequence_data,
 b'FILL': read_filler_data,
 b'SCLP': read_sourceclip_data,
+b'PRCL': read_paramclip_data,
+b'PRIT': read_paramitem_data,
+b'TRKR': read_trackref_data,
 b'ATTR': read_attr_data,
 }

@@ -14,6 +14,7 @@ import binascii
 import traceback
 import array
 from weakref import WeakValueDictionary
+import struct
 
 from . import utils
 from .core import walk_references
@@ -157,7 +158,7 @@ class AVBFile(object):
 
         for i in range(num_objects):
             self.object_positions[i+1] = f.tell()
-            class_id = ctx.read_fourcc(f)
+            class_id = f.read(4)
             size = ctx.read_u32(f)
 
             f.seek(size, os.SEEK_CUR)
@@ -233,6 +234,9 @@ class AVBFile(object):
 
         f = self.f
         f.seek(object_pos)
+
+        # ctx.read_chunk
+        # class_id, size = struct.unpack()
         class_id = ctx.read_fourcc(f)
         size = ctx.read_u32(f)
         pos = f.tell()
