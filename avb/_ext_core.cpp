@@ -355,7 +355,6 @@ int read_mob_id(Properties *p, Buffer *f, const char* name)
     read_assert_tag(f, 65);
     int data4len = read_u32le(f);
     if(data4len != 8) {
-        cerr << 'wtf\n';
         return -1;
     }
 
