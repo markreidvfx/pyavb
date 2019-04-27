@@ -1,6 +1,7 @@
 COVERAGE_EXEC := $(shell command -v coverage 2> /dev/null)
 
 test: python-version
+	@python setup.py build_ext --inplace
 	@python -m unittest discover tests -v
 
 python-version:
