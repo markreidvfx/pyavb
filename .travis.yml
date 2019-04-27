@@ -10,7 +10,7 @@ env:
   - PYAVB_BUILD_EXT=1
 install: pip install cython
 script:
-  - pytest
+  - make test
 deploy:
   on:
     tags: true

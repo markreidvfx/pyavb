@@ -1,3 +1,6 @@
+CYTHON_SRC = $(shell find avb -maxdepth 1 -name "*.pyx")
+C_SRC = $(CYTHON_SRC:%.pyx=build/cython/%.cpp)
+MOD_SOS = $(CYTHON_SRC:%.pyx=%.so)
 COVERAGE_EXEC := $(shell command -v coverage 2> /dev/null)
 
 test: python-version
