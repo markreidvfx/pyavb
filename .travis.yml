@@ -5,6 +5,10 @@ python:
   - "3.6"
   - "pypy"
   - "pypy3"
+env:
+  - PYAVB_BUILD_EXT=0
+  - PYAVB_BUILD_EXT=1
+install: pip install cython
 script:
   - make test
 deploy:

@@ -22,14 +22,16 @@ sourcefiles = [
 "avb/_ext.pyx",
 ]
 
+extensions =[]
 try:
     from Cython.Build import cythonize
-    extensions = cythonize([Extension("avb._ext",
-                            sourcefiles,
-                            language="c++")])
+    if int(os.environ.get("PYAVB_BUILD_EXT", '1')):
+        extensions = cythonize([Extension("avb._ext",
+                                sourcefiles,
+                                language="c++")])
 except ImportError as e:
     print('unable to build optional cython extension')
-    extensions =[]
+
 
 class AddMetadata(setuptools.command.build_py.build_py):
     """Stamps PROJECT_METADATA into __init__ files."""
