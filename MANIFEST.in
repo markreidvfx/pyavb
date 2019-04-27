@@ -1,1 +1,3 @@
 include README.rst LICENSE
+include avb/*.pyx
+include avb/*.cpp
