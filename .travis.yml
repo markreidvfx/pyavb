@@ -9,6 +9,12 @@ env:
   - PYAVB_BUILD_EXT=0
   - PYAVB_BUILD_EXT=1
 install: pip install cython nose
+matrix:
+  exclude:
+  - python: pypy
+    env: PYAVB_BUILD_EXT=1
+  - python: pypy3
+    env: PYAVB_BUILD_EXT=1
 script:
   - make test
 deploy:
