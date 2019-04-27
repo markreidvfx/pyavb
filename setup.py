@@ -2,7 +2,6 @@ import sys
 import os
 from setuptools import setup
 import setuptools.command.build_py
-from Cython.Build import cythonize
 from distutils.extension import Extension
 
 PROJECT_METADATA = {
@@ -22,11 +21,15 @@ __license__ = "{license}"
 sourcefiles = [
 "avb/_ext.pyx",
 ]
-extensions = [Extension("avb._ext",
-                        sourcefiles,
-                        language="c++",
-)]
 
+try:
+    from Cython.Build import cythonize
+    extensions = cythonize([Extension("avb._ext",
+                            sourcefiles,
+                            language="c++")])
+except ImportError as e:
+    print('unable to build optional cython extension')
+    extensions =[]
 
 class AddMetadata(setuptools.command.build_py.build_py):
     """Stamps PROJECT_METADATA into __init__ files."""
@@ -89,7 +92,8 @@ setup(
     ],
 
     cmdclass={'build_py': AddMetadata},
-    ext_modules = cythonize(extensions),
+    ext_modules = extensions,
+    extras_require= {'cython' : ['cython']},
 
     **PROJECT_METADATA
 )
