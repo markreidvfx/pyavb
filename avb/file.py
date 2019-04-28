@@ -230,15 +230,15 @@ class AVBFile(object):
 
         object_pos = self.object_positions[index]
 
-        ctx = self.ictx
-
         f = self.f
         f.seek(object_pos)
 
-        # ctx.read_chunk
-        # class_id, size = struct.unpack()
-        class_id = ctx.read_fourcc(f)
-        size = ctx.read_u32(f)
+        if self.ictx.byte_order == 'little':
+            class_id, size = struct.unpack("<4sI", f.read(8))
+            class_id = class_id[::-1]
+        else:
+            class_id, size = struct.unpack(">4sI", f.read(8))
+
         pos = f.tell()
 
         chunk = AVBChunk(self, class_id, pos, size)
