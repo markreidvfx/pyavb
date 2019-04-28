@@ -127,8 +127,7 @@ cdef extern from "_ext_core.cpp" nogil:
         vector[IntArrayData] arrays
         vector[BytesData] bytearrays
 
-    cdef int read_attributes(Buffer *f, vector[AttrData] &d)
-
+    cdef int read_attributes(Buffer *f, vector[AttrData] &d) except+
     cdef int read_comp(Buffer *f, Properties *p) except+
     cdef int read_sequence(Buffer *f, Properties *p) except+
     cdef int read_sourceclip(Buffer *f, Properties *p) except+

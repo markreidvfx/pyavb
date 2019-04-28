@@ -170,10 +170,13 @@ static inline uint8_t read_u8(Buffer *f)
     return 0;
 }
 
+#define S1(x) #x
+#define S2(x) S1(x)
+#define ASSERT_MESSAGE "Assert error: " __FILE__ " : " S2(__LINE__)
+
 #define read_assert_tag(f, value) \
     if (value != read_u8(f)) { \
-        cerr << "assert error: " <<  __FILE__ << ":" << __LINE__ << "\n"; \
-        return -1; \
+        throw runtime_error(ASSERT_MESSAGE); \
     } \
 
 static inline bool read_bool(Buffer *f)
