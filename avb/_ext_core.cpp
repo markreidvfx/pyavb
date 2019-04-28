@@ -55,12 +55,12 @@ enum PropertyType {
 
 struct UIntData {
     const char *name;
-    uint32_t data;
+    uint64_t data;
 };
 
 struct IntData {
     const char *name;
-    int32_t data;
+    int64_t data;
 };
 
 struct DoubleData {
@@ -76,6 +76,11 @@ struct UIntData64 {
 struct IntData64 {
     const char *name;
     int64_t data;
+};
+
+struct IntArrayData {
+    const char *name;
+    vector<int64_t> data;
 };
 
 struct BoolData {
@@ -142,8 +147,6 @@ struct Properties {
     vector<UIntData> dates;
     vector<UIntData> int_unsigned;
     vector<IntData>  int_signed;
-    vector<UIntData64> int_unsigned64;
-    vector<IntData64>  int_signed64;
     vector<DoubleData> doubles;
     vector<StringData> strings;
     struct ChildData {
@@ -156,6 +159,8 @@ struct Properties {
     vector<MobIDData > mob_ids;
     vector<BytesData> uuids;
     vector<ControlPointData> control_points;
+    vector<IntArrayData> arrays;
+    vector<BytesData> bytearrays;
 };
 
 static inline uint8_t read_u8(Buffer *f)
@@ -215,9 +220,9 @@ static inline double read_exp10_encoded_float(Buffer *f)
 
 static inline void read_data32(Buffer *f, std::vector<uint8_t> &s)
 {
-    uint32_t size = read_u32le(f);
+    size_t size = read_u32le(f);
     s.resize(size);
-    for(int i =0; i < size; i++) {
+    for(size_t i =0; i < size; i++) {
         s[i] = read_u8(f);
     }
 }
@@ -380,6 +385,22 @@ static inline int add_raw_uuid(Properties *p, const char * name, Buffer *f)
     return 0;
 }
 
+static inline vector<int64_t> & add_int_array(Properties *p, const char * name)
+{
+    p->arrays.push_back(IntArrayData());
+    IntArrayData *d = &p->arrays[p->arrays.size()-1];
+    d->name = name;
+    return d->data;
+}
+
+static inline vector<uint8_t> & add_bytearray(Properties *p, const char * name)
+{
+    p->bytearrays.push_back(BytesData());
+    BytesData *d = &p->bytearrays[p->bytearrays.size()-1];
+    d->name = name;
+    return d->data;
+}
+
 
 static int read_comp(Buffer *f, Properties *p)
 {
@@ -422,12 +443,12 @@ static int read_sequence(Buffer *f, Properties *p)
     read_assert_tag(f, 0x02);
     read_assert_tag(f, 0x03);
 
-    uint32_t count = (int32_t)read_u32le(f);
+    size_t count = (int32_t)read_u32le(f);
     p->reflists.push_back(RefListData());
     RefListData &reflist = p->reflists[p->reflists.size()-1];
     reflist.name = "components";
     reflist.data.reserve(count);
-    for (int i =0; i < count; i++) {
+    for (size_t i =0; i < count; i++) {
         reflist.data.push_back(read_u32le(f));
     }
 
@@ -497,7 +518,7 @@ static int read_paramclip(Buffer *f, Properties *p)
     ControlPointValueType value_type = (ControlPointValueType)read_u16le(f);
     add_int(p, "value_type", value_type);
 
-    uint32_t point_count = read_u32le(f);
+    size_t point_count = read_u32le(f);
 
     p->control_points.resize(1);
     ControlPointData *cp_data = &p->control_points[0];
@@ -506,7 +527,7 @@ static int read_paramclip(Buffer *f, Properties *p)
     cp_data->value_type = value_type;
     cp_data->data.resize(point_count);
 
-    for (int i=0; i < point_count; i++) {
+    for (size_t i=0; i < point_count; i++) {
         ControlPoint *cp = &cp_data->data[i];
         cp->offset_num = (int32_t)read_u32le(f);
         cp->offset_den = (int32_t)read_u32le(f);
@@ -865,12 +886,220 @@ static int read_did_descriptor(Buffer *f,  Properties *p)
     add_int(p, "display_y_offset",   (int32_t)read_u32le(f));
 
     add_int(p, "frame_layout",       (int16_t)read_u16le(f));
+
+    vector<int64_t> &aspect = add_int_array(p, "aspect_ratio");
+    aspect.push_back((int32_t)read_u32le(f));
+    aspect.push_back((int32_t)read_u32le(f));
+
+    vector<int64_t> &line_map = add_int_array(p, "line_map");
+
+    size_t line_map_byte_size = read_u32le(f);
+    for (size_t i = 0; i < line_map_byte_size/4; i++) {
+        line_map.push_back((int32_t)read_u32le(f));
+    }
+
+    add_int(p, "alpha_transparency",   (int32_t)read_u32le(f));
+    add_bool(p, "uniformness",         read_bool(f));
+    add_int(p, "did_image_size",       (int32_t)read_u32le(f));
+
+    add_object_ref(p, "next_did_desc", read_u32le(f));
+
+    vector<uint8_t> &compress_method = add_bytearray(p, "compress_method");
+    compress_method.resize(4);
+    compress_method[3] = read_u8(f);
+    compress_method[2] = read_u8(f);
+    compress_method[1] = read_u8(f);
+    compress_method[0] = read_u8(f);
+
+    add_int(p, "resolution_id",          (int32_t)read_u32le(f));
+    add_int(p, "image_alignment_factor", (int32_t)read_u32le(f));
+
+    while (iter_ext(f)) {
+        uint8_t tag = read_u8(f);
+
+        if(tag == 0x01) {
+            read_assert_tag(f, 69);
+            add_int(p, "frame_index_byte_order", (int16_t)read_u16le(f));
+
+        } else if (tag == 0x02) {
+            read_assert_tag(f, 71);
+            add_int(p, "frame_sample_size", (int32_t)read_u32le(f));
+
+        } else if (tag == 0x03) {
+            read_assert_tag(f, 71);
+            add_int(p, "first_frame_offset", (int32_t)read_u32le(f));
+
+        } else if (tag == 0x04) {
+            read_assert_tag(f, 71);
+            add_int(p, "client_fill_start", (int32_t)read_u32le(f));
+
+            read_assert_tag(f, 71);
+            add_int(p, "client_fill_end", (int32_t)read_u32le(f));
+
+        } else if (tag == 0x05) {
+            read_assert_tag(f, 71);
+            add_int(p, "offset_to_rle_frame_index", (int32_t)read_u32le(f));
+
+        } else if (tag == 0x06) {
+            read_assert_tag(f, 71);
+            add_int(p, "frame_start_offset", (int32_t)read_u32le(f));
+
+        } else if (tag == 0x08) {
+            vector<int64_t> &valid_box = add_int_array(p, "valid_box");
+            read_assert_tag(f, 71);
+            valid_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            valid_box.push_back((int32_t)read_u32le(f));
+
+            read_assert_tag(f, 71);
+            valid_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            valid_box.push_back((int32_t)read_u32le(f));
+
+            read_assert_tag(f, 71);
+            valid_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            valid_box.push_back((int32_t)read_u32le(f));
+
+            read_assert_tag(f, 71);
+            valid_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            valid_box.push_back((int32_t)read_u32le(f));
+
+            vector<int64_t> &essence_box = add_int_array(p, "essence_box");
+
+            read_assert_tag(f, 71);
+            essence_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            essence_box.push_back((int32_t)read_u32le(f));
+
+            read_assert_tag(f, 71);
+            essence_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            essence_box.push_back((int32_t)read_u32le(f));
+
+            read_assert_tag(f, 71);
+            essence_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            essence_box.push_back((int32_t)read_u32le(f));
+
+            read_assert_tag(f, 71);
+            essence_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            essence_box.push_back((int32_t)read_u32le(f));
+
+            vector<int64_t> &source_box = add_int_array(p, "source_box");
+
+            read_assert_tag(f, 71);
+            source_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            source_box.push_back((int32_t)read_u32le(f));
+
+            read_assert_tag(f, 71);
+            source_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            source_box.push_back((int32_t)read_u32le(f));
+
+            read_assert_tag(f, 71);
+            source_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            source_box.push_back((int32_t)read_u32le(f));
+
+            read_assert_tag(f, 71);
+            source_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            source_box.push_back((int32_t)read_u32le(f));
+
+        } else if (tag == 9) {
+            vector<int64_t> &framing_box = add_int_array(p, "framing_box");
+
+            read_assert_tag(f, 71);
+            framing_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            framing_box.push_back((int32_t)read_u32le(f));
+
+            read_assert_tag(f, 71);
+            framing_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            framing_box.push_back((int32_t)read_u32le(f));
+
+            read_assert_tag(f, 71);
+            framing_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            framing_box.push_back((int32_t)read_u32le(f));
+
+            read_assert_tag(f, 71);
+            framing_box.push_back((int32_t)read_u32le(f));
+            read_assert_tag(f, 71);
+            framing_box.push_back((int32_t)read_u32le(f));
+
+            read_assert_tag(f, 71);
+            add_int(p, "reformatting_option", (int32_t)read_u32le(f));
+
+        } else if (tag == 10) {
+            read_assert_tag(f, 80);
+            add_raw_uuid(p, "transfer_characteristic", f);
+
+        } else if (tag == 11) {
+            read_assert_tag(f, 80);
+            add_raw_uuid(p, "color_primaries", f);
+            read_assert_tag(f, 80);
+            add_raw_uuid(p, "coding_equations", f);
+
+        } else if (tag == 12) {
+            read_assert_tag(f, 80);
+            add_raw_uuid(p, "essence_compression", f);
+
+        } else if (tag == 14) {
+            read_assert_tag(f, 68);
+            add_int(p, "essence_element_size_kind", read_u8(f));
+
+        } else if (tag == 15) {
+            read_assert_tag(f, 66);
+            add_bool(p, "frame_checked_with_mapper", read_bool(f));
+        } else {
+            cerr << "unknown tag: " << (uint32_t)tag << "\n";
+            return -1;
+        }
+    }
+
     return 0;
 }
 
 static int read_cdci_descriptor(Buffer *f, Properties *p)
 {
     read_did_descriptor(f, p);
+    read_assert_tag(f, 0x02);
+    read_assert_tag(f, 0x02);
+
+    add_uint(p, "horizontal_subsampling", read_u32le(f));
+    add_uint(p, "vertical_subsampling", read_u32le(f));
+    add_uint(p, "component_width", read_u32le(f));
+
+    add_int(p, "color_sitting", (int16_t)read_u16le(f));
+    add_uint(p, "black_ref_level", read_u32le(f));
+    add_uint(p, "white_ref_level", read_u32le(f));
+    add_uint(p, "color_range", read_u32le(f));
+
+    add_int(p, "frame_index_offset", (int64_t)read_u64le(f));
+
+    while (iter_ext(f)) {
+        uint8_t tag = read_u8(f);
+        switch (tag) {
+            case 0x01:
+                read_assert_tag(f, 72);
+                add_uint(p, "alpha_sampled_width", read_u32le(f));
+                break;
+            case 0x02:
+                read_assert_tag(f, 72);
+                add_uint(p, "ignore_bw", read_u32le(f));
+                break;
+            default:
+                cerr << "unknown tag type: " << (uint32_t)tag<< "\n";
+                return -1;
+        }
+    }
+    read_assert_tag(f, 0x03);
     return 1;
 }
 
@@ -881,12 +1110,12 @@ static int read_attributes(Buffer *f, std::vector<AttrData> &d)
     read_assert_tag(f, 0x02);
     read_assert_tag(f, 0x01);
 
-    uint32_t attr_count = read_u32le(f);
+    size_t attr_count = read_u32le(f);
     d.resize(attr_count);
 
     AttrData *ptr = &d[0];
 
-    for(int i =0; i < attr_count; i++) {
+    for(size_t i =0; i < attr_count; i++) {
         ptr->type = (AttrType)read_u32le(f);
         read_data16(f, ptr->name);
         switch (ptr->type) {

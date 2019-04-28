@@ -2,7 +2,7 @@
 
 from libcpp.vector cimport vector
 from libcpp.map cimport map
-from libc.stdint cimport (uint8_t, int16_t, uint32_t, int32_t)
+from libc.stdint cimport (uint8_t, int16_t, uint32_t, int32_t,uint64_t, int64_t)
 from cython.operator cimport dereference as deref, preincrement as inc
 cimport cython
 
@@ -44,11 +44,15 @@ cdef extern from "_ext_core.cpp" nogil:
 
     cdef struct UIntData:
         const char *name
-        uint32_t data
+        uint64_t data
 
     cdef struct IntData:
         const char *name
-        int32_t data
+        int64_t data
+
+    cdef struct IntArrayData:
+        const char *name
+        vector[int64_t] data
 
     cdef struct DoubleData:
         const char *name
@@ -120,6 +124,8 @@ cdef extern from "_ext_core.cpp" nogil:
         vector[RefListData] reflists
         vector[ChildData]  children;
         vector[ControlPointData] control_points
+        vector[IntArrayData] arrays
+        vector[BytesData] bytearrays
 
     cdef int read_attributes(Buffer *f, vector[AttrData] &d)
 
@@ -179,8 +185,8 @@ cdef void controlpoints2dict(object root, dict d, Properties* p):
     cdef object obj_class
     cdef object pp_obj_class
 
-    cdef AVBPropertyData cpdata
-    cdef AVBPropertyData ppdata
+    cdef dict cpdata
+    cdef dict ppdata
 
     for item in p.control_points:
         if item.type == ParamControlPointType:
@@ -308,6 +314,27 @@ cdef void children2dict(object root, dict d, Properties *p):
 
         d[item.name.decode('utf-8')] = plist
 
+cdef void int_array2dict(dict d, Properties *p):
+    cdef IntArrayData item
+    for item in p.arrays:
+        name = item.name.decode('utf-8')
+        if name in ('valid_box', 'essence_box', 'source_box', 'framing_box'):
+            d[name] = [ [item.data[0], item.data[1]],
+                        [item.data[2], item.data[3]],
+                        [item.data[4], item.data[5]],
+                        [item.data[6], item.data[7]],]
+        else:
+            d[name] = item.data
+
+cdef void bytearray2dict(dict d, Properties *p):
+    cdef BytesData item
+    cdef uint8_t *ptr
+    cdef size_t size
+    for item in p.bytearrays:
+        ptr = &item.data[0]
+        size = item.data.size()
+        d[item.name.decode('utf-8')] = <bytes> ptr[:size]
+
 cdef dict process_poperties(object root, Properties *p):
     cdef dict result = AVBPropertyData()
 
@@ -321,6 +348,8 @@ cdef dict process_poperties(object root, Properties *p):
     uuid2dict(result, p)
     mob_id2dict(result, p)
     dates2dict(result, p)
+    int_array2dict(result, p)
+    bytearray2dict(result, p)
     if p.control_points.size():
         controlpoints2dict(root, result, p)
     children2dict(root, result, p)
@@ -548,7 +577,7 @@ def read_trackeffect_data(root, object_instance, const unsigned char[:] data):
 READERS = {
 b'CMPO': read_composition_data,
 b'TKFX': read_trackeffect_data,
-# b'CDCI': read_cdci_descriptor_data,
+b'CDCI': read_cdci_descriptor_data,
 b'SLCT': reads_selector_data,
 b"SEQU": read_sequence_data,
 b'FILL': read_filler_data,
