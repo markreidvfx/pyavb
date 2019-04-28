@@ -139,6 +139,8 @@ cdef extern from "_ext_core.cpp" nogil:
     cdef int read_trackeffect(Buffer *f, Properties *p) except+
     cdef int read_selector(Buffer *f, Properties *p) except+
     cdef int read_composition(Buffer *f, Properties *p) except+
+    cdef int read_media_descriptor(Buffer *f, Properties *p) except+
+    cdef int read_did_descriptor(Buffer *f, Properties *p) except+
     cdef int read_cdci_descriptor(Buffer *f, Properties *p) except+
 
 
@@ -546,6 +548,37 @@ def read_composition_data(root, object_instance, const unsigned char[:] data):
 
     object_instance.property_data = result
 
+def read_media_descriptor_data(root, object_instance, const unsigned char[:] data):
+    cdef Buffer buf
+    buf.root = &data[0]
+    buf.ptr =  &data[0]
+    buf.end = &data[-1]
+
+    cdef Properties p
+    with nogil:
+        read_media_descriptor(&buf, &p)
+
+    # print_property_sizes(&p)
+    cdef dict result = process_poperties(root, &p)
+
+    object_instance.property_data = result
+
+def read_did_descriptor_data(root, object_instance, const unsigned char[:] data):
+    cdef Buffer buf
+    buf.root = &data[0]
+    buf.ptr =  &data[0]
+    buf.end = &data[-1]
+
+    cdef Properties p
+    with nogil:
+        read_did_descriptor(&buf, &p)
+
+    # print_property_sizes(&p)
+    cdef dict result = process_poperties(root, &p)
+
+    object_instance.property_data = result
+
+
 def read_cdci_descriptor_data(root, object_instance, const unsigned char[:] data):
     cdef Buffer buf
     buf.root = &data[0]
@@ -560,6 +593,7 @@ def read_cdci_descriptor_data(root, object_instance, const unsigned char[:] data
     cdef dict result = process_poperties(root, &p)
 
     object_instance.property_data = result
+
 def read_trackeffect_data(root, object_instance, const unsigned char[:] data):
     cdef Buffer buf
     buf.root = &data[0]
@@ -577,6 +611,8 @@ def read_trackeffect_data(root, object_instance, const unsigned char[:] data):
 READERS = {
 b'CMPO': read_composition_data,
 b'TKFX': read_trackeffect_data,
+b'MDES': read_media_descriptor_data,
+b'DIDD': read_did_descriptor_data,
 b'CDCI': read_cdci_descriptor_data,
 b'SLCT': reads_selector_data,
 b"SEQU": read_sequence_data,

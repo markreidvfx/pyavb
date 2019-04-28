@@ -946,6 +946,8 @@ static int read_did_descriptor(Buffer *f,  Properties *p)
 
         } else if (tag == 0x08) {
             vector<int64_t> &valid_box = add_int_array(p, "valid_box");
+            valid_box.reserve(8);
+
             read_assert_tag(f, 71);
             valid_box.push_back((int32_t)read_u32le(f));
             read_assert_tag(f, 71);
@@ -967,6 +969,7 @@ static int read_did_descriptor(Buffer *f,  Properties *p)
             valid_box.push_back((int32_t)read_u32le(f));
 
             vector<int64_t> &essence_box = add_int_array(p, "essence_box");
+            essence_box.reserve(8);
 
             read_assert_tag(f, 71);
             essence_box.push_back((int32_t)read_u32le(f));
@@ -989,6 +992,7 @@ static int read_did_descriptor(Buffer *f,  Properties *p)
             essence_box.push_back((int32_t)read_u32le(f));
 
             vector<int64_t> &source_box = add_int_array(p, "source_box");
+            source_box.reserve(8);
 
             read_assert_tag(f, 71);
             source_box.push_back((int32_t)read_u32le(f));
@@ -1012,6 +1016,7 @@ static int read_did_descriptor(Buffer *f,  Properties *p)
 
         } else if (tag == 9) {
             vector<int64_t> &framing_box = add_int_array(p, "framing_box");
+            framing_box.reserve(8);
 
             read_assert_tag(f, 71);
             framing_box.push_back((int32_t)read_u32le(f));
