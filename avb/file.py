@@ -224,7 +224,10 @@ class AVBFile(object):
 
         return pos
 
-    def read_chunk_data(self, index):
+    def read_chunk(self, index):
+        if index == 0:
+            return self.root_chunk
+
         object_pos = self.object_positions[index]
 
         f = self.f
@@ -236,14 +239,8 @@ class AVBFile(object):
         else:
             class_id, size = struct.unpack(">4sI", f.read(8))
 
-        return class_id, f.read(size)
-
-    def read_chunk(self, index):
-        if index == 0:
-            return self.root_chunk
-        class_id, data = self.read_chunk_data(index)
-        pos = self.object_positions[index] + 8
-        chunk = AVBChunk(self, class_id, pos, len(data))
+        pos = f.tell()
+        chunk = AVBChunk(self, class_id, pos, size)
         return chunk
 
     def read_object(self, index):
@@ -254,7 +251,18 @@ class AVBFile(object):
         if object_instance is not None:
             return object_instance
 
-        class_id, data = self.read_chunk_data(index)
+        object_pos = self.object_positions[index]
+
+        f = self.f
+        f.seek(object_pos)
+
+        if self.ictx.byte_order == 'little':
+            class_id, size = struct.unpack("<4sI", f.read(8))
+            class_id = class_id[::-1]
+        else:
+            class_id, size = struct.unpack(">4sI", f.read(8))
+
+        data = f.read(size)
 
         obj_class = utils.AVBClaseID_dict.get(class_id, None)
         if obj_class:
