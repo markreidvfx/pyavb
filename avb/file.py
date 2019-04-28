@@ -224,10 +224,7 @@ class AVBFile(object):
 
         return pos
 
-    def read_chunk(self, index):
-        if index == 0:
-            return self.root_chunk
-
+    def read_chunk_data(self, index):
         object_pos = self.object_positions[index]
 
         f = self.f
@@ -239,9 +236,14 @@ class AVBFile(object):
         else:
             class_id, size = struct.unpack(">4sI", f.read(8))
 
-        pos = f.tell()
+        return class_id, f.read(size)
 
-        chunk = AVBChunk(self, class_id, pos, size)
+    def read_chunk(self, index):
+        if index == 0:
+            return self.root_chunk
+        class_id, data = self.read_chunk_data(index)
+        pos = self.object_positions[index] + 8
+        chunk = AVBChunk(self, class_id, pos, len(data))
         return chunk
 
     def read_object(self, index):
@@ -252,10 +254,9 @@ class AVBFile(object):
         if object_instance is not None:
             return object_instance
 
-        chunk = self.read_chunk(index)
-        data = chunk.read()
+        class_id, data = self.read_chunk_data(index)
 
-        obj_class = utils.AVBClaseID_dict.get(chunk.class_id, None)
+        obj_class = utils.AVBClaseID_dict.get(class_id, None)
         if obj_class:
             try:
                 self.reading = True
@@ -263,10 +264,10 @@ class AVBFile(object):
                 object_instance = obj_class.__new__(obj_class, root=self)
 
                 # Only OrderedDict needs run __init__ in order to work
-                if chunk.class_id == b'ATTR':
+                if class_id == b'ATTR':
                     object_instance.__init__(object_instance)
 
-                reader = self.fast_readers.get(chunk.class_id, None)
+                reader = self.fast_readers.get(class_id, None)
 
                 if reader:
                     reader(self, object_instance, data)
@@ -279,6 +280,8 @@ class AVBFile(object):
                 object_instance.instance_id = index
                 return object_instance
             except:
+                pos = self.object_positions[index] + 8
+                chunk = AVBChunk(self, class_id, pos, len(data))
                 print(chunk.class_id)
                 print(chunk.hex())
                 print(traceback.format_exc())
@@ -287,6 +290,8 @@ class AVBFile(object):
                 self.reading = False
 
         else:
+            pos = self.object_positions[index] + 8
+            chunk = AVBChunk(self, class_id, pos, len(data))
             print(chunk.class_id)
             print(chunk.hex())
             raise NotImplementedError(chunk.class_id)
