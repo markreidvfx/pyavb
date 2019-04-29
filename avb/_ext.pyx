@@ -409,20 +409,6 @@ def read_attr_data(root, object_instance, const unsigned char[:] data):
         ptr =  <const char *>&item.name[0]
         object_instance[ptr[:data_size].decode('macroman')] = value
 
-# @cython.boundscheck(False)
-def read_fourcc_le(object f):
-    cdef const unsigned char[:] data = f.read(4)
-    if len(data) != 4:
-        return None
-
-    cdef uint32_t value = data[3]
-    value |= data[2] << 8
-    value |= data[1] << 16
-    value |= data[0] << 24
-    cdef uint8_t *ptr = <uint8_t *> &value
-    cdef bytes result = <bytes> ptr[:4]
-    return result
-
 # cdef print_property_sizes(Properties *p):
 #     print("refs",           p.refs.size())
 #     print("int_unsigned",   p.int_unsigned.size())
