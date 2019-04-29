@@ -180,6 +180,11 @@ static inline uint8_t read_u8(Buffer *f)
         throw runtime_error(ASSERT_MESSAGE); \
     } \
 
+#define check(value) \
+    if (value < 0) {  \
+        throw runtime_error(ASSERT_MESSAGE); \
+    } \
+
 static inline bool read_bool(Buffer *f)
 {
     return read_u8(f) == 0x01;
@@ -835,16 +840,13 @@ static int read_media_descriptor(Buffer *f,  Properties *p)
                 return -1;
             }
             add_raw_uuid(p, "uuid",f);
-            break;
         } else if (tag== 0x02) {
             read_assert_tag(f, 65);
-            vector<uint8_t> data;
+            vector<uint8_t> &data = add_bytearray(p, "wchar");
             read_data32(f, data);
-            break;
         } else if (tag == 0x03 ) {
             read_assert_tag(f, 72);
             add_object_ref(p, "attributes", read_u32le(f));
-            break;
         } else {
             cerr << "unknown ext tag: " << (uint32_t)tag << "\n";
             return -1;
@@ -856,7 +858,7 @@ static int read_media_descriptor(Buffer *f,  Properties *p)
 
 static int read_media_file_descriptor(Buffer *f,  Properties *p)
 {
-    read_media_descriptor(f, p);
+    check(read_media_descriptor(f, p));
     read_assert_tag(f, 0x02);
     read_assert_tag(f, 0x03);
 
