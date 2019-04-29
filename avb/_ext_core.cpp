@@ -538,8 +538,8 @@ static int read_paramclip(Buffer *f, Properties *p)
         int16_t pp_count = read_u16le(f);
         cp->pp.resize(pp_count);
         for(int j = 0; j < pp_count; j++) {
-            PerPoint *pp = &cp->pp[0];
-            pp->code = read_u16le(f);
+            PerPoint *pp = &cp->pp[j];
+            pp->code = (int16_t)read_u16le(f);
             pp->type = (ControlPointValueType)read_u16le(f);
             switch (pp->type) {
                 case CP_TYPE_INT:
