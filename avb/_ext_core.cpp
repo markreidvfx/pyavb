@@ -69,16 +69,6 @@ struct DoubleData {
     double data;
 };
 
-struct UIntData64 {
-    const char *name;
-    uint64_t data;
-};
-
-struct IntData64 {
-    const char *name;
-    int64_t data;
-};
-
 struct IntArrayData {
     const char *name;
     vector<int64_t> data;
