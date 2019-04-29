@@ -51,6 +51,7 @@ enum ControlPointType {
 enum PropertyType {
     TRKG,
     TRACK,
+    PARAM,
 };
 
 struct UIntData {
@@ -1108,9 +1109,91 @@ static int read_cdci_descriptor(Buffer *f, Properties *p)
         }
     }
     read_assert_tag(f, 0x03);
-    return 1;
+    return 0;
 }
 
+static int read_effectparamlist(Buffer *f, Properties *p)
+{
+    read_assert_tag(f, 0x02);
+    read_assert_tag(f, 0x12);
+
+    add_int(p, "orig_length",    (int32_t)read_u32le(f));
+    add_int(p, "window_offset",  (int32_t)read_u32le(f));
+
+    int32_t parameter_count = read_u32le(f);
+    add_int(p, "keyframe_size",  (int32_t)read_u32le(f));
+
+    p->children.push_back(Properties::ChildData());
+    Properties::ChildData &child = p->children[ p->children.size()-1];
+    child.name = "parameters";
+
+    vector <Properties> &parameters = child.data;
+    parameters.resize(parameter_count);
+
+    for (int i = 0; i < parameter_count; i++) {
+        Properties &param = parameters[i];
+        param.type = PARAM;
+
+        add_int(&param, "percent_time",  (int32_t)read_u32le(f));
+        add_int(&param, "level",         (int32_t)read_u32le(f));
+        add_int(&param, "pos_x",         (int32_t)read_u32le(f));
+        add_int(&param, "floor_x",       (int32_t)read_u32le(f));
+        add_int(&param, "ceil_x",        (int32_t)read_u32le(f));
+        add_int(&param, "pos_y",         (int32_t)read_u32le(f));
+        add_int(&param, "floor_y",       (int32_t)read_u32le(f));
+        add_int(&param, "ceil_y",        (int32_t)read_u32le(f));
+        add_int(&param, "scale_x",       (int32_t)read_u32le(f));
+        add_int(&param, "scale_y",       (int32_t)read_u32le(f));
+
+        add_int(&param, "crop_left",      (int32_t)read_u32le(f));
+        add_int(&param, "crop_right",     (int32_t)read_u32le(f));
+        add_int(&param, "crop_top",       (int32_t)read_u32le(f));
+        add_int(&param, "crop_bottom",    (int32_t)read_u32le(f));
+
+        vector<int64_t> &box = add_int_array(&param, "box");
+        box.reserve(4);
+        box.push_back((int32_t)read_u32le(f));
+        box.push_back((int32_t)read_u32le(f));
+        box.push_back((int32_t)read_u32le(f));
+        box.push_back((int32_t)read_u32le(f));
+
+        add_bool(&param, "box_xscale", read_bool(f));
+        add_bool(&param, "box_yscale", read_bool(f));
+        add_bool(&param, "box_xpos",   read_bool(f));
+        add_bool(&param, "box_ypos",   read_bool(f));
+
+        add_int(&param, "border_width",  (int32_t)read_u32le(f));
+        add_int(&param, "border_soft",   (int32_t)read_u32le(f));
+
+        add_int(&param, "splill_gain2",   (int16_t)read_u16le(f));
+        add_int(&param, "splill_gain",    (int16_t)read_u16le(f));
+        add_int(&param, "splill_soft2",   (int16_t)read_u16le(f));
+        add_int(&param, "splill_soft",    (int16_t)read_u16le(f));
+
+        add_int(&param, "enable_key_flags",   (int8_t)read_u8(f));
+
+        uint32_t color_count =read_u32le(f);
+        vector<int64_t> &colors = add_int_array(&param, "colors");
+        colors.reserve(color_count);
+
+        for (int j=0; j < color_count; j++) {
+            colors.push_back((int32_t)read_u32le(f));
+        }
+
+        uint32_t param_size = read_u32le(f);
+        vector<uint8_t> &user_param = add_bytearray(&param, "user_param");
+        user_param.resize(param_size);
+        for (int j=0; j < param_size; j++) {
+            user_param[j] = read_u8(f);
+        }
+
+        add_bool(&param, "selected",   read_bool(f));
+
+    }
+
+    read_assert_tag(f, 0x03);
+    return 0;
+}
 
 static int read_attributes(Buffer *f, std::vector<AttrData> &d)
 {

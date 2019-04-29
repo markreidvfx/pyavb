@@ -27,6 +27,7 @@ cdef extern from "_ext_core.cpp" nogil:
     cdef enum PropertyType:
         TRKG,
         TRACK,
+        PARAM,
 
     cdef enum AttrType:
         INT_ATTR,
@@ -111,7 +112,7 @@ cdef extern from "_ext_core.cpp" nogil:
         const uint8_t *end
 
     cdef struct Properties:
-        Buffer *f
+        PropertyType type
         vector[UIntData]   refs
         vector[UIntData]   int_unsigned
         vector[IntData]    int_signed
@@ -141,7 +142,7 @@ cdef extern from "_ext_core.cpp" nogil:
     cdef int read_media_descriptor(Buffer *f, Properties *p) except+
     cdef int read_did_descriptor(Buffer *f, Properties *p) except+
     cdef int read_cdci_descriptor(Buffer *f, Properties *p) except+
-
+    cdef int read_effectparamlist(Buffer *f, Properties *p) except+
 
 cdef class AVBPropertyData(dict):
 
@@ -308,7 +309,12 @@ cdef void children2dict(object root, dict d, Properties *p):
 
         for child_properties in item.data:
             pdata = process_poperties(root, &child_properties)
-            obj_class = utils.AVBClassName_dict['Track']
+
+            if child_properties.type == TRACK:
+                obj_class = utils.AVBClassName_dict['Track']
+            elif child_properties.type == PARAM:
+                obj_class = utils.AVBClassName_dict['EffectParam']
+
             object_instance = obj_class.__new__(obj_class, root=root)
             object_instance.property_data = pdata
             plist.append(object_instance)
@@ -334,7 +340,7 @@ cdef void bytearray2dict(dict d, Properties *p):
     for item in p.bytearrays:
         ptr = &item.data[0]
         size = item.data.size()
-        d[item.name.decode('utf-8')] = <bytes> ptr[:size]
+        d[item.name.decode('utf-8')] = bytearray(<bytes> ptr[:size])
 
 cdef dict process_poperties(object root, Properties *p):
     cdef dict result = AVBPropertyData()
@@ -607,6 +613,21 @@ def read_trackeffect_data(root, object_instance, const unsigned char[:] data):
 
     object_instance.property_data = result
 
+def read_effectparamlist_data(root, object_instance, const unsigned char[:] data):
+    cdef Buffer buf
+    buf.root = &data[0]
+    buf.ptr =  &data[0]
+    buf.end = &data[-1]
+
+    cdef Properties p
+    with nogil:
+        read_effectparamlist(&buf, &p)
+
+    cdef dict result = process_poperties(root, &p)
+
+    object_instance.property_data = result
+
+
 READERS = {
 b'CMPO': read_composition_data,
 b'TKFX': read_trackeffect_data,
@@ -620,5 +641,6 @@ b'SCLP': read_sourceclip_data,
 b'PRCL': read_paramclip_data,
 b'PRIT': read_paramitem_data,
 b'TRKR': read_trackref_data,
+b'FXPS': read_effectparamlist_data,
 b'ATTR': read_attr_data,
 }
