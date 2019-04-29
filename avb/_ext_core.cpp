@@ -253,7 +253,7 @@ static inline bool iter_ext(Buffer *f) {
 }
 
 
-static inline void add_object_ref(Properties *p, const char* name, uint32_t value)
+static inline void add_object_ref(Properties *p, const char* name, uint64_t value)
 {
     IntData d = {};
 
@@ -291,7 +291,7 @@ static inline void add_double(Properties *p, const char* name, double value)
 }
 
 
-static inline void add_date(Properties *p, const char* name, uint32_t value)
+static inline void add_date(Properties *p, const char* name, uint64_t value)
 {
     IntData d = {};
 
