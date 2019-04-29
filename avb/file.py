@@ -268,10 +268,10 @@ class AVBFile(object):
         f.seek(object_pos)
 
         if self.ictx.byte_order == 'little':
-            class_id, size = struct.unpack("<4sI", f.read(8))
+            class_id, size = struct.unpack(b"<4sI", f.read(8))
             class_id = class_id[::-1]
         else:
-            class_id, size = struct.unpack(">4sI", f.read(8))
+            class_id, size = struct.unpack(b">4sI", f.read(8))
 
         data = bytearray(size)
         bytes_read = f.readinto(data)
