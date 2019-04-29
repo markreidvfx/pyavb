@@ -267,7 +267,7 @@ static inline void add_object_ref(Properties *p, const char* name, uint32_t valu
     p->refs.push_back(d);
 }
 
-static inline void add_uint(Properties *p, const char* name, uint32_t value)
+static inline void add_uint(Properties *p, const char* name, uint64_t value)
 {
     UIntData d = {};
 
@@ -276,7 +276,7 @@ static inline void add_uint(Properties *p, const char* name, uint32_t value)
     p->int_unsigned.push_back(d);
 }
 
-static inline void add_int(Properties *p, const char* name, int32_t value)
+static inline void add_int(Properties *p, const char* name, int64_t value)
 {
     IntData d = {};
 
