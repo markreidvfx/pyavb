@@ -1,8 +1,5 @@
-#include <map>
-#include <string>
-#include <iostream>
-#include <string>
 #include <vector>
+#include <iostream>
 #include <math.h>
 
 using namespace std;
