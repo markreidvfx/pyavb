@@ -439,7 +439,7 @@ static int read_comp(Buffer *f, Properties *p)
                 break;
             default:
                 cerr << "unknown ext tag: " << tag << "\n";
-                break;
+                return -1;
         }
     }
 
@@ -507,7 +507,7 @@ static int read_sourceclip(Buffer *f, Properties *p)
                 break;
             default:
                 cerr << "unknown ext tag: " << (uint32_t)tag << "\n";
-                break;
+                return -1;
         }
     }
 
@@ -724,7 +724,7 @@ static int read_trackgroup(Buffer *f, Properties *p)
                 break;
             default:
                 cerr << "unknown ext tag: " << tag << "\n";
-                break;
+                return -1;
         }
     }
 
@@ -1122,7 +1122,7 @@ static int read_effectparamlist(Buffer *f, Properties *p)
     add_int(p, "orig_length",    (int32_t)read_u32le(f));
     add_int(p, "window_offset",  (int32_t)read_u32le(f));
 
-    int32_t parameter_count = read_u32le(f);
+    size_t parameter_count = read_u32le(f);
     add_int(p, "keyframe_size",  (int32_t)read_u32le(f));
 
     p->children.push_back(Properties::ChildData());
@@ -1132,7 +1132,7 @@ static int read_effectparamlist(Buffer *f, Properties *p)
     vector <Properties> &parameters = child.data;
     parameters.resize(parameter_count);
 
-    for (int i = 0; i < parameter_count; i++) {
+    for (size_t i = 0; i < parameter_count; i++) {
         Properties &param = parameters[i];
         param.type = PARAM;
 
@@ -1174,18 +1174,18 @@ static int read_effectparamlist(Buffer *f, Properties *p)
 
         add_int(&param, "enable_key_flags",   (int8_t)read_u8(f));
 
-        uint32_t color_count =read_u32le(f);
+        size_t color_count =read_u32le(f);
         vector<int64_t> &colors = add_int_array(&param, "colors");
         colors.reserve(color_count);
 
-        for (int j=0; j < color_count; j++) {
+        for (size_t j=0; j < color_count; j++) {
             colors.push_back((int32_t)read_u32le(f));
         }
 
-        uint32_t param_size = read_u32le(f);
+        size_t param_size = read_u32le(f);
         vector<uint8_t> &user_param = add_bytearray(&param, "user_param");
         user_param.resize(param_size);
-        for (int j=0; j < param_size; j++) {
+        for (size_t j=0; j < param_size; j++) {
             user_param[j] = read_u8(f);
         }
 
