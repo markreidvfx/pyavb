@@ -115,11 +115,6 @@ struct RefListData {
     vector<uint32_t> data;
 };
 
-struct MobIDData {
-    const char *name;
-    uint8_t data[32];
-};
-
 struct AttrData {
     vector<uint8_t> name;
     AttrType type;
@@ -142,7 +137,7 @@ struct Properties {
     };
     vector<RefListData> reflists;
     vector<ChildData> children;
-    vector<MobIDData > mob_ids;
+    vector<BytesData> mob_ids;
     vector<BytesData> uuids;
     vector<ControlPointData> control_points;
     vector<IntArrayData> arrays;
@@ -311,9 +306,9 @@ static inline void add_bool(Properties *p, const char* name, bool value)
 
 static inline int read_mob_id(Properties *p, Buffer *f, const char* name)
 {
-    MobIDData mob_id;
+    BytesData mob_id;
     mob_id.name = name;
-
+    mob_id.data.resize(32);
     uint8_t *m = &mob_id.data[0];
 
     read_assert_tag(f, 65);

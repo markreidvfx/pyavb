@@ -73,10 +73,6 @@ cdef extern from "_ext_core.cpp" nogil:
         const char *name
         vector[uint32_t] data
 
-    cdef struct MobIDData:
-        const char *name;
-        uint8_t data[32]
-
     cdef struct PerPoint:
         int16_t code;
         ControlPointValueType type
@@ -117,7 +113,7 @@ cdef extern from "_ext_core.cpp" nogil:
         vector[DoubleData] doubles
         vector[BytesData]  uuids
         vector[StringData] strings
-        vector[MobIDData]  mob_ids
+        vector[BytesData]  mob_ids
         vector[RefListData] reflists
         vector[ChildData]  children;
         vector[ControlPointData] control_points
@@ -268,12 +264,13 @@ cdef void uuid2dict(dict d, Properties *p):
         d[item.name.decode('utf-8')] = uuid.UUID(bytes_le=data)
 
 cdef void mob_id2dict(dict d, Properties *p):
-
     cdef bytes data
-    cdef MobIDData item
+    cdef BytesData item
+    cdef uint8_t *ptr
 
     for item in p.mob_ids:
-        data = <bytes> item.data[:32]
+        ptr = &item.data[0]
+        data = <bytes> ptr[:32]
 
         d[item.name.decode('utf-8')] = MobID(bytes_le=data)
 
