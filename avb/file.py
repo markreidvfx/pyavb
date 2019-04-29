@@ -89,8 +89,16 @@ LE_BYTE_ORDER = b'\x06\x00'
 BE_BYTE_ORDER = b'\x00\x06'
 MAGIC=b'Domain'
 
+def is_fileobject_like(fileobject):
+
+    for attr_name in ('read', 'readinto', 'seek', 'tell', 'close'):
+        if not hasattr(fileobject, attr_name):
+            return False
+
+    return True
+
 class AVBFile(object):
-    def __init__(self, path=None, buffering=io.DEFAULT_BUFFER_SIZE, use_ext=True):
+    def __init__(self, fileobject=None, buffering=io.DEFAULT_BUFFER_SIZE, use_ext=True):
 
         self.check_refs = True
         self.debug_copy_refs = False
@@ -101,11 +109,14 @@ class AVBFile(object):
         self.modified_objects = {}
         self.next_object_id = 0
 
-        if path is None:
+        if fileobject is None:
             self.setup_empty()
             return
 
-        self.f = io.open(path, 'rb', buffering=buffering)
+        if is_fileobject_like(fileobject):
+            self.f = fileobject
+        else:
+            self.f = io.open(fileobject, 'rb', buffering=buffering)
 
         f = self.f
         file_bytes = f.read(2)
@@ -262,7 +273,9 @@ class AVBFile(object):
         else:
             class_id, size = struct.unpack(">4sI", f.read(8))
 
-        data = f.read(size)
+        data = bytearray(size)
+        bytes_read = f.readinto(data)
+        assert bytes_read == size
 
         obj_class = utils.AVBClaseID_dict.get(class_id, None)
         if obj_class:
