@@ -411,8 +411,7 @@ def read_attr_data(root, object_instance, const unsigned char[:] data):
 
 # cdef print_property_sizes(Properties *p):
 #     print("refs",           p.refs.size())
-#     print("int_unsigned",   p.int_unsigned.size())
-#     print("int_signed",     p.int_signed.size())
+#     print("ints",           p.ints.size())
 #     print("bools",          p.bools.size())
 #     print("dates",          p.dates.size())
 #     print("doubles",        p.doubles.size())
@@ -460,6 +459,7 @@ def read_paramclip_data(root, object_instance, const unsigned char[:] data):
     cdef Properties p
     with nogil:
         p.refs.reserve(6)
+        p.ints.reserve(6)
         read_paramclip(&buf, &p)
 
     # print_property_sizes(&p)
@@ -477,6 +477,7 @@ def read_paramitem_data(root, object_instance, const unsigned char[:] data):
     with nogil:
         read_paramitem(&buf, &p)
 
+    # print_property_sizes(&p)
     cdef dict result = process_poperties(root, &p)
 
     object_instance.property_data = result
@@ -531,6 +532,7 @@ def read_composition_data(root, object_instance, const unsigned char[:] data):
 
     cdef Properties p
     with nogil:
+        p.ints.reserve(6)
         p.refs.reserve(7)
         p.strings.reserve(2)
         read_composition(&buf, &p)
@@ -594,10 +596,13 @@ def read_trackeffect_data(root, object_instance, const unsigned char[:] data):
 
     cdef Properties p
     with nogil:
+        p.refs.reserve(8)
+        p.ints.reserve(12)
         read_trackeffect(&buf, &p)
 
     cdef dict result = process_poperties(root, &p)
 
+    # print_property_sizes(&p)
     object_instance.property_data = result
 
 def read_effectparamlist_data(root, object_instance, const unsigned char[:] data):
