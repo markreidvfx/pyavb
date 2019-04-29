@@ -332,7 +332,7 @@ cdef void bytearray2dict(dict d, Properties *p):
     for item in p.bytearrays:
         ptr = &item.data[0]
         size = item.data.size()
-        d[item.name.decode('utf-8')] = bytearray(<bytes> ptr[:size])
+        d[item.name.decode('utf-8')] = <bytearray> ptr[:size]
 
 cdef dict process_poperties(object root, Properties *p):
     cdef dict result = AVBPropertyData()
@@ -375,7 +375,6 @@ def read_attr_data(root, object_instance, const unsigned char[:] data):
     cdef AttrData item
     cdef vector[AttrData] d
 
-    cdef bytes item_data
     cdef object value
 
     cdef const char * ptr
@@ -402,8 +401,7 @@ def read_attr_data(root, object_instance, const unsigned char[:] data):
         elif item.type == BOB_ATTR:
             data_size = item.data.size()
             ptr =  <const char *>&item.data[0]
-            item_data = <bytes> ptr[:data_size]
-            value = bytearray(item_data)
+            value = <bytearray> ptr[:data_size]
 
         data_size = item.name.size()
         ptr =  <const char *>&item.name[0]
