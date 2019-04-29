@@ -1,4 +1,4 @@
-# cython: language_level=3, distutils: language = c++, boundscheck=False
+# cython: language_level=3, distutils: language = c++, boundscheck=False, profile=False
 
 from libcpp.vector cimport vector
 from libcpp.map cimport map
@@ -43,13 +43,10 @@ cdef extern from "_ext_core.cpp" nogil:
         CP_TYPE_DOUBLE,
         CP_TYPE_REFERENCE,
 
-    cdef struct UIntData:
-        const char *name
-        uint64_t data
-
     cdef struct IntData:
         const char *name
-        int64_t data
+        bint is_signed;
+        uint64_t data
 
     cdef struct IntArrayData:
         const char *name
@@ -113,11 +110,10 @@ cdef extern from "_ext_core.cpp" nogil:
 
     cdef struct Properties:
         PropertyType type
-        vector[UIntData]   refs
-        vector[UIntData]   int_unsigned
-        vector[IntData]    int_signed
+        vector[IntData]   refs
+        vector[IntData]   ints
         vector[BoolData]   bools
-        vector[UIntData]   dates
+        vector[IntData]   dates
         vector[DoubleData] doubles
         vector[BytesData]  uuids
         vector[StringData] strings
@@ -162,7 +158,7 @@ cdef class AVBPropertyData(dict):
         return self.deref(super(AVBPropertyData, self).get(*args, **kwargs))
 
 cdef void refs2dict(object root, dict d, Properties* p):
-    cdef UIntData item
+    cdef IntData item
     for item in p.refs:
         d[item.name.decode('utf-8')] = AVBObjectRef(root, item.data)
 
@@ -234,20 +230,19 @@ cdef void controlpoints2dict(object root, dict d, Properties* p):
         d[item.name.decode("utf-8")] = control_point_list
 
 
-cdef void int_usigned2dict(dict d, Properties* p):
-    cdef UIntData item
-    for item in p.int_unsigned:
-        d[item.name.decode('utf-8')] = item.data
+cdef void ints2dict(dict d, Properties* p):
+    cdef IntData item
+    cdef int64_t signed_value
+    for item in p.ints:
+        if item.is_signed:
+            d[item.name.decode('utf-8')] = <int64_t>item.data
+        else:
+            d[item.name.decode('utf-8')] = item.data
 
 cdef void dates2dict(dict d, Properties* p):
-    cdef UIntData item
+    cdef IntData item
     for item in p.dates:
         d[item.name.decode('utf-8')] = datetime.fromtimestamp(item.data)
-
-cdef void int_signed2dict(dict d, Properties* p):
-    cdef IntData item
-    for item in p.int_signed:
-        d[item.name.decode('utf-8')] = item.data
 
 cdef void doubles2dict(dict d, Properties *p):
     cdef DoubleData item
@@ -347,8 +342,7 @@ cdef dict process_poperties(object root, Properties *p):
 
     refs2dict(root, result, p)
     reflist2dict(root, result, p)
-    int_usigned2dict(result, p)
-    int_signed2dict(result, p)
+    ints2dict(result, p)
     doubles2dict(result, p)
     strings2dict(result, p)
     bools2dict(result, p)
@@ -471,7 +465,6 @@ def read_paramclip_data(root, object_instance, const unsigned char[:] data):
     cdef Properties p
     with nogil:
         p.refs.reserve(6)
-        p.int_signed.reserve(5)
         read_paramclip(&buf, &p)
 
     # print_property_sizes(&p)
@@ -544,7 +537,6 @@ def read_composition_data(root, object_instance, const unsigned char[:] data):
     cdef Properties p
     with nogil:
         p.refs.reserve(7)
-        p.int_signed.reserve(4)
         p.strings.reserve(2)
         read_composition(&buf, &p)
 

@@ -54,14 +54,10 @@ enum PropertyType {
     PARAM,
 };
 
-struct UIntData {
-    const char *name;
-    uint64_t data;
-};
-
 struct IntData {
     const char *name;
-    int64_t data;
+    uint64_t data;
+    bool is_signed;
 };
 
 struct DoubleData {
@@ -134,10 +130,9 @@ struct AttrData {
 struct Properties {
     PropertyType type;
     vector<BoolData> bools;
-    vector<UIntData> refs;
-    vector<UIntData> dates;
-    vector<UIntData> int_unsigned;
-    vector<IntData>  int_signed;
+    vector<IntData> refs;
+    vector<IntData> dates;
+    vector<IntData> ints;
     vector<DoubleData> doubles;
     vector<StringData> strings;
     struct ChildData {
@@ -260,7 +255,7 @@ static inline bool iter_ext(Buffer *f) {
 
 static inline void add_object_ref(Properties *p, const char* name, uint32_t value)
 {
-    UIntData d = {};
+    IntData d = {};
 
     d.name = name;
     d.data = value;
@@ -269,11 +264,11 @@ static inline void add_object_ref(Properties *p, const char* name, uint32_t valu
 
 static inline void add_uint(Properties *p, const char* name, uint64_t value)
 {
-    UIntData d = {};
+    IntData d = {};
 
     d.name = name;
     d.data = value;
-    p->int_unsigned.push_back(d);
+    p->ints.push_back(d);
 }
 
 static inline void add_int(Properties *p, const char* name, int64_t value)
@@ -282,7 +277,8 @@ static inline void add_int(Properties *p, const char* name, int64_t value)
 
     d.name = name;
     d.data = value;
-    p->int_signed.push_back(d);
+    d.is_signed = true;
+    p->ints.push_back(d);
 }
 
 static inline void add_double(Properties *p, const char* name, double value)
@@ -297,7 +293,7 @@ static inline void add_double(Properties *p, const char* name, double value)
 
 static inline void add_date(Properties *p, const char* name, uint32_t value)
 {
-    UIntData d = {};
+    IntData d = {};
 
     d.name = name;
     d.data = value;
