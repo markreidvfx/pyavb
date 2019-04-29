@@ -337,20 +337,32 @@ cdef void bytearray2dict(dict d, Properties *p):
 cdef dict process_poperties(object root, Properties *p):
     cdef dict result = AVBPropertyData()
 
-    refs2dict(root, result, p)
-    reflist2dict(root, result, p)
-    ints2dict(result, p)
-    doubles2dict(result, p)
-    strings2dict(result, p)
-    bools2dict(result, p)
-    uuid2dict(result, p)
-    mob_id2dict(result, p)
-    dates2dict(result, p)
-    int_array2dict(result, p)
-    bytearray2dict(result, p)
+    if p.refs.size():
+        refs2dict(root, result, p)
+    if p.reflists.size():
+        reflist2dict(root, result, p)
+    if p.ints.size():
+        ints2dict(result, p)
+    if p.doubles.size():
+        doubles2dict(result, p)
+    if p.strings.size():
+        strings2dict(result, p)
+    if p.bools.size():
+        bools2dict(result, p)
+    if p.uuids.size():
+        uuid2dict(result, p)
+    if p.mob_ids.size():
+        mob_id2dict(result, p)
+    if p.dates.size():
+        dates2dict(result, p)
+    if p.arrays.size():
+        int_array2dict(result, p)
+    if p.bytearrays.size():
+        bytearray2dict(result, p)
     if p.control_points.size():
         controlpoints2dict(root, result, p)
-    children2dict(root, result, p)
+    if p.children.size():
+        children2dict(root, result, p)
 
     return result
 
