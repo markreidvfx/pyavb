@@ -731,16 +731,16 @@ class MPGPosition(DIDPosition):
 
         self.trailing_discards = ctx.read_s16(f)
         self.need_seq_hdr = ctx.read_bool(f)
+        self.fields = []
 
         # NOTE: I think leading_discard_fields == 2 * leader_length
         leader_length = ctx.read_s16(f)
-        leading_discard_fields = ctx.read_s16(f)
-
-        self.fields = []
-        for i in range(leader_length):
-            picture_type = ctx.read_u8(f)
-            length = ctx.read_u32(f)
-            self.fields.append([picture_type, length])
+        if leader_length > 0:
+            leading_discard_fields = ctx.read_s16(f)
+            for i in range(leader_length):
+                picture_type = ctx.read_u8(f)
+                length = ctx.read_u32(f)
+                self.fields.append([picture_type, length])
 
         ctx.read_assert_tag(f, 0x03)
 
@@ -753,12 +753,14 @@ class MPGPosition(DIDPosition):
         ctx.write_s16(f, self.trailing_discards)
         ctx.write_bool(f, self.need_seq_hdr)
 
-        ctx.write_s16(f, len(self.fields))
-        ctx.write_s16(f, len(self.fields)*2)
+        leader_length = len(self.fields)
+        ctx.write_s16(f, leader_length)
+        if leader_length > 0:
+            ctx.write_s16(f, leader_length*2)
 
-        for picture_type, length in self.fields:
-            ctx.write_u8(f, picture_type)
-            ctx.write_u32(f, length)
+            for picture_type, length in self.fields:
+                ctx.write_u8(f, picture_type)
+                ctx.write_u32(f, length)
 
         ctx.write_u8(f, 0x03)
 
