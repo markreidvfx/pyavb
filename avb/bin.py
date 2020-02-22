@@ -301,7 +301,9 @@ class Bin(core.AVBObject):
 
         self.attributes = ctx.read_object_ref(self.root, f)
         self.was_iconic = ctx.read_bool(f)
-        ctx.read_assert_tag(f, 0x03)
+
+        if self.class_id[:] == b'ABIN':
+            ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
         super(Bin, self).write(f)
@@ -361,7 +363,9 @@ class Bin(core.AVBObject):
         ctx.write_s16(f, self.ql_image_scale)
         ctx.write_object_ref(self.root, f, self.attributes)
         ctx.write_bool(f, self.was_iconic)
-        ctx.write_u8(f, 0x03)
+
+        if self.class_id[:] == b'ABIN':
+            ctx.write_u8(f, 0x03)
 
     def build_mob_dict(self):
         self.mob_dict = {}
@@ -382,3 +386,33 @@ class Bin(core.AVBObject):
         for mob in self.mobs:
             if  mob.mob_type in ('CompositionMob', ) and mob.usage_code == 0:
                 yield mob
+
+@utils.register_class
+class BinFirst(Bin):
+    class_id = b'BINF'
+    propertydefs_dict = {}
+    propertydefs = Bin.propertydefs + [
+        AVBPropertyDef('unknown_s32', 'unknown_s32', 'int32',  0),
+    ]
+    __slots__ = ()
+
+    def read(self, f):
+        super(BinFirst, self).read(f)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
+
+        self.unknown_s32 = ctx.read_s32(f)
+
+        ctx.read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(BinFirst, self).write(f)
+        ctx = self.root.octx
+
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
+
+        ctx.write_s32(f, self.unknown_s32)
+
+        ctx.write_u8(f, 0x03)

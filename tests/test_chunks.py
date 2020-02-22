@@ -256,6 +256,9 @@ class TestChuckDB(unittest.TestCase):
         for chunk_path in iter_chunks("URLL"):
             read_write_chunk(chunk_path)
 
+    def test_binf_chunks(self):
+        for chunk_path in iter_chunks("BINF"):
+            read_write_chunk(chunk_path)
 
 if __name__ == "__main__":
     unittest.main()
