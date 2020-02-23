@@ -131,8 +131,11 @@ def nice_edit_rate(rate):
         return "24/1"
     elif rate ==  23.976:
         return "24000/1001"
+    elif rate == 29.97:
+        return "30000/1001"
     elif rate == 30:
         return "30/1"
+
 
     return "%d/%d" % (int(rate * 1000), 1000)
 
@@ -690,7 +693,7 @@ def convert_slots(aaf_file, comp, aaf_mob):
         # print(track.index, track.component.media_kind)
         # slot_list.add(track.index)
         slot_id = i + 1
-        slot.edit_rate = track.component.edit_rate
+        slot.edit_rate = nice_edit_rate(track.component.edit_rate)
         slot.slot_id = slot_id
         slot.segment = convert_component(aaf_file, track.component)
         aaf_mob.slots.append(slot)
