@@ -133,8 +133,9 @@ def nice_edit_rate(rate):
         return "24000/1001"
     elif rate == 29.97:
         return "30000/1001"
-    elif rate == 30:
-        return "30/1"
+
+    if int(rate) == rate:
+        return "%d/1" % int(rate)
 
 
     return "%d/%d" % (int(rate * 1000), 1000)
