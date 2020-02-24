@@ -682,14 +682,15 @@ def convert_slots(aaf_file, comp, aaf_mob):
     for i, track in enumerate(iter_tracks(comp)):
 
         media_kind = track.component.media_kind
-        if media_kind in ('picture', 'sound','edgecode', 'timecode'):
+        if media_kind in ('picture', 'sound', 'edgecode', 'timecode'):
             slot = aaf_file.create.TimelineMobSlot()
-
-            # raise Exception()
         elif media_kind in ('DescriptiveMetadata', ):
             slot = aaf_file.create.EventMobSlot()
         else:
             raise Exception("Unknown media_kind: %s" % track.component.media_kind)
+
+        if hasattr(track, 'index'):
+            slot['PhysicalTrackNumber'].value = track.index
 
         # print(track.index, track.component.media_kind)
         # slot_list.add(track.index)
