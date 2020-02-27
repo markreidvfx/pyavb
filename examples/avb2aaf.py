@@ -698,6 +698,8 @@ def convert_slots(aaf_file, comp, aaf_mob):
         slot.edit_rate = nice_edit_rate(track.component.edit_rate)
         slot.slot_id = slot_id
         slot.segment = convert_component(aaf_file, track.component)
+        # If slot name is not set, Resolve doesn't like the AAF
+        slot.name =  ""
         aaf_mob.slots.append(slot)
 
         markers = convert_markers(aaf_file, track.component, described_slots=[slot.slot_id])
