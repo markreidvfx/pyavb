@@ -2,9 +2,20 @@
 
 from libcpp.vector cimport vector
 from libcpp.map cimport map
-from libc.stdint cimport (uint8_t, int16_t, uint32_t, int32_t,uint64_t, int64_t)
 from cython.operator cimport dereference as deref, preincrement as inc
 cimport cython
+
+IF UNAME_SYSNAME == "Windows":
+    ctypedef unsigned char  uint8_t
+    ctypedef   signed short int16_t
+
+    ctypedef signed int    int32_t
+    ctypedef unsigned int  uint32_t
+
+    ctypedef   signed long long int int64_t
+    ctypedef unsigned long long int uint64_t
+ELSE:
+    from libc.stdint cimport (uint8_t, int16_t, uint32_t, int32_t,uint64_t, int64_t)
 
 from datetime import datetime
 import uuid

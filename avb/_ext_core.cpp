@@ -2,6 +2,25 @@
 #include <iostream>
 #include <math.h>
 
+#ifdef _MSC_VER
+
+#if _MSC_VER == 1500
+
+    typedef unsigned char  uint8_t;
+    typedef   signed char  int8_t;
+
+    typedef   signed short int16_t;
+    typedef unsigned short uint16_t;
+
+    typedef   signed int   int32_t;
+    typedef unsigned int   uint32_t;
+
+    typedef   signed long long int  int64_t;
+    typedef unsigned long long int uint64_t;
+
+#endif
+#endif
+
 using namespace std;
 
 #define TRACK_LABEL_FLAG            1 << 0
@@ -201,7 +220,7 @@ static inline double read_exp10_encoded_float(Buffer *f)
     int32_t mantissa = (int32_t)read_u32le(f);
     int16_t exp10 = (int16_t)read_u16le(f);
 
-    return mantissa * pow(10, exp10);
+    return mantissa * pow(10.0, (int)exp10);
 }
 
 static inline void read_data32(Buffer *f, std::vector<uint8_t> &s)
