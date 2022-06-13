@@ -17,6 +17,13 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["2.7", "3.8", "3.9", "3.10"]
+        include:
+        - os: ubuntu-latest
+          CFLAGS: "-g0 -O3"
+        - os: windows-latest
+          CFLAGS: "/O2"
+        - os: macos-latest
+          CFLAGS: "-g0 -O3"
 
     steps:
     - uses: actions/checkout@v3
@@ -47,6 +54,8 @@ jobs:
         python -m unittest discover tests -v
 
     - name: Run Cython Ext Unit Tests
+      env:
+        CFLAGS : ${{ matrix.CFLAGS }}
       run: |
         python setup.py build_ext --inplace
         python -m unittest discover tests -v
