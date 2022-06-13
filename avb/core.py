@@ -5,10 +5,15 @@ from __future__ import (
     division,
     )
 
-from . import utils
+import sys
 from collections import OrderedDict
+from . import utils
 
 sentinel = object()
+
+INT_FORMAT = int
+if sys.version_info.major < 3:
+    INT_FORMAT = (int, long)
 
 class AVBPropertyDef(object):
     __slots__ = ('name', 'long_name', 'type', 'default')
@@ -94,7 +99,7 @@ class AVBRefList(list):
         self.mark_modified()
 
     def deref(self, value):
-        if isinstance(value, int):
+        if isinstance(value, INT_FORMAT):
             return utils.AVBObjectRef(self.root, value).value
 
         if isinstance(value, utils.AVBObjectRef):

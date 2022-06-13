@@ -9,8 +9,8 @@
     typedef unsigned char  uint8_t;
     typedef   signed char  int8_t;
 
-    typedef   signed short int16_t;
     typedef unsigned short uint16_t;
+    typedef   signed short int16_t;
 
     typedef   signed int   int32_t;
     typedef unsigned int   uint32_t;
@@ -70,10 +70,15 @@ enum PropertyType {
     PARAM,
 };
 
+union IntDataValue {
+    uint64_t u64;
+    int64_t s64;
+};
+
 struct IntData {
     const char *name;
-    uint64_t data;
     bool is_signed;
+    IntDataValue data;
 };
 
 struct DoubleData {
@@ -269,7 +274,7 @@ static inline void add_object_ref(Properties *p, const char* name, uint64_t valu
     IntData d = {};
 
     d.name = name;
-    d.data = value;
+    d.data.u64 = value;
     p->refs.push_back(d);
 }
 
@@ -278,7 +283,7 @@ static inline void add_uint(Properties *p, const char* name, uint64_t value)
     IntData d = {};
 
     d.name = name;
-    d.data = value;
+    d.data.u64 = value;
     p->ints.push_back(d);
 }
 
@@ -287,7 +292,7 @@ static inline void add_int(Properties *p, const char* name, int64_t value)
     IntData d = {};
 
     d.name = name;
-    d.data = value;
+    d.data.s64 = value;
     d.is_signed = true;
     p->ints.push_back(d);
 }
@@ -307,7 +312,7 @@ static inline void add_date(Properties *p, const char* name, uint64_t value)
     IntData d = {};
 
     d.name = name;
-    d.data = value;
+    d.data.u64 = value;
     p->dates.push_back(d);
 }
 
@@ -328,9 +333,10 @@ static inline int read_mob_id(Properties *p, Buffer *f, const char* name)
     uint8_t *m = &mob_id.data[0];
 
     read_assert_tag(f, 65);
-    int smpte_label_len = read_u32le(f);
+    uint32_t smpte_label_len = read_u32le(f);
+
     if(smpte_label_len != 12)
-    return -1;
+        return -1;
 
     for (int i =0; i < 12; i++) {
         *m++ = read_u8(f);
@@ -364,7 +370,7 @@ static inline int read_mob_id(Properties *p, Buffer *f, const char* name)
     *m++ = read_u8(f);
 
     read_assert_tag(f, 65);
-    int data4len = read_u32le(f);
+    uint32_t data4len = read_u32le(f);
     if(data4len != 8) {
         return -1;
     }
@@ -449,7 +455,7 @@ static int read_sequence(Buffer *f, Properties *p)
     read_assert_tag(f, 0x02);
     read_assert_tag(f, 0x03);
 
-    size_t count = (int32_t)read_u32le(f);
+    uint32_t count = read_u32le(f);
     p->reflists.push_back(RefListData());
     RefListData &reflist = p->reflists[p->reflists.size()-1];
     reflist.name = "components";
@@ -467,7 +473,7 @@ static int read_clip(Buffer *f, Properties *p)
     read_comp(f, p);
     read_assert_tag(f, 0x02);
     read_assert_tag(f, 0x01);
-    add_int(p, "length", (int32_t)read_u32le(f));
+    add_uint(p, "length", read_u32le(f)); // should this be a int?
 
     return 0;
 }
@@ -524,7 +530,7 @@ static int read_paramclip(Buffer *f, Properties *p)
     ControlPointValueType value_type = (ControlPointValueType)read_u16le(f);
     add_int(p, "value_type", value_type);
 
-    size_t point_count = read_u32le(f);
+    uint32_t point_count = read_u32le(f);
 
     p->control_points.resize(1);
     ControlPointData *cp_data = &p->control_points[0];
@@ -554,7 +560,7 @@ static int read_paramclip(Buffer *f, Properties *p)
                 return -1;
         }
 
-        int16_t pp_count = read_u16le(f);
+        uint16_t pp_count = read_u16le(f);
         cp->pp.resize(pp_count);
         for(int j = 0; j < pp_count; j++) {
             PerPoint *pp = &cp->pp[j];
@@ -1119,7 +1125,7 @@ static int read_effectparamlist(Buffer *f, Properties *p)
     add_int(p, "orig_length",    (int32_t)read_u32le(f));
     add_int(p, "window_offset",  (int32_t)read_u32le(f));
 
-    size_t parameter_count = read_u32le(f);
+    uint32_t parameter_count = read_u32le(f);
     add_int(p, "keyframe_size",  (int32_t)read_u32le(f));
 
     p->children.push_back(Properties::ChildData());
@@ -1130,6 +1136,7 @@ static int read_effectparamlist(Buffer *f, Properties *p)
     parameters.resize(parameter_count);
 
     for (size_t i = 0; i < parameter_count; i++) {
+
         Properties &param = parameters[i];
         param.type = PARAM;
 
@@ -1171,7 +1178,7 @@ static int read_effectparamlist(Buffer *f, Properties *p)
 
         add_int(&param, "enable_key_flags",   (int8_t)read_u8(f));
 
-        size_t color_count =read_u32le(f);
+        uint32_t color_count =read_u32le(f);
         vector<int64_t> &colors = add_int_array(&param, "colors");
         colors.reserve(color_count);
 
@@ -1179,7 +1186,7 @@ static int read_effectparamlist(Buffer *f, Properties *p)
             colors.push_back((int32_t)read_u32le(f));
         }
 
-        size_t param_size = read_u32le(f);
+        uint32_t param_size = read_u32le(f);
         vector<uint8_t> &user_param = add_bytearray(&param, "user_param");
         user_param.resize(param_size);
         for (size_t j=0; j < param_size; j++) {
@@ -1191,6 +1198,7 @@ static int read_effectparamlist(Buffer *f, Properties *p)
     }
 
     read_assert_tag(f, 0x03);
+
     return 0;
 }
 
@@ -1202,6 +1210,9 @@ static int read_attributes(Buffer *f, std::vector<AttrData> &d)
 
     size_t attr_count = read_u32le(f);
     d.resize(attr_count);
+
+    if (attr_count == 0)
+        return 0;
 
     AttrData *ptr = &d[0];
 

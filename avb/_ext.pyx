@@ -6,14 +6,20 @@ from cython.operator cimport dereference as deref, preincrement as inc
 cimport cython
 
 IF UNAME_SYSNAME == "Windows":
-    ctypedef unsigned char  uint8_t
-    ctypedef   signed short int16_t
 
-    ctypedef signed int    int32_t
-    ctypedef unsigned int  uint32_t
+    cdef extern from *:
+        ctypedef unsigned char  uint8_t
+        ctypedef   signed char  int8_t
 
-    ctypedef   signed long long int int64_t
-    ctypedef unsigned long long int uint64_t
+        ctypedef unsigned short uint16_t
+        ctypedef   signed short int16_t
+
+        ctypedef signed int    int32_t
+        ctypedef unsigned int  uint32_t
+
+        ctypedef   signed long long int int64_t
+        ctypedef unsigned long long int uint64_t
+
 ELSE:
     from libc.stdint cimport (uint8_t, int16_t, uint32_t, int32_t,uint64_t, int64_t)
 
@@ -52,12 +58,16 @@ cdef extern from "_ext_core.cpp" nogil:
     cdef enum ControlPointValueType:
         CP_TYPE_INT,
         CP_TYPE_DOUBLE,
-        CP_TYPE_REFERENCE,
+        CP_TYPE_REFERENCE
+
+    cdef union IntDataValue:
+        uint64_t u64
+        int64_t  s64
 
     cdef struct IntData:
         const char *name
         bint is_signed;
-        uint64_t data
+        IntDataValue data
 
     cdef struct IntArrayData:
         const char *name
@@ -147,6 +157,8 @@ cdef extern from "_ext_core.cpp" nogil:
     cdef int read_cdci_descriptor(Buffer *f, Properties *p) except+
     cdef int read_effectparamlist(Buffer *f, Properties *p) except+
 
+    cdef void check_internal_sizes()
+
 cdef class AVBPropertyData(dict):
 
     def deref(self, value):
@@ -167,7 +179,7 @@ cdef class AVBPropertyData(dict):
 cdef void refs2dict(object root, dict d, Properties* p):
     cdef IntData item
     for item in p.refs:
-        d[item.name.decode('utf-8')] = AVBObjectRef(root, item.data)
+        d[item.name.decode('utf-8')] = AVBObjectRef(root, item.data.u64)
 
 cdef void reflist2dict(object root, dict d, Properties* p):
     cdef RefListData item
@@ -242,14 +254,14 @@ cdef void ints2dict(dict d, Properties* p):
     cdef int64_t signed_value
     for item in p.ints:
         if item.is_signed:
-            d[item.name.decode('utf-8')] = <int64_t>item.data
+            d[item.name.decode('utf-8')] = item.data.s64
         else:
-            d[item.name.decode('utf-8')] = item.data
+            d[item.name.decode('utf-8')] = item.data.u64
 
 cdef void dates2dict(dict d, Properties* p):
     cdef IntData item
     for item in p.dates:
-        d[item.name.decode('utf-8')] = datetime.fromtimestamp(item.data)
+        d[item.name.decode('utf-8')] = datetime.fromtimestamp(item.data.u64)
 
 cdef void doubles2dict(dict d, Properties *p):
     cdef DoubleData item
@@ -341,9 +353,12 @@ cdef void bytearray2dict(dict d, Properties *p):
     cdef uint8_t *ptr
     cdef size_t size
     for item in p.bytearrays:
-        ptr = &item.data[0]
         size = item.data.size()
-        d[item.name.decode('utf-8')] = <bytearray> ptr[:size]
+        if size:
+            ptr = &item.data[0]
+            d[item.name.decode('utf-8')] = <bytearray> ptr[:size]
+        else:
+            d[item.name.decode('utf-8')] = bytearray()
 
 cdef dict process_poperties(object root, Properties *p):
     cdef dict result = AVBPropertyData()
