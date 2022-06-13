@@ -67,5 +67,11 @@ jobs:
     - name: Create Artifact ${{ matrix.os }} python ${{ matrix.python-version }}
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ matrix.os }}-python-${{ matrix.python-version }}
+        name: pyavb-${{ matrix.os }}-python-${{ matrix.python-version }}-${{ github.sha }}
+        path: dist/*.whl
+
+    - name: Create Artifact All
+      uses: actions/upload-artifact@v3
+      with:
+        name: pyavb-all-${{ github.sha }}
         path: dist/*.whl
