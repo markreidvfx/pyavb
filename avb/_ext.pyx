@@ -120,6 +120,7 @@ cdef extern from "_ext_core.cpp" nogil:
         const uint8_t *root
         const uint8_t *ptr
         const uint8_t *end
+        const char *error_message
 
     cdef struct Properties:
         PropertyType type
@@ -152,8 +153,6 @@ cdef extern from "_ext_core.cpp" nogil:
     cdef int read_did_descriptor(Buffer *f, Properties *p) except+
     cdef int read_cdci_descriptor(Buffer *f, Properties *p) except+
     cdef int read_effectparamlist(Buffer *f, Properties *p) except+
-
-    cdef void check_internal_sizes()
 
 cdef class AVBPropertyData(dict):
 
@@ -394,6 +393,8 @@ def read_attr_data(root, object_instance, const unsigned char[:] data):
     buf.root = &data[0]
     buf.ptr =  &data[0]
     buf.end = &data[-1]
+    buf.error_message = ""
+
     cdef AttrData item
     cdef vector[AttrData] d
 
@@ -407,7 +408,7 @@ def read_attr_data(root, object_instance, const unsigned char[:] data):
         ret = read_attributes(&buf, d)
 
     if ret < 0:
-        raise ValueError("Error reading Attributes")
+        raise ValueError("Error reading Attributes: %s" % buf.error_message.decode("utf-8"))
 
     for item in d:
 
@@ -451,6 +452,7 @@ def read_sequence_data(root, object_instance, const unsigned char[:] data):
     buf.root = &data[0]
     buf.ptr =  &data[0]
     buf.end = &data[-1]
+    buf.error_message = ""
 
     cdef Properties p
     cdef int ret
@@ -458,7 +460,7 @@ def read_sequence_data(root, object_instance, const unsigned char[:] data):
         ret = read_sequence(&buf, &p)
 
     if ret < 0:
-        raise ValueError("Error reading SEQU")
+        raise ValueError("Error reading SEQU: %s" % buf.error_message.decode("utf-8"))
 
     cdef dict result = process_poperties(root, &p)
 
@@ -469,6 +471,7 @@ def read_sourceclip_data(root, object_instance, const unsigned char[:] data):
     buf.root = &data[0]
     buf.ptr =  &data[0]
     buf.end = &data[-1]
+    buf.error_message = ""
 
     cdef Properties p
     cdef int ret
@@ -476,7 +479,7 @@ def read_sourceclip_data(root, object_instance, const unsigned char[:] data):
         ret = read_sourceclip(&buf, &p)
 
     if ret < 0:
-        raise ValueError("Error reading SCLP")
+        raise ValueError("Error reading SCLP: %s" % buf.error_message.decode("utf-8"))
 
     cdef dict result = process_poperties(root, &p)
 
@@ -487,6 +490,7 @@ def read_paramclip_data(root, object_instance, const unsigned char[:] data):
     buf.root = &data[0]
     buf.ptr =  &data[0]
     buf.end = &data[-1]
+    buf.error_message = ""
 
     cdef Properties p
     cdef int ret
@@ -496,7 +500,7 @@ def read_paramclip_data(root, object_instance, const unsigned char[:] data):
         ret = read_paramclip(&buf, &p)
 
     if ret < 0:
-        raise ValueError("Error reading PRCL")
+        raise ValueError("Error reading PRCL: %s" % buf.error_message.decode("utf-8"))
 
     # print_property_sizes(&p)
     cdef dict result = process_poperties(root, &p)
@@ -508,6 +512,7 @@ def read_paramitem_data(root, object_instance, const unsigned char[:] data):
     buf.root = &data[0]
     buf.ptr =  &data[0]
     buf.end = &data[-1]
+    buf.error_message = ""
 
     cdef Properties p
     cdef int ret
@@ -515,7 +520,8 @@ def read_paramitem_data(root, object_instance, const unsigned char[:] data):
         ret = read_paramitem(&buf, &p)
 
     if ret < 0:
-        raise ValueError("Error reading PRIT")
+        raise ValueError("Error reading PRIT: %s" % buf.error_message.decode("utf-8"))
+
     # print_property_sizes(&p)
     cdef dict result = process_poperties(root, &p)
 
@@ -526,6 +532,7 @@ def read_trackref_data(root, object_instance, const unsigned char[:] data):
     buf.root = &data[0]
     buf.ptr =  &data[0]
     buf.end = &data[-1]
+    buf.error_message = ""
 
     cdef Properties p
     cdef int ret
@@ -533,7 +540,7 @@ def read_trackref_data(root, object_instance, const unsigned char[:] data):
         ret = read_trackref(&buf, &p)
 
     if ret < 0:
-        raise ValueError("Error reading TRKR")
+        raise ValueError("Error reading TRKR: %s" % buf.error_message.decode("utf-8"))
 
     cdef dict result = process_poperties(root, &p)
 
@@ -544,6 +551,7 @@ def read_filler_data(root, object_instance, const unsigned char[:] data):
     buf.root = &data[0]
     buf.ptr =  &data[0]
     buf.end = &data[-1]
+    buf.error_message = ""
 
     cdef Properties p
     cdef int ret
@@ -551,7 +559,7 @@ def read_filler_data(root, object_instance, const unsigned char[:] data):
         ret = read_filler(&buf, &p)
 
     if ret < 0:
-        raise ValueError("Error reading FILL")
+        raise ValueError("Error reading FILL: %s" % buf.error_message.decode("utf-8"))
 
     cdef dict result = process_poperties(root, &p)
 
@@ -562,6 +570,7 @@ def reads_selector_data(root, object_instance, const unsigned char[:] data):
     buf.root = &data[0]
     buf.ptr =  &data[0]
     buf.end = &data[-1]
+    buf.error_message = ""
 
     cdef Properties p
     cdef int ret
@@ -569,7 +578,7 @@ def reads_selector_data(root, object_instance, const unsigned char[:] data):
         ret = read_selector(&buf, &p)
 
     if ret < 0:
-        raise ValueError("Error reading SLCT")
+        raise ValueError("Error reading SLCT: %s" % buf.error_message.decode("utf-8"))
 
     cdef dict result = process_poperties(root, &p)
 
@@ -580,6 +589,7 @@ def read_composition_data(root, object_instance, const unsigned char[:] data):
     buf.root = &data[0]
     buf.ptr =  &data[0]
     buf.end = &data[-1]
+    buf.error_message = ""
 
     cdef Properties p
     cdef int ret
@@ -590,7 +600,8 @@ def read_composition_data(root, object_instance, const unsigned char[:] data):
         ret = read_composition(&buf, &p)
 
     if ret < 0:
-        raise ValueError("Error reading CMPO")
+        raise ValueError("Error reading CMPO: %s" % buf.error_message.decode("utf-8"))
+
     # print_property_sizes(&p)
     cdef dict result = process_poperties(root, &p)
 
@@ -601,6 +612,7 @@ def read_media_descriptor_data(root, object_instance, const unsigned char[:] dat
     buf.root = &data[0]
     buf.ptr =  &data[0]
     buf.end = &data[-1]
+    buf.error_message = ""
 
     cdef Properties p
     cdef int ret
@@ -608,7 +620,8 @@ def read_media_descriptor_data(root, object_instance, const unsigned char[:] dat
         ret = read_media_descriptor(&buf, &p)
 
     if ret < 0:
-        raise ValueError("Error reading MDES")
+        raise ValueError("Error reading MDES: %s" % buf.error_message.decode("utf-8"))
+
     # print_property_sizes(&p)
     cdef dict result = process_poperties(root, &p)
 
@@ -619,6 +632,7 @@ def read_did_descriptor_data(root, object_instance, const unsigned char[:] data)
     buf.root = &data[0]
     buf.ptr =  &data[0]
     buf.end = &data[-1]
+    buf.error_message = ""
 
     cdef Properties p
     cdef int ret
@@ -626,7 +640,8 @@ def read_did_descriptor_data(root, object_instance, const unsigned char[:] data)
         ret = read_did_descriptor(&buf, &p)
 
     if ret < 0:
-        raise ValueError("Error reading DIDD")
+        raise ValueError("Error reading DIDD: %s" % buf.error_message.decode("utf-8"))
+
     # print_property_sizes(&p)
     cdef dict result = process_poperties(root, &p)
 
@@ -638,6 +653,7 @@ def read_cdci_descriptor_data(root, object_instance, const unsigned char[:] data
     buf.root = &data[0]
     buf.ptr =  &data[0]
     buf.end = &data[-1]
+    buf.error_message = ""
 
     cdef Properties p
     cdef int ret
@@ -645,7 +661,8 @@ def read_cdci_descriptor_data(root, object_instance, const unsigned char[:] data
         ret = read_cdci_descriptor(&buf, &p)
 
     if ret < 0:
-        raise ValueError("Error reading CDCI")
+        raise ValueError("Error reading CDCI: %s" % buf.error_message.decode("utf-8"))
+
     # print_property_sizes(&p)
     cdef dict result = process_poperties(root, &p)
 
@@ -656,6 +673,7 @@ def read_trackeffect_data(root, object_instance, const unsigned char[:] data):
     buf.root = &data[0]
     buf.ptr =  &data[0]
     buf.end = &data[-1]
+    buf.error_message = ""
 
     cdef Properties p
     cdef int ret
@@ -665,7 +683,7 @@ def read_trackeffect_data(root, object_instance, const unsigned char[:] data):
         ret = read_trackeffect(&buf, &p)
 
     if ret < 0:
-        raise ValueError("Error reading TKFX")
+        raise ValueError("Error reading TKFX: %s" % buf.error_message.decode("utf-8"))
 
     cdef dict result = process_poperties(root, &p)
 
@@ -677,6 +695,7 @@ def read_effectparamlist_data(root, object_instance, const unsigned char[:] data
     buf.root = &data[0]
     buf.ptr =  &data[0]
     buf.end = &data[-1]
+    buf.error_message = ""
 
     cdef Properties p
     cdef int ret
@@ -684,7 +703,7 @@ def read_effectparamlist_data(root, object_instance, const unsigned char[:] data
         ret = read_effectparamlist(&buf, &p)
 
     if ret < 0:
-        raise ValueError("Error reading FXPS")
+        raise ValueError("Error reading FXPS: %s" % buf.error_message.decode("utf-8"))
 
     cdef dict result = process_poperties(root, &p)
 

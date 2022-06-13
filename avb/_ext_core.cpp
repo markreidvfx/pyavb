@@ -36,9 +36,10 @@ using namespace std;
 #define TRACK_UNKNOWN_FLAGS         0xFC00
 
 struct Buffer {
-  const uint8_t *root;
-  const uint8_t *ptr;
-  const uint8_t *end;
+    const uint8_t *root;
+    const uint8_t *ptr;
+    const uint8_t *end;
+    const char *error_message;
 };
 
 enum StringType {
@@ -177,12 +178,13 @@ static inline uint8_t read_u8(Buffer *f)
 
 #define read_assert_tag(f, value) \
     if (value != read_u8(f)) { \
-        throw runtime_error(ASSERT_MESSAGE); \
+        f->error_message = ASSERT_MESSAGE; \
+        return -1; \
     } \
 
 #define check(value) \
     if (value < 0) {  \
-        throw runtime_error(ASSERT_MESSAGE); \
+        return -1; \
     } \
 
 static inline bool read_bool(Buffer *f)
@@ -334,8 +336,11 @@ static inline int read_mob_id(Properties *p, Buffer *f, const char* name)
     read_assert_tag(f, 65);
     uint32_t smpte_label_len = read_u32le(f);
 
-    if(smpte_label_len != 12)
+    if(smpte_label_len != 12) {
+        fprintf(stderr, "mob_id smpte_label_len 12 != %d\n", smpte_label_len);
+        f->error_message = ASSERT_MESSAGE;
         return -1;
+    }
 
     for (int i =0; i < 12; i++) {
         *m++ = read_u8(f);
@@ -371,6 +376,8 @@ static inline int read_mob_id(Properties *p, Buffer *f, const char* name)
     read_assert_tag(f, 65);
     uint32_t data4len = read_u32le(f);
     if(data4len != 8) {
+        fprintf(stderr, "mob_id data4len 8 != %d\n", data4len);
+        f->error_message = ASSERT_MESSAGE;
         return -1;
     }
 
@@ -441,6 +448,7 @@ static int read_comp(Buffer *f, Properties *p)
                 break;
             default:
                 fprintf(stderr, "unknown ext tag: %d\n", tag);
+                f->error_message = ASSERT_MESSAGE;
                 return -1;
         }
     }
@@ -509,6 +517,7 @@ static int read_sourceclip(Buffer *f, Properties *p)
                 break;
             default:
                 fprintf(stderr, "unknown ext tag: %d\n", tag);
+                f->error_message = ASSERT_MESSAGE;
                 return -1;
         }
     }
@@ -556,6 +565,7 @@ static int read_paramclip(Buffer *f, Properties *p)
                 break;
             default:
                 fprintf(stderr, "unknown value_type: %d\n", value_type);
+                f->error_message = ASSERT_MESSAGE;
                 return -1;
         }
 
@@ -574,6 +584,7 @@ static int read_paramclip(Buffer *f, Properties *p)
                     break;
                 default:
                     fprintf(stderr, "unknown value_type: %d\n", pp->type);
+                    f->error_message = ASSERT_MESSAGE;
                     return -1;
             }
         }
@@ -591,6 +602,7 @@ static int read_paramclip(Buffer *f, Properties *p)
                 break;
             default:
                 fprintf(stderr, "unknown ext tag: %d\n", tag);
+                f->error_message = ASSERT_MESSAGE;
                 return -1;
         }
     }
@@ -619,6 +631,7 @@ static int read_paramitem(Buffer *f, Properties *p)
             break;
         default:
             fprintf(stderr, "unknown value_type: %d\n", value_type);
+            f->error_message = ASSERT_MESSAGE;
             return -1;
     }
 
@@ -635,6 +648,7 @@ static int read_paramitem(Buffer *f, Properties *p)
                 break;
             default:
                 fprintf(stderr, "unknown ext tag: %d", tag);
+                f->error_message = ASSERT_MESSAGE;
                 return -1;
         }
     }
@@ -710,6 +724,7 @@ static int read_trackgroup(Buffer *f, Properties *p)
 
         if (flags & TRACK_UNKNOWN_FLAGS) {
             fprintf(stderr, "Unknown Track Flag: %d\n", flags);
+            f->error_message = ASSERT_MESSAGE;
             return -1;
         }
             // raise ValueError("Unknown Track Flag: %d" % flags)
@@ -726,6 +741,7 @@ static int read_trackgroup(Buffer *f, Properties *p)
                 break;
             default:
                 fprintf(stderr, "unknown ext tag: %d\n", tag);
+                f->error_message = ASSERT_MESSAGE;
                 return -1;
         }
     }
@@ -763,6 +779,7 @@ static int read_trackeffect(Buffer *f, Properties *p)
                 break;
             default:
                 fprintf(stderr, "unknown ext tag: %d\n", tag);
+                f->error_message = ASSERT_MESSAGE;
                 return -1;
         }
     }
@@ -812,6 +829,7 @@ static int read_composition(Buffer *f, Properties *p)
                 break;
             default:
                 fprintf(stderr, "unknown ext tag: %d\b",tag);
+                f->error_message = ASSERT_MESSAGE;
                 return -1;
         }
     }
@@ -839,6 +857,7 @@ static int read_media_descriptor(Buffer *f,  Properties *p)
             uint32_t uuid_len = read_u32le(f);
             if (uuid_len != 16) {
                 fprintf(stderr, "bad uuid len: %d\n", uuid_len);
+                f->error_message = ASSERT_MESSAGE;
                 return -1;
             }
             add_raw_uuid(p, "uuid",f);
@@ -851,6 +870,7 @@ static int read_media_descriptor(Buffer *f,  Properties *p)
             add_object_ref(p, "attributes", read_u32le(f));
         } else {
             fprintf(stderr, "unknown ext tag: %d\n", tag);
+            f->error_message = ASSERT_MESSAGE;
             return -1;
         }
 
@@ -1072,6 +1092,7 @@ static int read_did_descriptor(Buffer *f,  Properties *p)
             add_bool(p, "frame_checked_with_mapper", read_bool(f));
         } else {
             fprintf(stderr, "unknown tag: %d\n", tag);
+            f->error_message = ASSERT_MESSAGE;
             return -1;
         }
     }
@@ -1109,6 +1130,7 @@ static int read_cdci_descriptor(Buffer *f, Properties *p)
                 break;
             default:
                 fprintf(stderr, "unknown tag type: %d\n", tag);
+                f->error_message = ASSERT_MESSAGE;
                 return -1;
         }
     }
@@ -1233,6 +1255,7 @@ static int read_attributes(Buffer *f, std::vector<AttrData> &d)
                 break;
             default:
                 fprintf(stderr, "unknown attr type: %d\n", (uint32_t)ptr->type);
+                f->error_message = ASSERT_MESSAGE;
                 return -1;
         }
          ptr++;
