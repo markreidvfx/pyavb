@@ -1,5 +1,4 @@
 #include <vector>
-#include <iostream>
 #include <math.h>
 
 #ifdef _MSC_VER
@@ -441,7 +440,7 @@ static int read_comp(Buffer *f, Properties *p)
                 add_object_ref(p, "param_list", read_u32le(f));
                 break;
             default:
-                cerr << "unknown ext tag: " << tag << "\n";
+                fprintf(stderr, "unknown ext tag: %d\n", tag);
                 return -1;
         }
     }
@@ -509,7 +508,7 @@ static int read_sourceclip(Buffer *f, Properties *p)
                 read_mob_id(p, f, "mob_id");
                 break;
             default:
-                cerr << "unknown ext tag: " << (uint32_t)tag << "\n";
+                fprintf(stderr, "unknown ext tag: %d\n", tag);
                 return -1;
         }
     }
@@ -556,7 +555,7 @@ static int read_paramclip(Buffer *f, Properties *p)
                 cp->value = read_u32le(f);
                 break;
             default:
-                cerr << "unknown value_type: " << (uint32_t)value_type << "\n";
+                fprintf(stderr, "unknown value_type: %d\n", value_type);
                 return -1;
         }
 
@@ -574,7 +573,7 @@ static int read_paramclip(Buffer *f, Properties *p)
                     cp->double_value = read_double_le(f);
                     break;
                 default:
-                    cerr << "unknown value_type: " << (uint32_t)pp->type << "\n";
+                    fprintf(stderr, "unknown value_type: %d\n", pp->type);
                     return -1;
             }
         }
@@ -591,7 +590,7 @@ static int read_paramclip(Buffer *f, Properties *p)
                 add_int(p, "fields", (int32_t)read_u32le(f));
                 break;
             default:
-                cerr << "unknown ext tag: " << tag << "\n";
+                fprintf(stderr, "unknown ext tag: %d\n", tag);
                 return -1;
         }
     }
@@ -619,7 +618,7 @@ static int read_paramitem(Buffer *f, Properties *p)
             add_object_ref(p, "value", read_u32le(f));
             break;
         default:
-            cerr << "unknown value_type: " << (uint32_t)value_type << "\n";
+            fprintf(stderr, "unknown value_type: %d\n", value_type);
             return -1;
     }
 
@@ -635,7 +634,7 @@ static int read_paramitem(Buffer *f, Properties *p)
                 add_bool(p, "contribs_to_sig", read_bool(f));
                 break;
             default:
-                cerr << "unknown ext tag: " << tag << "\n";
+                fprintf(stderr, "unknown ext tag: %d", tag);
                 return -1;
         }
     }
@@ -643,7 +642,7 @@ static int read_paramitem(Buffer *f, Properties *p)
     return 0;
 }
 
-int read_trackref(Buffer *f, Properties *p)
+static int read_trackref(Buffer *f, Properties *p)
 {
     read_clip(f, p);
     read_assert_tag(f, 0x02);
@@ -710,7 +709,7 @@ static int read_trackgroup(Buffer *f, Properties *p)
             add_bool(&track, "read_only", read_bool(f));
 
         if (flags & TRACK_UNKNOWN_FLAGS) {
-            cerr << "Unknown Track Flag: " << flags << "\n";
+            fprintf(stderr, "Unknown Track Flag: %d\n", flags);
             return -1;
         }
             // raise ValueError("Unknown Track Flag: %d" % flags)
@@ -726,7 +725,7 @@ static int read_trackgroup(Buffer *f, Properties *p)
                 }
                 break;
             default:
-                cerr << "unknown ext tag: " << tag << "\n";
+                fprintf(stderr, "unknown ext tag: %d\n", tag);
                 return -1;
         }
     }
@@ -763,7 +762,7 @@ static int read_trackeffect(Buffer *f, Properties *p)
                 add_object_ref(p, "trackman", read_u32le(f));
                 break;
             default:
-                cerr << "unknown ext tag: " << (uint32_t)tag << "\n";
+                fprintf(stderr, "unknown ext tag: %d\n", tag);
                 return -1;
         }
     }
@@ -812,7 +811,7 @@ static int read_composition(Buffer *f, Properties *p)
                 read_mob_id(p, f, "mob_id");
                 break;
             default:
-                cerr << "unknown ext tag: " << (uint32_t)tag << "\n";
+                fprintf(stderr, "unknown ext tag: %d\b",tag);
                 return -1;
         }
     }
@@ -839,7 +838,7 @@ static int read_media_descriptor(Buffer *f,  Properties *p)
             read_assert_tag(f, 65);
             uint32_t uuid_len = read_u32le(f);
             if (uuid_len != 16) {
-                cerr << "bad uuid len: " << (uint32_t)uuid_len << "\n";
+                fprintf(stderr, "bad uuid len: %d\n", uuid_len);
                 return -1;
             }
             add_raw_uuid(p, "uuid",f);
@@ -851,7 +850,7 @@ static int read_media_descriptor(Buffer *f,  Properties *p)
             read_assert_tag(f, 72);
             add_object_ref(p, "attributes", read_u32le(f));
         } else {
-            cerr << "unknown ext tag: " << (uint32_t)tag << "\n";
+            fprintf(stderr, "unknown ext tag: %d\n", tag);
             return -1;
         }
 
@@ -1072,7 +1071,7 @@ static int read_did_descriptor(Buffer *f,  Properties *p)
             read_assert_tag(f, 66);
             add_bool(p, "frame_checked_with_mapper", read_bool(f));
         } else {
-            cerr << "unknown tag: " << (uint32_t)tag << "\n";
+            fprintf(stderr, "unknown tag: %d\n", tag);
             return -1;
         }
     }
@@ -1109,7 +1108,7 @@ static int read_cdci_descriptor(Buffer *f, Properties *p)
                 add_uint(p, "ignore_bw", read_u32le(f));
                 break;
             default:
-                cerr << "unknown tag type: " << (uint32_t)tag<< "\n";
+                fprintf(stderr, "unknown tag type: %d\n", tag);
                 return -1;
         }
     }
@@ -1233,7 +1232,7 @@ static int read_attributes(Buffer *f, std::vector<AttrData> &d)
                 read_data32(f, ptr->data);
                 break;
             default:
-                cerr << "unknown attr type: " << (uint32_t)ptr->type << "\n";
+                fprintf(stderr, "unknown attr type: %d\n", (uint32_t)ptr->type);
                 return -1;
         }
          ptr++;
