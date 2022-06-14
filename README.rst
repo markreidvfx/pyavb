@@ -31,7 +31,7 @@ Documentation is available on `Read the Docs. <http://pyavb.readthedocs.io/>`_
 
 .. |python-versions| image:: https://img.shields.io/badge/python-%3E%3D%202.7-blue.svg
 
-.. |github-build| image:: https://github.com/markreidvfx/pyavb/actions/workflows/python-tests.yml/badge.svg
+.. |github-build| image:: https://github.com/markreidvfx/pyavb/actions/workflows/workflow.yml/badge.svg
     :alt: github actions
     :target: https://github.com/markreidvfx/pyavb/actions
 
