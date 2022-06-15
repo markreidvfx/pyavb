@@ -20,7 +20,7 @@ def pretty_value(value):
 
 def get_properties(obj):
 
-    propertie_keys = []
+    property_keys = []
     property_data = None
 
     if isinstance(obj, avb.core.AVBObject):
@@ -29,15 +29,14 @@ def get_properties(obj):
             key = pdef.name
             if key not in obj.property_data:
                 continue
-            propertie_keys.append(key)
+            property_keys.append(key)
 
     elif isinstance(obj, dict):
-        propertie_keys = obj.keys()
-        propertie_keys.sort()
+        property_keys = sorted(obj.keys())
         property_data = obj
 
     result = []
-    for key in propertie_keys:
+    for key in property_keys:
         value = property_data[key]
         if value is not None:
             result.append([key, pretty_value(value)])
