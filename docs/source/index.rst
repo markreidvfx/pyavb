@@ -65,3 +65,7 @@ pyavb was initially started using these projects as reference
 More datatypes and names have been discovered via this avid console command::
 
   EnableBinXMLDump true
+
+The xml dumping can be buggy, if it fails you might need to set this to disabled too::
+
+  SwitchBinSaveWorkflow
