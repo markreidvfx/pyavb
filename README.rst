@@ -5,6 +5,11 @@ pyavb
 
 A python module for reading and writing Avid Bin Files (AVB) files.
 
+Notice
+------
+
+This project is in no way affiliated, nor endorsed in any way with Avid, and their name and all product names are registered brand names and trademarks that belong to them.
+
 Requirements
 ------------
 
