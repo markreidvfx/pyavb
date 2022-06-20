@@ -264,10 +264,18 @@ class SourceClip(Clip):
 
     @property
     def mob(self):
-        mob_id = self.mob_id
-        if mob_id:
-            return self.root.content.mob_dict.get(self.mob_id, None)
+        if hasattr(self, 'mob_id'):
+            mob_id = self.mob_id
+            if mob_id:
+                return self.root.content.mob_dict.get(self.mob_id, None)
 
+    @property
+    def track(self):
+        mob = self.mob
+        if mob:
+            for track in mob.tracks:
+                if track.index == self.track_id and track.component and self.media_kind == track.component.media_kind:
+                    return track
 
 @utils.register_class
 class Timecode(Clip):
