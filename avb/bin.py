@@ -387,6 +387,17 @@ class Bin(core.AVBObject):
             if  mob.mob_type in ('CompositionMob', ) and mob.usage_code == 0:
                 yield mob
 
+    def compositionmobs(self):
+        for mob in self.mobs:
+            if  mob.mob_type in ('CompositionMob', ):
+                yield mob
+
+    def mastermobs(self):
+        for mob in self.mobs:
+            if  mob.mob_type in ('MasterMob', ):
+                yield mob
+
+
 @utils.register_class
 class BinFirst(Bin):
     class_id = b'BINF'
