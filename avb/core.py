@@ -178,6 +178,12 @@ class AVBObject(object):
             if item.name == name:
                 return item
 
+    def get(self, key, default):
+        for property_key, value in self.property_data.items():
+            if property_key == key:
+                return value
+        return default
+
     def __setattr__(self, name, value):
         pdef = self.propertydefs_dict.get(name, None)
         if pdef:
