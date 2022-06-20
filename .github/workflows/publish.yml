@@ -34,6 +34,12 @@ jobs:
         name: sdist
         path: dist
 
+    - name: Display structure of downloaded files
+      working-directory: dist/
+      run: |
+        ls -R
+        rm *cp27*linux*.whl
+
     - name: Publish distribution 📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
