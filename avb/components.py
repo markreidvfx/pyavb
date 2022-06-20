@@ -262,6 +262,12 @@ class SourceClip(Clip):
 
         ctx.write_u8(f, 0x03)
 
+    @property
+    def mob(self):
+        mob_id = self.mob_id
+        if mob_id:
+            return self.root.content.mob_dict.get(self.mob_id, None)
+
 
 @utils.register_class
 class Timecode(Clip):
