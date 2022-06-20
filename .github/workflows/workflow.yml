@@ -64,16 +64,10 @@ jobs:
       run: |
         python setup.py bdist_wheel
 
-    - name: Create Artifact ${{ matrix.os }} python ${{ matrix.python-version }}
-      uses: actions/upload-artifact@v3
-      with:
-        name: pyavb-${{ matrix.os }}-python-${{ matrix.python-version }}-${{ github.sha }}
-        path: dist/*.whl
-
     - name: Create Artifact All
       uses: actions/upload-artifact@v3
       with:
-        name: pyavb-all-${{ github.sha }}
+        name: wheels
         path: dist/*.whl
 
   latest-release:
@@ -92,10 +86,16 @@ jobs:
           pip install wheel cython
           python setup.py sdist
 
+      - name: Create Artifact sdist
+        uses: actions/upload-artifact@v3
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
       - name: Download Artifacts
         uses: actions/download-artifact@v3
         with:
-          name: pyavb-all-${{ github.sha }}
+          name: wheels
           path: dist/
 
       - name: Display structure of downloaded files
