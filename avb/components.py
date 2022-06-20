@@ -186,7 +186,7 @@ class Sequence(Component):
     def nearest_component_at_time(self, edit_unit):
         """ returns the nearest component to edit_unit and its start position"""
         index, position = self.nearest_index_at_time(edit_unit)
-        return self.components[self.index_at_time(edit_unit)], position
+        return self.components[index], position
 
     def nearest_index_at_time(self, edit_unit):
         """returns the index of the nearest component to edit_unit and its start position"""
