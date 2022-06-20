@@ -175,13 +175,56 @@ class Sequence(Component):
 
     @property
     def length(self):
-        l = 0
-        for c in self.components:
-            if c.class_id == b'TNFX':
-                l -= c.length
+        length = 0
+        for component in self.components:
+            if component.class_id == b'TNFX':
+                length -= component.length
             else:
-                l += c.length
-        return l
+                length += component.length
+        return length
+
+    def nearest_component_at_time(self, edit_unit):
+        """ returns the nearest component to edit_unit and its start position"""
+        index, position = self.nearest_index_at_time(edit_unit)
+        return self.components[self.index_at_time(edit_unit)], position
+
+    def nearest_index_at_time(self, edit_unit):
+        """returns the index of the nearest component to edit_unit and its start position"""
+        last_component = None
+        last_index = None
+        last_pos = 0
+
+        if edit_unit <= 0:
+            return 0
+
+        # this needs to go past target index to handle Transitions
+        for index, position, component in self.positions():
+
+            if component.class_id == b'TNFX':
+                if position <= edit_unit < position + component.length:
+                    return index, position
+
+            # gone past return previous
+            if last_component and position >= edit_unit:
+                return last_index, last_pos
+
+            last_component = component
+            last_index = index
+            last_pos = position
+
+        return last_index, last_pos
+
+    def positions(self):
+        length = 0
+        for index, component in enumerate(self.components):
+
+            if component.class_id == b'TNFX':
+                length -= component.length
+                yield (index, length, component)
+            else:
+                yield (index, length, component)
+                length += component.length
+
 
 class Clip(Component):
     class_id = b'CLIP'
