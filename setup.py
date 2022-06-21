@@ -5,7 +5,7 @@ import setuptools.command.build_py
 from distutils.extension import Extension
 
 PROJECT_METADATA = {
-    "version": "0.1.0.dev6",
+    "version": "0.1.0.dev7",
     "author": 'Mark Reid',
     "author_email": 'mindmark@gmail.com',
     "license": 'MIT',
@@ -81,6 +81,10 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Operating System :: OS Independent',
         'Natural Language :: English',
     ],
