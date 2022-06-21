@@ -191,14 +191,15 @@ class Sequence(Component):
     def nearest_index_at_time(self, edit_unit):
         """returns the index of the nearest component to edit_unit and its start position"""
         last_component = None
-        last_index = None
+        last_index = 0
         last_pos = 0
-
-        if edit_unit <= 0:
-            return 0
 
         # this needs to go past target index to handle Transitions
         for index, position, component in self.positions():
+
+            # skip zero length FILL components
+            if component.length == 0:
+                continue
 
             if component.class_id == b'TNFX':
                 if position <= edit_unit < position + component.length:
