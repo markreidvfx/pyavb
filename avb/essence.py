@@ -435,6 +435,88 @@ class PCMADescriptor(MediaFileDescriptor):
 
         ctx.write_u8(f, 0x03)
 
+
+@utils.register_class
+class MPGADescriptor(MediaFileDescriptor):
+    class_id = b'MPGA'
+    propertydefs = MediaFileDescriptor.propertydefs + [
+        AVBPropertyDef('channels',                    'OMFI:MDAU:NumChannels',               'uint16'),
+        AVBPropertyDef('quantization_bits',           'OMFI:MDAU:BitsPerSample',             'uint16'),
+        AVBPropertyDef('sample_rate',                 'EdRate',                              'fexp10'),
+        AVBPropertyDef('locked',                      'OMFI:MDAU:Locked',                    'Boolean'),
+        AVBPropertyDef('audio_ref_level',             'OMFI:MDAU:AudioRefLevel',             'int16'),
+        AVBPropertyDef('electro_spatial_formulation', 'OMFI:MDAU:ElectroSpatialFormulation', 'int32'),
+        AVBPropertyDef('dial_norm',                   'OMFI:MDAU:DialNorm',                  'uint16'),
+        AVBPropertyDef('coding_format',               'OMFI:MDAU:AudioCodingFormat',         'int32'),
+        AVBPropertyDef('bit_rate',                    'OMFI:MPGA:BitRate',                   'uint32'),
+        AVBPropertyDef('sub_frame_alignment',         'OMFI:MPGA:SubframeAlignment',         'uint64'),
+        AVBPropertyDef('origin',                      'OMFI:MPGA:Origin',                    'uint64'),
+    ]
+    __slots__ = ()
+
+    def read(self, f):
+        super(MPGADescriptor, self).read(f)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
+
+        self.channels = ctx.read_u16(f)
+        self.quantization_bits = ctx.read_u16(f)
+        self.sample_rate = ctx.read_exp10_encoded_float(f)
+
+        self.locked = ctx.read_bool(f)
+        self.audio_ref_level = ctx.read_s16(f)
+        self.electro_spatial_formulation = ctx.read_s32(f)
+        self.dial_norm = ctx.read_u16(f)
+
+        self.coding_format = ctx.read_u32(f)
+        self.bit_rate = ctx.read_u32(f)
+
+        for tag in ctx.iter_ext(f):
+            if tag == 0x01:
+                ctx.read_assert_tag(f, 77)
+                self.sub_frame_alignment = ctx.read_u64(f)
+            elif tag == 0x02:
+                ctx.read_assert_tag(f, 77)
+                self.origin = ctx.read_u64(f)
+            else:
+                raise ValueError("%s: unknown ext tag 0x%02X %d" % (str(self.class_id), tag,tag))
+
+        ctx.read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(MPGADescriptor, self).write(f)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
+
+        ctx.write_u16(f, self.channels)
+        ctx.write_u16(f, self.quantization_bits)
+        ctx.write_exp10_encoded_float(f, self.sample_rate)
+
+        ctx.write_bool(f, self.locked)
+        ctx.write_s16(f, self.audio_ref_level)
+        ctx.write_s32(f, self.electro_spatial_formulation)
+        ctx.write_u16(f, self.dial_norm)
+
+        ctx.write_u32(f, self.coding_format)
+        ctx.write_u32(f, self.bit_rate)
+
+        if hasattr(self, 'sub_frame_alignment'):
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 77)
+            ctx.write_s64(f, self.sub_frame_alignment)
+
+        if hasattr(self, 'origin'):
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x02)
+            ctx.write_u8(f, 77)
+            ctx.write_string(f, self.origin)
+
+        ctx.write_u8(f, 0x03)
+
+
 @utils.register_class
 class DIDDescriptor(MediaFileDescriptor):
     class_id = b'DIDD'
