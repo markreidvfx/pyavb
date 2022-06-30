@@ -419,16 +419,22 @@ def read_attr_data(root, object_instance, const unsigned char[:] data):
 
         elif item.type == STR_ATTR:
             data_size = item.data.size()
-            ptr =  <const char *>&item.data[0]
-            value = ptr[:data_size].decode('macroman')
+            if data_size > 0:
+                ptr =  <const char *>&item.data[0]
+                value = ptr[:data_size].decode('macroman')
+            else:
+                value = ""
 
         elif item.type == OBJ_ATTR:
             value = utils.AVBObjectRef(root, item.value)
 
         elif item.type == BOB_ATTR:
             data_size = item.data.size()
-            ptr =  <const char *>&item.data[0]
-            value = <bytearray> ptr[:data_size]
+            if data_size > 0:
+                ptr =  <const char *>&item.data[0]
+                value = <bytearray> ptr[:data_size]
+            else:
+                value = bytearray()
 
         data_size = item.name.size()
         ptr =  <const char *>&item.name[0]
