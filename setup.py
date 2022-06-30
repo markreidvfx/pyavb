@@ -5,7 +5,7 @@ import setuptools.command.build_py
 from distutils.extension import Extension
 
 PROJECT_METADATA = {
-    "version": "1.1.0",
+    "version": "1.2.0.dev",
     "author": 'Mark Reid',
     "author_email": 'mindmark@gmail.com',
     "license": 'MIT',
