@@ -19,7 +19,7 @@ __license__ = "{license}"
 """
 
 sourcefiles = [
-"avb/_ext.pyx",
+"src/avb/_ext.pyx",
 ]
 
 extensions =[]
@@ -43,7 +43,7 @@ class AddMetadata(setuptools.command.build_py.build_py):
             return
 
         target_file = os.path.join(self.build_lib, 'avb', "__init__.py")
-        source_file = os.path.join(os.path.dirname(__file__), 'avb', "__init__.py")
+        source_file = os.path.join(os.path.dirname(__file__), 'src', 'avb', "__init__.py")
 
         # get the base data from the original file
         with open(source_file, 'r') as fi:
@@ -91,9 +91,8 @@ setup(
 
     platforms='any',
 
-    packages=[
-        'avb',
-    ],
+    packages=['avb'],
+    package_dir={'': 'src'},
 
     cmdclass={'build_py': AddMetadata},
     ext_modules = extensions,
