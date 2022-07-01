@@ -1,4 +1,4 @@
-CYTHON_SRC = $(shell find avb -maxdepth 1 -name "*.pyx")
+CYTHON_SRC = $(shell find src/avb -maxdepth 1 -name "*.pyx")
 C_SRC = $(CYTHON_SRC:%.pyx=build/cython/%.cpp)
 MOD_SOS = $(CYTHON_SRC:%.pyx=%.so)
 COVERAGE_EXEC := $(shell command -v coverage 2> /dev/null)
@@ -12,11 +12,13 @@ python-version:
 
 clean:
 	- rm -rf build
-	- find avb -name '*.so' -delete
-	- find avb -name '*.dylib' -delete
-	- find avb -name '*.pyd' -delete
-	- find avb -name '*.dll' -delete
-	- find avb -name '*.pyc' -delete
+	- find src/avb -name '*.so' -delete
+	- find src/avb -name '*.dylib' -delete
+	- find src/avb -name '*.pyd' -delete
+	- find src/avb -name '*.dll' -delete
+	- find src/avb -name '*.pyc' -delete
+	- rm -f src/avb/_ext.cpp
+	- rm -f .coverage
 
 doc:
 	@make -C docs html
