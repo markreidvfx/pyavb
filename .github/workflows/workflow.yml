@@ -10,93 +10,177 @@ on:
     branches: [ "master", "dev" ]
 
 jobs:
-  build-test:
+  build-pure-wheel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install pypa build
+        run: python -m pip install build
+
+      - name: Create wheel
+        run: python -m build -w .
+        env:
+          PYAVB_BUILD_EXT: '0'
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v3
+        with:
+          name: pure-wheel
+          path: dist/*.whl
+
+  build-cython-wheels:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["2.7", "3.8", "3.9", "3.10"]
-        include:
-        - os: ubuntu-latest
-          CFLAGS: "-g0 -O3"
-        - os: windows-latest
-          CFLAGS: "/O2"
-        - os: macos-latest
-          CFLAGS: "-g0 -O3"
+        python-version: ["cp27*", "cp37*", "cp38*", "cp39*", "cp310*"]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Prepare compiler environment for Windows (Python 2.7)
+        if: matrix.python-version == 'cp27*' && runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      # cibuildwheel 1.12.0 gates Python 2.7 wheels builds
+      # by using two environment variables, DISTUTILS_USE_SDK and MSSdk.
+      # https://cibuildwheel.readthedocs.io/en/1.x/cpp_standards/#windows-and-python-27
+      - name: Set Windows Python 2.7 environment variables
+        if: matrix.python-version == 'cp27*' && runner.os == 'Windows'
+        shell: bash
+        run: |
+          echo "DISTUTILS_USE_SDK=1" >> $GITHUB_ENV
+          echo "MSSdk=1" >> $GITHUB_ENV
+
+      - name: Build wheels (Python 2.7)
+        if: matrix.python-version == 'cp27*'
+        # cibuildwheel 1.12.0 is the last release that supported Python 2.7.
+        uses: pypa/cibuildwheel@v1.12.0
+        with:
+          output-dir: wheelhouse
+        env:
+          CIBW_BUILD: ${{ matrix.python-version }}
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
+          CIBW_MANYLINUX_I686_IMAGE: manylinux2010
+          CIBW_ARCHS_WINDOWS: AMD64  # On windows we will only compile 64 bits wheels.
+
+      - name: Build wheels (Python 3)
+        uses: pypa/cibuildwheel@v2.7.0
+        if: matrix.python-version != 'cp27*'
+        with:
+          output-dir: wheelhouse
+        env:
+          CIBW_BUILD: ${{ matrix.python-version }}
+          CIBW_SKIP: '*musllinux*'
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
+          CIBW_MANYLINUX_I686_IMAGE: manylinux2010
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v3
+        with:
+          name: cython-wheels
+          path: ./wheelhouse/*.whl
+
+  test-pure-wheel:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["2.7", "3.7", "3.8", "3.9", "3.10"]
+
+    needs:
+    - build-pure-wheel
 
     steps:
     - uses: actions/checkout@v3
+
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Windows Choco Cache
-      if: ${{ runner.os == 'Windows' && matrix.python-version == '2.7' }}
-      uses: actions/cache@v3
+    - name: Download pure wheel
+      uses: actions/download-artifact@v3
       with:
-        key: choco-${{ runner.os }}-vcpython27
-        path: ~\AppData\Local\Temp\chocolatey\vcpython27\*\*.msi
-
-    - name: Setup MSVC for Python 2.7
-      if: ${{ runner.os == 'Windows' && matrix.python-version == '2.7' }}
-      run: |
-        choco install vcpython27 -fd --ignore-dependencies --source=".github\workflows\custom" -y
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install wheel cython
+        name: pure-wheel
+        path: dist/
 
     - name: Run Unit Tests
+      shell: bash
       run: |
+        python -m pip install dist/*
         python -m unittest discover tests -v
 
-    - name: Run Cython Ext Unit Tests
-      env:
-        CFLAGS : ${{ matrix.CFLAGS }}
-      run: |
-        python setup.py build_ext --inplace
-        python -m unittest discover tests -v
+  test-cython-wheels:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["2.7", "3.7", "3.8", "3.9", "3.10"]
 
-    - name: Build Wheel
-      run: |
-        python setup.py bdist_wheel
+    needs:
+    - build-cython-wheels
 
-    - name: Create Artifact All
-      uses: actions/upload-artifact@v3
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
       with:
-        name: wheels
-        path: dist/*.whl
+        python-version: ${{ matrix.python-version }}
+
+    - name: Download cython wheels
+      uses: actions/download-artifact@v3
+      with:
+        name: cython-wheels
+        path: dist/
+
+    - name: Run Unit Tests
+      shell: bash
+      run: |
+        python -m pip install --find-links=./dist --only-binary=:all: pyavb
+        python -m unittest discover tests -v
 
   latest-release:
-    needs: build-test
+    needs:
+      - test-cython-wheels
+      - test-pure-wheel
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
       - name: Create sdist
         run: |
-          pip install wheel cython
-          python setup.py sdist
+          pip install build
+          python -m build -s .
 
-      - name: Create Artifact sdist
-        uses: actions/upload-artifact@v3
-        with:
-          name: sdist
-          path: dist/*.tar.gz
-
-      - name: Download Artifacts
+      - name: Download pure wheel
         uses: actions/download-artifact@v3
         with:
-          name: wheels
-          path: dist/
+          name: pure-wheel
+          path: dist
+
+      - name: Download cython wheels
+        uses: actions/download-artifact@v3
+        with:
+          name: cython-wheels
+          path: dist
 
       - name: Display structure of downloaded files
         run: ls -R
