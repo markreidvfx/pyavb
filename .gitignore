@@ -42,3 +42,5 @@ docs/source/api/*
 
 # Mac
 .DS_Store
+
+src/avb/_ext.cpp
