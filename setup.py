@@ -1,7 +1,9 @@
-import sys
 import os
-from setuptools import setup
+import sys
+
+from setuptools import setup, find_packages
 import setuptools.command.build_py
+import setuptools.command.build_ext
 from distutils.extension import Extension
 
 PROJECT_METADATA = {
@@ -31,6 +33,28 @@ try:
                                 language="c++")])
 except ImportError as e:
     print('unable to build optional cython extension')
+
+
+class PyavbBuildExt(setuptools.command.build_ext.build_ext):
+    """Custom Extension command"""
+
+    def build_extensions(self):
+        for ext in self.extensions:
+            flags = []
+            if self.compiler.compiler_type == 'msvc':
+                if sys.version_info[0] == 2:
+                    # If we are compiling for Python 2.7 on Windows, statically link
+                    # the runtime libraries. THis will allow to compile using an
+                    # msvc greater than the one used to compile Python 2.7.
+                    # See See https://docs.microsoft.com/en-us/cpp/build/reference/md-mt-ld-use-run-time-library?view=msvc-160.
+                    flags.append('/MT')
+                flags.append('/O2')
+
+            else:
+                flags.extend(['-g0', '-O3'])
+
+            ext.extra_compile_args = flags
+        setuptools.command.build_ext.build_ext.build_extensions(self)
 
 
 class AddMetadata(setuptools.command.build_py.build_py):
@@ -94,7 +118,10 @@ setup(
     packages=['avb'],
     package_dir={'': 'src'},
 
-    cmdclass={'build_py': AddMetadata},
+    cmdclass={
+        'build_py': AddMetadata,
+        'build_ext': PyavbBuildExt
+    },
     ext_modules = extensions,
     extras_require= {'cython' : ['cython']},
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*',
