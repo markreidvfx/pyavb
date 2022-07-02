@@ -16,13 +16,22 @@ jobs:
     # This action will download the artifact for workflow runs that
     # happen for this actual commit (the commit that the tag points to).
     # It also restores the files timestamps.
-    - name: Download wheels from commit ${{ github.sha }}
+    - name: Download cython wheels from commit ${{ github.sha }}
       uses: dawidd6/action-download-artifact@v2
       with:
         workflow: workflow.yml
         workflow_conclusion: success
         commit: ${{ github.sha }}
         name: cython-wheels
+        path: dist
+
+    - name: Download pure wheel from commit ${{ github.sha }}
+      uses: dawidd6/action-download-artifact@v2
+      with:
+        workflow: workflow.yml
+        workflow_conclusion: success
+        commit: ${{ github.sha }}
+        name: pure-wheel
         path: dist
 
     - name: Download sdist from commit ${{ github.sha }}
