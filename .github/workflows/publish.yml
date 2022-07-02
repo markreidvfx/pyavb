@@ -22,7 +22,7 @@ jobs:
         workflow: workflow.yml
         workflow_conclusion: success
         commit: ${{ github.sha }}
-        name: wheels
+        name: cython-wheels
         path: dist
 
     - name: Download sdist from commit ${{ github.sha }}
