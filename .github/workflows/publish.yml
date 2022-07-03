@@ -55,7 +55,6 @@ jobs:
       working-directory: dist/
       run: |
         ls -R
-        rm -v *linux*.whl
 
     - name: Publish distribution 📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
