@@ -170,6 +170,12 @@ jobs:
           pip install build
           python -m build -s .
 
+      - name: Upload sdist
+        uses: actions/upload-artifact@v3
+        with:
+          name: sdist
+          path: ./dist/*.tar.gz
+
       - name: Download pure wheel
         uses: actions/download-artifact@v3
         with:
