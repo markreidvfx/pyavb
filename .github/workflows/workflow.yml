@@ -193,6 +193,7 @@ jobs:
         working-directory: dist/
 
       - uses: "marvinpinto/action-automatic-releases@latest"
+        if: ${{ github.ref == 'refs/heads/master' }}
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
