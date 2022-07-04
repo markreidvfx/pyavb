@@ -577,10 +577,10 @@ static int read_paramclip(Buffer *f, Properties *p)
             pp->type = (ControlPointValueType)read_u16le(f);
             switch (pp->type) {
                 case CP_TYPE_INT:
-                    cp->value = read_u32le(f);
+                    pp->value = read_u32le(f);
                     break;
                 case CP_TYPE_DOUBLE:
-                    cp->double_value = read_double_le(f);
+                    pp->double_value = read_double_le(f);
                     break;
                 default:
                     fprintf(stderr, "unknown value_type: %d\n", pp->type);
