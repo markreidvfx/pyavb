@@ -374,8 +374,7 @@ class AVBFile(object):
             self.f.close()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if (exc_type is None and exc_value is None and traceback is None):
-            self.close()
+        self.close()
 
     def __enter__(self):
         return self
