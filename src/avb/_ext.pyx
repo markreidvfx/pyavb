@@ -62,7 +62,7 @@ cdef extern from "_ext_core.cpp" nogil:
 
     cdef struct IntData:
         const char *name
-        bint is_signed;
+        bint is_signed
         IntDataValue data
 
     cdef struct IntArrayData:
@@ -78,31 +78,31 @@ cdef extern from "_ext_core.cpp" nogil:
         bint data
 
     cdef struct StringData:
-        const char *name;
+        const char *name
         StringType type
         vector[uint8_t] data
 
     cdef struct BytesData:
-        const char *name;
+        const char *name
         vector[uint8_t] data
 
     cdef struct RefListData:
         const char *name
         vector[uint32_t] data
 
-    cdef struct PerPoint:
-        int16_t code;
+    cdef struct ControlPointProperty:
+        int16_t code
         ControlPointValueType type
-        uint32_t value;
-        double double_value;
+        uint32_t value
+        double double_value
 
     cdef struct ControlPoint:
-        int32_t offset_num;
-        int32_t offset_den;
-        int32_t timescale;
-        uint32_t value;
-        double double_value;
-        vector[PerPoint] pp;
+        int32_t offset_num
+        int32_t offset_den
+        int32_t timescale
+        uint32_t value
+        double double_value
+        vector[ControlPointProperty] pp
 
     cdef struct ControlPointData:
         const char *name
@@ -133,7 +133,7 @@ cdef extern from "_ext_core.cpp" nogil:
         vector[StringData] strings
         vector[BytesData]  mob_ids
         vector[RefListData] reflists
-        vector[ChildData]  children;
+        vector[ChildData]  children
         vector[ControlPointData] control_points
         vector[IntArrayData] arrays
         vector[BytesData] bytearrays
@@ -189,7 +189,7 @@ cdef void controlpoints2dict(object root, dict d, Properties* p):
 
     cdef ControlPointData item
     cdef ControlPoint cp
-    cdef PerPoint pp
+    cdef ControlPointProperty pp
     cdef bytes name
     cdef list control_point_list
     cdef list pp_list
@@ -203,10 +203,10 @@ cdef void controlpoints2dict(object root, dict d, Properties* p):
     for item in p.control_points:
         if item.type == ParamControlPointType:
             obj_class = utils.AVBClassName_dict['ParamControlPoint']
-            pp_obj_class = utils.AVBClassName_dict['ParamPerPoint']
+            pp_obj_class = utils.AVBClassName_dict['ParamControlPointProperty']
         else:
             obj_class = utils.AVBClassName_dict['ControlPoint']
-            pp_obj_class = utils.AVBClassName_dict['PerPoint']
+            pp_obj_class = utils.AVBClassName_dict['ControlPointProperty']
 
         control_point_list = []
         for cp in item.data:

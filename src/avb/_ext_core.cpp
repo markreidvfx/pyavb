@@ -101,7 +101,7 @@ struct BytesData {
     vector<uint8_t> data;
 };
 
-struct PerPoint {
+struct ControlPointProperty {
     int16_t code;
     ControlPointValueType type;
     uint32_t value;
@@ -115,7 +115,7 @@ struct ControlPoint {
 
     uint32_t value;
     double double_value;
-    vector<PerPoint> pp;
+    vector<ControlPointProperty> pp;
 };
 
 struct ControlPointData {
@@ -572,7 +572,7 @@ static int read_paramclip(Buffer *f, Properties *p)
         uint16_t pp_count = read_u16le(f);
         cp->pp.resize(pp_count);
         for(int j = 0; j < pp_count; j++) {
-            PerPoint *pp = &cp->pp[j];
+            ControlPointProperty *pp = &cp->pp[j];
             pp->code = (int16_t)read_u16le(f);
             pp->type = (ControlPointValueType)read_u16le(f);
             switch (pp->type) {

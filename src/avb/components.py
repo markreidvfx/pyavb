@@ -511,7 +511,7 @@ class ParamControlPoint(core.AVBObject):
 
 
 @utils.register_helper_class
-class ParamPerPoint(core.AVBObject):
+class ParamControlPointProperty(core.AVBObject):
     propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('code',  'OMFI:PRCL:PPCode',  'int16'),
@@ -584,7 +584,7 @@ class ParamClip(Clip):
             assert pp_count >= 0
             cp.pp = []
             for j in range(pp_count):
-                pp = ParamPerPoint.__new__(ParamPerPoint, root=self.root)
+                pp = ParamControlPointProperty.__new__(ParamControlPointProperty, root=self.root)
                 pp.code = ctx.read_s16(f)
                 pp.type = ctx.read_s16(f)
 
@@ -832,7 +832,7 @@ class ControlPoint(core.AVBObject):
     __slots__ = ()
 
 @utils.register_helper_class
-class PerPoint(core.AVBObject):
+class ControlPointProperty(core.AVBObject):
     propertydefs_dict = {}
     propertydefs = [
         AVBPropertyDef('code',    'OMFI:CTRL:PPCode',  'int16'),
@@ -882,7 +882,7 @@ class ControlClip(Clip):
             pp_count = ctx.read_s16(f)
             assert pp_count >= 0
             for j in range(pp_count):
-                pp = PerPoint.__new__(PerPoint, root=self.root)
+                pp = ControlPointProperty.__new__(ControlPointProperty, root=self.root)
                 pp.code = ctx.read_s16(f)
                 a = ctx.read_s32(f)
                 b = ctx.read_s32(f)
