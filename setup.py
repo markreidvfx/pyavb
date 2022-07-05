@@ -7,7 +7,7 @@ import setuptools.command.build_ext
 from distutils.extension import Extension
 
 PROJECT_METADATA = {
-    "version": "1.2.0",
+    "version": "1.3.0.dev0",
     "author": 'Mark Reid',
     "author_email": 'mindmark@gmail.com',
     "license": 'MIT',
