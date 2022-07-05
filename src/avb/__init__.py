@@ -5,3 +5,4 @@ from . import components
 from . import trackgroups
 from . import essence
 from . import misc
+from . import interpolation

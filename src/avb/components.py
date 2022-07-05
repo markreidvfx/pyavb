@@ -10,6 +10,7 @@ from .core import AVBPropertyDef, AVBRefList
 from . import utils
 from . import mobid
 from . utils import peek_data
+from .interpolation import integrate_iter, lerp, cubic_interpolate, bezier_interpolate
 
 class Component(core.AVBObject):
     class_id = b'COMP'
@@ -444,6 +445,22 @@ CP_TYPE_INT = 1
 CP_TYPE_DOUBLE = 2
 CP_TYPE_REFERENCE = 4
 
+INTERPOLATION_MAP = {
+    2: 'ConstantInterp',
+    3: 'LinearInterp',
+    5: 'BezierInterpolator',
+    6: 'CubicInterpolator',
+}
+
+POINT_PROPERTY_MAP = {
+    5: 'PP_IN_TANGENT_POS_U',
+    6: 'PP_IN_TANGENT_VAL_U',
+    7: 'PP_OUT_TANGENT_POS_U',
+    8: 'PP_OUT_TANGENT_VAL_U',
+    9: 'PP_TANGENT_MODE_U',
+    14: 'PP_BASE_FRAME_U',
+}
+
 @utils.register_helper_class
 class ParamControlPoint(core.AVBObject):
     propertydefs_dict = {}
@@ -455,7 +472,44 @@ class ParamControlPoint(core.AVBObject):
     ]
     __slots__ = ()
 
-# not sure hwat PP's stands for
+    @property
+    def time(self):
+        num = float(self.offset[0])
+        den = float(self.offset[1])
+        if den == 0.0:
+            raise ValueError("bad denominator")
+
+        # TODO: check if this is what timescale does
+        if self.timescale == 0:
+            raise ValueError("bad timescale")
+
+        return num / den * self.timescale
+
+    @property
+    def point_properties(self):
+        props = {}
+        for p in self.pp:
+            name = p.name
+            if name:
+                props[p.name] = p.value
+        return props
+
+    @property
+    def base_frame(self):
+        for p in self.pp:
+            if p.name == 'PP_BASE_FRAME_U':
+                return p.value
+        return 0
+
+    @property
+    def tangents(self):
+        props = self.point_properties
+        return [(float(props.get("PP_IN_TANGENT_POS_U", 0)),
+                 float(props.get("PP_IN_TANGENT_VAL_U", 0))),
+                (float(props.get("PP_OUT_TANGENT_POS_U", 0)),
+                 float(props.get("PP_OUT_TANGENT_VAL_U", 0)))]
+
+
 @utils.register_helper_class
 class ParamPerPoint(core.AVBObject):
     propertydefs_dict = {}
@@ -465,6 +519,22 @@ class ParamPerPoint(core.AVBObject):
         AVBPropertyDef('value', 'OMFI:PRCL:PPValue', 'number'), # int or double
     ]
     __slots__ = ()
+
+    @property
+    def name(self):
+        return POINT_PROPERTY_MAP.get(self.code, None)
+
+    @property
+    def type_name(self):
+        if self.type == CP_TYPE_INT:
+            return 'int'
+        elif self.type == CP_TYPE_DOUBLE:
+            return 'double'
+        elif self.type == CP_TYPE_REFERENCE:
+            return 'reference'
+        else:
+            return 'unknown'
+
 
 @utils.register_class
 class ParamClip(Clip):
@@ -592,6 +662,163 @@ class ParamClip(Clip):
             ctx.write_s32(f, self.fields)
 
         ctx.write_u8(f, 0x03)
+
+    @property
+    def value_type_name(self):
+        if self.value_type == CP_TYPE_INT:
+            return 'int'
+        elif self.value_type == CP_TYPE_DOUBLE:
+            return 'double'
+        elif self.value_type == CP_TYPE_REFERENCE:
+            return 'reference'
+        else:
+            return 'unknown'
+
+    @property
+    def interp(self):
+        return INTERPOLATION_MAP.get(self.interp_kind, 'unknown')
+
+    def nearest_index(self, t):
+        """
+        binary search for index of point.time <= t
+        """
+
+        start = 0
+        end = len(self.control_points) - 1
+        while True:
+            if end < start:
+                return max(0, end)
+
+            m = (start + end) // 2
+            p = self.control_points[m]
+            if p.time < t:
+                start = m + 1
+            elif p.time > t:
+                end = m - 1
+            else:
+                return m
+
+
+    def value_at(self, time):
+        t = float(time)
+
+        index = self.nearest_index(t)
+        p1 = self.control_points[index]
+
+        # clamp if t outside of range
+        if t < p1.time or index + 1 >= len(self.control_points):
+            return float(p1.value)
+
+        if self.interp == 'ConstantInterp':
+            return float(p1.value)
+
+        p2 = self.control_points[index+1]
+
+        if self.interp == 'LinearInterp':
+            t_len = float(p2.time) - float(p1.time)
+            t_diff = t - float(p1.time)
+            t_mix = t_diff/t_len
+
+            v0 = float(p1.value)
+            v1 = float(p2.value)
+            return lerp(v0, v1, t_mix)
+
+        elif self.interp == 'BezierInterpolator':
+            t0 = float(p1.time)
+            v0 = float(p1.value)
+
+            t3 = float(p2.time)
+            v3 = float(p2.value)
+
+            tangents = p1.tangents[1]
+            t1 = t0 + tangents[0]
+            v1 = v0 + tangents[1]
+
+            tangents = p2.tangents[0]
+            t2 = t3 + tangents[0]
+            v2 = v3 + tangents[1]
+
+            return bezier_interpolate((t0, v0),
+                                      (t1, v1),
+                                      (t2, v2),
+                                      (t3, v3), t)
+
+        elif self.interp == 'CubicInterpolator':
+            t1 = float(p1.time)
+            v1 = float(p1.value)
+
+            t2 = float(p2.time)
+            v2 = float(p2.value)
+
+            if index - 1 >= 0:
+                p0 = self.control_points[index - 1]
+                t0 = float(p0.time)
+                v0 = float(p0.value)
+            else:
+                t0 = t1 - ((t2 - t1) * 0.5)
+                v0 = v1
+
+            if index + 2 < len(self.control_points):
+                p3 = self.control_points[index + 2]
+                t3 = float(p3.time)
+                v3 = float(p3.value)
+            else:
+                t3 = t2 + ((t2 - t1) * 0.5)
+                v3 = v2
+
+            return cubic_interpolate((t0, v0),
+                                     (t1, v1),
+                                     (t2, v2),
+                                     (t3, v3), t)
+
+        else:
+            raise NotImplementedError("Interpolation not implemented for %s %s" %
+                           (self.interp, str(self.interp_kind)))
+
+        return 0.0
+
+    def intergate(self, start, end=None):
+        # first speed map key frame is the zero point
+        # of the offset map curve
+        first = self.control_points[0]
+        center = int(first.time)
+        if end is None:
+            last = self.control_points[-1]
+            end = int(last.time)
+
+        if start > end:
+            raise ValueError("start needs to be less then end")
+
+        time = []
+        value = []
+        offset_index = None
+
+        inter_start = min(start, center)
+        inter_end = max(center,  end+1)
+
+        for i, (t,v) in enumerate(integrate_iter(self.value_at, inter_start, inter_end)):
+            time.append(t)
+            value.append(v)
+
+            if t == center:
+                offset_index = i
+
+        center_offset = value[offset_index]
+
+        # not really sure what this base frame offset is about
+        # but appears to contain the how much calculation is off...
+        center_offset -= first.base_frame
+
+        result = []
+        for i, t in enumerate(time):
+            if t > end:
+                break
+
+            if t >= start:
+                v = value[i] - center_offset
+                result.append((t, v))
+
+        return result
 
 @utils.register_helper_class
 class ControlPoint(core.AVBObject):

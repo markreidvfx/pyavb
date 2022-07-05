@@ -72,6 +72,7 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
           CIBW_MANYLINUX_I686_IMAGE: manylinux2010
           CIBW_ARCHS_WINDOWS: AMD64  # On windows we will only compile 64 bits wheels.
+          CIBW_BUILD_VERBOSITY: 1
 
       - name: Build wheels (Python 3)
         uses: pypa/cibuildwheel@v2.7.0
@@ -83,6 +84,7 @@ jobs:
           CIBW_SKIP: '*musllinux*'
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
           CIBW_MANYLINUX_I686_IMAGE: manylinux2010
+          CIBW_BUILD_VERBOSITY: 1
 
       - name: Upload wheels
         uses: actions/upload-artifact@v3
@@ -118,7 +120,7 @@ jobs:
     - name: Run Unit Tests
       shell: bash
       run: |
-        python -m pip install dist/*
+        python -m pip install dist/* --no-index
         python -m unittest discover tests -v
 
   test-cython-wheels:
@@ -149,7 +151,7 @@ jobs:
     - name: Run Unit Tests
       shell: bash
       run: |
-        python -m pip install --find-links=./dist --only-binary=:all: pyavb
+        python -m pip install --find-links=./dist --no-index --only-binary=:all: pyavb
         python -m unittest discover tests -v
 
   latest-release:
