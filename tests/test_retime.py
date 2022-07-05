@@ -39,7 +39,7 @@ def compare_speedmap_to_offset_map(path):
 
         error_list = []
 
-        for t, v in speed_map.control_track.intergate(int(start), length):
+        for t, v in speed_map.control_track.integrate(int(start), length):
             target_value = offset_map.control_track.value_at(t)
             error_list.append(abs(target_value - v))
 
@@ -134,7 +134,7 @@ class TestRetime(unittest.TestCase):
             pos = 0
             error_list = []
 
-            offset_map_gen = speed_map.control_track.intergate(start, motion_effect.length)
+            offset_map_gen = speed_map.control_track.integrate(start, motion_effect.length)
             calcuated = [[], []]
             for t,v in offset_map_gen:
                 calcuated[0].append(t)

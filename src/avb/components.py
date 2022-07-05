@@ -777,7 +777,7 @@ class ParamClip(Clip):
 
         return 0.0
 
-    def intergate(self, start, end=None):
+    def integrate(self, start, end=None):
         # first speed map key frame is the zero point
         # of the offset map curve
         first = self.control_points[0]
