@@ -244,7 +244,7 @@ class EffectParamList(core.AVBObject):
         AVBPropertyDef('orig_length',   'OMFI:FXPS:originalLength',   'int32'),
         AVBPropertyDef('window_offset', 'OMFI:FXPS:omFXwindowOffset', 'int32'),
         AVBPropertyDef('keyframe_size', 'OMFI:FXPS:keyFrameSize',     'int32'),
-        AVBPropertyDef('parameters',   'paramamters',                 'list'),
+        AVBPropertyDef('parameters',   'parameters',                 'list'),
     ]
     __slots__ = ()
 
@@ -437,7 +437,7 @@ class CFUserParam(core.AVBObject):
         ctx.write_u8(f, 0x03)
 
 @utils.register_class
-class ParameterItems(core.AVBObject):
+class ParameterItem(core.AVBObject):
     class_id = b'PRIT'
     propertydefs_dict = {}
     propertydefs = [
@@ -452,7 +452,7 @@ class ParameterItems(core.AVBObject):
     __slots__ = ()
 
     def read(self, f):
-        super(ParameterItems, self).read(f)
+        super(ParameterItem, self).read(f)
         ctx = self.root.ictx
         ctx.read_assert_tag(f, 0x02)
         ctx.read_assert_tag(f, 0x02)
@@ -482,7 +482,7 @@ class ParameterItems(core.AVBObject):
         ctx.read_assert_tag(f, 0x03)
 
     def write(self, f):
-        super(ParameterItems, self).write(f)
+        super(ParameterItem, self).write(f)
         ctx = self.root.octx
         ctx.write_u8(f, 0x02)
         ctx.write_u8(f, 0x02)
