@@ -7,7 +7,7 @@ from __future__ import (
 import math
 import sys
 
-EPSILON = sys.float_info.epsilon
+EPSILON = 1e-10 #sys.float_info.epsilon
 
 def lerp(a, b, t):
     return a + (b - a) * t
@@ -182,7 +182,7 @@ def bezier_interpolate(p0, p1, p2, p3, x):
         assert False
 
     # use the root as t for y
-    y = cubic_bezier(p0[1], p1[1], p2[1], p3[1], roots[0])
+    y = cubic_bezier(p0[1], p1[1], p2[1], p3[1], min(1.0, max(0, roots[0])))
     return y
 
 def bezier_interpolate_old(p0, p1, p2, p3, t):
