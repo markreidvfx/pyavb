@@ -520,6 +520,17 @@ class ParameterItem(core.AVBObject):
     def parameter_name(self):
         return PARAMETER_UUIDS.get(str(self.uuid), u"{}".format(self.uuid))
 
+    @property
+    def value_type_name(self):
+        if self.value_type == 1:
+            return 'int'
+        elif self.value_type == 2:
+            return 'double'
+        elif self.value_type == 4:
+            return 'reference'
+        else:
+            return 'unknown'
+
 @utils.register_class
 class MSMLocator(core.AVBObject):
     class_id = b'MSML'

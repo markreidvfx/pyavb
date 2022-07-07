@@ -682,6 +682,8 @@ class ParamClip(Clip):
         """
         binary search for index of point.time <= t
         """
+        if not self.control_points:
+            raise ValueError("ParamClip has no control points")
 
         start = 0
         end = len(self.control_points) - 1
@@ -700,8 +702,9 @@ class ParamClip(Clip):
 
 
     def value_at(self, time):
+        if not self.control_points:
+            raise ValueError("ParamClip has no control points")
         t = float(time)
-
         index = self.nearest_index(t)
         p1 = self.control_points[index]
 
