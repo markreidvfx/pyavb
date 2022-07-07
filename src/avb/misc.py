@@ -7,9 +7,10 @@ from __future__ import (
 
 from . import core
 from . import utils
-from .core import AVBPropertyDef, AVBRefList
+from . core import AVBPropertyDef, AVBRefList
 from . import mobid
 from . utils import peek_data
+from . parameter_uuids import PARAMETER_UUIDS
 
 class FileLocator(core.AVBObject):
     class_id = b'FILE'
@@ -514,6 +515,10 @@ class ParameterItem(core.AVBObject):
             ctx.write_bool(f, self.contribs_to_sig)
 
         ctx.write_u8(f, 0x03)
+
+    @property
+    def parameter_name(self):
+        return PARAMETER_UUIDS.get(str(self.uuid), u"{}".format(self.uuid))
 
 @utils.register_class
 class MSMLocator(core.AVBObject):

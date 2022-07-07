@@ -103,8 +103,10 @@ class TreeItem(object):
         if isinstance(item, list):
             children = []
             for i in item:
-                if hasattr(i, 'name') and i.name is not None:
+                if hasattr(i, 'name') and i.name:
                     children.append([i.name, i])
+                elif hasattr(i, 'parameter_name'):
+                    children.append([i.parameter_name, i])
                 else:
                     children.append([i.__class__.__name__, i])
             self.properties['Value'] = 'list'
