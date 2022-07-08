@@ -7,7 +7,7 @@ from __future__ import (
 import math
 import sys
 
-EPSILON = 1e-10 #sys.float_info.epsilon
+EPSILON = 1e-10 # sys.float_info.epsilon
 
 def lerp(a, b, t):
     return a + (b - a) * t
@@ -179,6 +179,7 @@ def bezier_interpolate(p0, p1, p2, p3, x):
     # solve for x = 0
     roots = bezier_cubic_roots(pa, pb, pc, pd)
     if not roots:
+        # fall back to old method or decrease EPSILON precision?
         assert False
 
     # use the root as t for y
@@ -195,7 +196,7 @@ def bezier_interpolate_old(p0, p1, p2, p3, t):
 
     # approximate the correct t value,
     # maybe this is the newtonian method?
-    # I kind of made it up, its slow but seems to work..
+    # I kind of made it up, its slow but seems to work
     for i in range(20):
         x = cubic_bezier(p0[0], p1[0], p2[0], p3[0], guess_t)
         if x == t:
