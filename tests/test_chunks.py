@@ -92,12 +92,28 @@ def read_write_chunk(path):
 
 class TestChuckDB(unittest.TestCase):
 
+    def test_aifc_chunks(self):
+        for chunk_path in iter_chunks("AIFC"):
+            read_write_chunk(chunk_path)
+
     def test_ancd_chunks(self):
         for chunk_path in iter_chunks("ANCD"):
             read_write_chunk(chunk_path)
 
-    def test_aifc_chunks(self):
-        for chunk_path in iter_chunks("AIFC"):
+    def test_aspi_chunks(self):
+        for chunk_path in iter_chunks("ASPI"):
+            read_write_chunk(chunk_path)
+
+    def test_binf_chunks(self):
+        for chunk_path in iter_chunks("BINF"):
+            read_write_chunk(chunk_path)
+
+    def test_bvst_chunks(self):
+        for chunk_path in iter_chunks("BVst"):
+            read_write_chunk(chunk_path)
+
+    def test_ccfx_chunks(self):
+        for chunk_path in iter_chunks("CCFX"):
             read_write_chunk(chunk_path)
 
     def test_cdci_chunks(self):
@@ -108,72 +124,52 @@ class TestChuckDB(unittest.TestCase):
         for chunk_path in iter_chunks("CMPO"):
             read_write_chunk(chunk_path)
 
-    def test_rgba_chunks(self):
-        for chunk_path in iter_chunks("RGBA"):
+    def test_ctrl_chunks(self):
+        for chunk_path in iter_chunks("CTRL"):
             read_write_chunk(chunk_path)
 
-    def test_rset_chunks(self):
-        for chunk_path in iter_chunks("RSET"):
+    def test_didp_chunks(self):
+        for chunk_path in iter_chunks("DIDP"):
             read_write_chunk(chunk_path)
 
-    def test_mdtp_chunks(self):
-        for chunk_path in iter_chunks("MDTP"):
-            read_write_chunk(chunk_path)
-
-    def test_mdfm_chunks(self):
-        for chunk_path in iter_chunks("MDFM"):
-            read_write_chunk(chunk_path)
-
-    def test_mdfl_chunks(self):
-        for chunk_path in iter_chunks("MDFL"):
-            read_write_chunk(chunk_path)
-
-    def test_mdng_chunks(self):
-        for chunk_path in iter_chunks("MDNG"):
-            read_write_chunk(chunk_path)
-
-    def test_fxps_chunks(self):
-        for chunk_path in iter_chunks("FXPS"):
-            read_write_chunk(chunk_path)
-
-    def test_ccfx_chunks(self):
-        for chunk_path in iter_chunks("CCFX"):
+    def test_eqmb_chunks(self):
+        for chunk_path in iter_chunks("EQMB"):
             read_write_chunk(chunk_path)
 
     def test_file_chunks(self):
         for chunk_path in iter_chunks("FILE"):
             read_write_chunk(chunk_path)
 
-    def test_rept_chunks(self):
-        for chunk_path in iter_chunks("REPT"):
+    def test_fxps_chunks(self):
+        for chunk_path in iter_chunks("FXPS"):
             read_write_chunk(chunk_path)
 
-    def test_pvol_chunks(self):
-        for chunk_path in iter_chunks("PVOL"):
-            read_write_chunk(chunk_path)
-
-    def test_slct_chunks(self):
-        for chunk_path in iter_chunks("SLCT"):
-            read_write_chunk(chunk_path)
-
-    def test_mcmr_chunks(self):
-        for chunk_path in iter_chunks("MCMR"):
+    def test_jped_chunks(self):
+        for chunk_path in iter_chunks("JPED"):
             read_write_chunk(chunk_path)
 
     def test_mcbr_chunks(self):
         for chunk_path in iter_chunks('MCBR'):
             read_write_chunk(chunk_path)
 
-    def test_msml_chunks(self):
-        for chunk_path in iter_chunks('MSML'):
+    def test_mcmr_chunks(self):
+        for chunk_path in iter_chunks("MCMR"):
             read_write_chunk(chunk_path)
 
-    def test_muld_chunks(self):
-        for chunk_path in iter_chunks("MULD"):
+    def test_mdfl_chunks(self):
+        for chunk_path in iter_chunks("MDFL"):
             read_write_chunk(chunk_path)
 
-    def test_didp_chunks(self):
-        for chunk_path in iter_chunks("DIDP"):
+    def test_mdfm_chunks(self):
+        for chunk_path in iter_chunks("MDFM"):
+            read_write_chunk(chunk_path)
+
+    def test_mdng_chunks(self):
+        for chunk_path in iter_chunks("MDNG"):
+            read_write_chunk(chunk_path)
+
+    def test_mdtp_chunks(self):
+        for chunk_path in iter_chunks("MDTP"):
             read_write_chunk(chunk_path)
 
     def test_mpga_chunks(self):
@@ -188,88 +184,88 @@ class TestChuckDB(unittest.TestCase):
         for chunk_path in iter_chunks("MPGP"):
             read_write_chunk(chunk_path)
 
-    def test_jped_chunks(self):
-        for chunk_path in iter_chunks("JPED"):
+    def test_msml_chunks(self):
+        for chunk_path in iter_chunks('MSML'):
             read_write_chunk(chunk_path)
 
-    def test_ctrl_chunks(self):
-        for chunk_path in iter_chunks("CTRL"):
-            read_write_chunk(chunk_path)
-
-    def test_tmbc_chunks(self):
-        for chunk_path in iter_chunks("TMBC"):
+    def test_muld_chunks(self):
+        for chunk_path in iter_chunks("MULD"):
             read_write_chunk(chunk_path)
 
     def test_pcma_chunks(self):
         for chunk_path in iter_chunks("PCMA"):
             read_write_chunk(chunk_path)
 
-    def test_prit_chunks(self):
-        for chunk_path in iter_chunks("PRIT"):
-            read_write_chunk(chunk_path)
-
     def test_prcl_chunks(self):
         for chunk_path in iter_chunks("PRCL"):
             read_write_chunk(chunk_path)
 
-    def test_eqmb_chunks(self):
-        for chunk_path in iter_chunks("EQMB"):
+    def test_prit_chunks(self):
+        for chunk_path in iter_chunks("PRIT"):
             read_write_chunk(chunk_path)
 
-    def test_aspi_chunks(self):
-        for chunk_path in iter_chunks("ASPI"):
+    def test_pvol_chunks(self):
+        for chunk_path in iter_chunks("PVOL"):
             read_write_chunk(chunk_path)
 
-    def test_strb_chunks(self):
-        for chunk_path in iter_chunks("STRB"):
+    def test_rept_chunks(self):
+        for chunk_path in iter_chunks("REPT"):
             read_write_chunk(chunk_path)
 
-    def test_tkds_chunks(self):
-        for chunk_path in iter_chunks("TKDS"):
+    def test_rgba_chunks(self):
+        for chunk_path in iter_chunks("RGBA"):
             read_write_chunk(chunk_path)
 
-    def test_tnfx_chunks(self):
-        for chunk_path in iter_chunks("TNFX"):
-            read_write_chunk(chunk_path)
-
-    def test_tkpa_chunks(self):
-        for chunk_path in iter_chunks("TKPS"):
-            read_write_chunk(chunk_path)
-
-    def test_tkda_chunks(self):
-        for chunk_path in iter_chunks("TKDA"):
-            read_write_chunk(chunk_path)
-
-    def test_tkpa_chunks(self):
-        for chunk_path in iter_chunks("TKPA"):
-            read_write_chunk(chunk_path)
-
-    def test_winf_chunks(self):
-        for chunk_path in iter_chunks("WINF"):
-            read_write_chunk(chunk_path)
-
-    def test_bvst_chunks(self):
-        for chunk_path in iter_chunks("BVst"):
-            read_write_chunk(chunk_path)
-
-    def test_wave_chunks(self):
-        for chunk_path in iter_chunks("WAVE"):
-            read_write_chunk(chunk_path)
-
-    def test_mpgi_chunks(self):
-        for chunk_path in iter_chunks("MPGI"):
+    def test_rset_chunks(self):
+        for chunk_path in iter_chunks("RSET"):
             read_write_chunk(chunk_path)
 
     def test_shlp_chunks(self):
         for chunk_path in iter_chunks("SHLP"):
             read_write_chunk(chunk_path)
 
+    def test_slct_chunks(self):
+        for chunk_path in iter_chunks("SLCT"):
+            read_write_chunk(chunk_path)
+
+    def test_strb_chunks(self):
+        for chunk_path in iter_chunks("STRB"):
+            read_write_chunk(chunk_path)
+
+    def test_tkda_chunks(self):
+        for chunk_path in iter_chunks("TKDA"):
+            read_write_chunk(chunk_path)
+
+    def test_tkds_chunks(self):
+        for chunk_path in iter_chunks("TKDS"):
+            read_write_chunk(chunk_path)
+
+    def test_tkpa_chunks(self):
+        for chunk_path in iter_chunks("TKPA"):
+            read_write_chunk(chunk_path)
+
+    def test_tkps_chunks(self):
+        for chunk_path in iter_chunks("TKPS"):
+            read_write_chunk(chunk_path)
+
+    def test_tmbc_chunks(self):
+        for chunk_path in iter_chunks("TMBC"):
+            read_write_chunk(chunk_path)
+
+    def test_tnfx_chunks(self):
+        for chunk_path in iter_chunks("TNFX"):
+            read_write_chunk(chunk_path)
+
     def test_urll_chunks(self):
         for chunk_path in iter_chunks("URLL"):
             read_write_chunk(chunk_path)
 
-    def test_binf_chunks(self):
-        for chunk_path in iter_chunks("BINF"):
+    def test_wave_chunks(self):
+        for chunk_path in iter_chunks("WAVE"):
+            read_write_chunk(chunk_path)
+
+    def test_winf_chunks(self):
+        for chunk_path in iter_chunks("WINF"):
             read_write_chunk(chunk_path)
 
 if __name__ == "__main__":
