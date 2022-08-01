@@ -1311,3 +1311,69 @@ class RGBADescriptor(DIDDescriptor):
             ctx.write_u32(f, self.alpha_max_ref)
 
         ctx.write_u8(f, 0x03)
+
+
+@utils.register_class
+class DataDescriptor(MediaFileDescriptor):
+    class_id = b'DATD'
+    propertydefs = MediaFileDescriptor.propertydefs + [
+        AVBPropertyDef("is_offset_to_frame_indexes_valid", "OMFI:DATD:IsOffsetToFrameIndexesValid", 'bool'),
+        AVBPropertyDef("offset_to_frame_indexes",          "OMFI:DATD:OffsetToFrameIndexes",        'uint64'),
+        AVBPropertyDef("first_frame_offset",               "OMFI:DATD:FirstFrameOffset",            'int32'),
+        AVBPropertyDef("min_sample_size",                  "OMFI:DATD:MinSampleSize",               'int32'),
+        AVBPropertyDef("max_sample_size",                  "OMFI:DATD:MaxSampleSize",               'int32'),
+    ]
+    __slots__ = ()
+
+    def read(self, f):
+        super(DataDescriptor, self).read(f)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
+
+        self.is_offset_to_frame_indexes_valid = ctx.read_bool(f)
+        self.offset_to_frame_indexes = ctx.read_u64(f)
+        self.first_frame_offset = ctx.read_s32(f)
+        self.min_sample_size = ctx.read_s32(f)
+        self.max_sample_size = ctx.read_s32(f)
+
+    def write(self, f):
+        super(DataDescriptor, self).write(f)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
+
+        ctx.write_bool(f, self.is_offset_to_frame_indexes_valid)
+        ctx.write_u64(f, self.offset_to_frame_indexes)
+        ctx.write_s32(f, self.first_frame_offset)
+        ctx.write_s32(f, self.min_sample_size)
+        ctx.write_s32(f, self.max_sample_size)
+
+@utils.register_class
+class ANCDataDescriptor(DataDescriptor):
+    class_id = b'ANCD'
+    propertydefs = DataDescriptor.propertydefs + [
+        AVBPropertyDef("manifest_element_count",  "OMFI:ANCD:ManifestElementCount",  'int32'),
+    ]
+
+    __slots__ = ()
+
+    def read(self, f):
+        super(ANCDataDescriptor, self).read(f)
+        ctx = self.root.ictx
+        ctx.read_assert_tag(f, 0x02)
+        ctx.read_assert_tag(f, 0x01)
+
+        self.manifest_element_count = ctx.read_s32(f)
+
+        ctx.read_assert_tag(f, 0x03)
+
+    def write(self, f):
+        super(ANCDataDescriptor, self).write(f)
+        ctx = self.root.octx
+        ctx.write_u8(f, 0x02)
+        ctx.write_u8(f, 0x01)
+
+        ctx.write_s32(f, self.manifest_element_count)
+
+        ctx.write_u8(f, 0x03)
