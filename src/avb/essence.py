@@ -512,7 +512,7 @@ class MPGADescriptor(MediaFileDescriptor):
             ctx.write_u8(f, 0x01)
             ctx.write_u8(f, 0x02)
             ctx.write_u8(f, 77)
-            ctx.write_string(f, self.origin)
+            ctx.write_u64(f, self.origin)
 
         ctx.write_u8(f, 0x03)
 
