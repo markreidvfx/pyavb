@@ -110,6 +110,8 @@ class Component(core.AVBObject):
             return 'effectdata'
         elif self.media_kind_id == 7:
             return 'DescriptiveMetadata'
+        elif self.media_kind_id == 16:
+            return "DataEssenceTrack"
         else:
             return "unknown%d" % self.media_kind_id
 
@@ -131,6 +133,8 @@ class Component(core.AVBObject):
             self.media_kind_id = 6
         elif value == 'DescriptiveMetadata':
             self.media_kind_id = 7
+        elif value == 'DataEssenceTrack':
+            self.media_kind_id = 16
         else:
             raise ValueError('unknown media kind: %s' % str(value))
 
