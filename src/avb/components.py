@@ -158,7 +158,7 @@ class Sequence(Component):
         ctx.read_assert_tag(f, 0x03)
 
         count = ctx.read_u32(f)
-        self.components = AVBRefList.__new__(AVBRefList, root=self.root)
+        self.components = AVBRefList.__new__(AVBRefList, root=self.root, parent=self)
         for i in range(count):
             ref = ctx.read_object_ref(self.root, f)
             # print ref

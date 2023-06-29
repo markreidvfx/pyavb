@@ -49,13 +49,15 @@ class AVBPropertyData(OrderedDict):
     def get(self, *args, **kwargs):
         return self.deref(super(AVBPropertyData, self).get(*args, **kwargs))
 
+@utils.register_helper_class
 class AVBRefList(list):
     propertydefs = []
-    __slots__ = ('root', 'instance_id', '__weakref__')
+    __slots__ = ('root', 'parent', '__weakref__')
 
     def __new__(cls, *args, **kwargs):
         self = super(AVBRefList, cls).__new__(cls)
         self.root = kwargs.get("root", None)
+        self.parent = kwargs.get("parent", None)
         return self
     # def __init__(self, root):
     #     super(AVBRefList, self).__init__()
@@ -63,7 +65,17 @@ class AVBRefList(list):
 
     def mark_modified(self):
         if not self.root.reading:
-            self.root.add_modified(self)
+            if not hasattr(self, 'class_id'):
+                if self.parent:
+                    self.root.add_modified(self.parent)
+            else:
+                self.root.add_modified(self)
+
+    def copy(self, root, parent=None):
+        obj = root.create.from_name(self.__class__.__name__)
+        for item in self:
+            obj.append(item.copy(root))
+        return obj
 
     def extend(self, x):
         super(AVBRefList, self).extend(x)
@@ -205,6 +217,29 @@ class AVBObject(object):
 
     def write(self, f):
         pass
+
+    def copy(self, root):
+        obj = root.create.from_name(self.__class__.__name__)
+        for key, value in self.property_data.items():
+            if isinstance(value, AVBObject):
+                obj.property_data[key] = value.copy(root)
+            elif isinstance(value, AVBRefList):
+                obj.property_data[key] = value.copy(root)
+                if value.parent:
+                    obj.property_data[key].parent = obj
+            elif isinstance(value, AVBPropertyData):
+                obj.property_data[key] = value.copy(root)
+            elif isinstance(value, list):
+                obj.property_data[key] = []
+                for item in value:
+                    if isinstance(item, AVBObject):
+                        obj.property_data[key].append(item.copy(root))
+                    else:
+                        obj.property_data[key].append(item)
+            else:
+                obj.property_data[key] = value
+
+        return obj
 
     @property
     def media_kind(self):

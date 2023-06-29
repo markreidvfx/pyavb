@@ -66,12 +66,14 @@ class AVBFactory(object):
 
     def from_name(self, name, *args, **kwargs):
 
-        classobj = obj_class = utils.AVBClassName_dict.get(name, None)
+        classobj = utils.AVBClassName_dict.get(name, None)
+        if not classobj:
+            raise ValueError("could not find class for: " + name)
 
         # obj = classobj(None, *args, **kwargs)
         obj = classobj.__new__(classobj)
         obj.root = self.root
-        if obj.class_id:
+        if hasattr(obj, "class_id") and obj.class_id:
             self.root.next_object_id += 1
             obj.instance_id = self.root.next_object_id
 
@@ -108,6 +110,9 @@ class AVBFile(object):
         self.object_cache = WeakValueDictionary()
         self.modified_objects = {}
         self.next_object_id = 0
+
+        self.octx = None
+        self.ictx = None
 
         if fileobject is None:
             self.setup_empty()
@@ -319,6 +324,8 @@ class AVBFile(object):
 
     def write_object(self, f, obj):
         buffer = io.BytesIO()
+        if self.octx != obj.root.octx:
+            raise ValueError("object is from different file: " + str(obj))
         obj.write(buffer)
         data = buffer.getvalue()
         assert data[-1:] == b'\x03'
@@ -343,22 +350,24 @@ class AVBFile(object):
         self.ref_mapping = {}
         ctx = AVBIOContext(byte_order)
         self.octx = ctx
+        try:
+            with io.open(path, 'wb') as f:
+                count_pos = self.write_header(f)
+                for obj in walk_references(self.content):
+                    if obj.instance_id in self.ref_mapping:
+                        continue
 
-        with io.open(path, 'wb') as f:
-            count_pos = self.write_header(f)
-            for obj in walk_references(self.content):
-                if obj.instance_id in self.ref_mapping:
-                    continue
+                    self.next_chunk_id += 1
+                    self.ref_mapping[obj.instance_id] = self.next_chunk_id
+                    self.write_object(f, obj)
 
-                self.next_chunk_id += 1
-                self.ref_mapping[obj.instance_id] = self.next_chunk_id
-                self.write_object(f, obj)
-
-            pos = f.tell()
-            f.seek(count_pos)
-            ctx.write_u32(f, self.next_chunk_id)
-            ctx.write_u32(f, self.next_chunk_id)
-            f.seek(pos)
+                pos = f.tell()
+                f.seek(count_pos)
+                ctx.write_u32(f, self.next_chunk_id)
+                ctx.write_u32(f, self.next_chunk_id)
+                f.seek(pos)
+        finally:
+            self.octx = None
 
     def chunks(self):
         for i in range(len(self.object_positions)):

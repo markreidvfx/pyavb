@@ -50,6 +50,21 @@ class Attributes(AVBPropertyData):
         self.mark_modified()
         return result
 
+    def copy(self, root):
+        obj = root.create.from_name(self.__class__.__name__)
+        for key, value in self.items():
+            if isinstance(value, int):
+                obj[key] = value
+            elif isinstance(value, unicode):
+                obj[key] = value
+            elif isinstance(value, bytearray):
+                obj[key] = value.copy()
+            elif isinstance(value, bytes):
+                raise ValueError("%s: bytes value type too ambiguous, use bytearray or unicode str" % key)
+            else:
+                obj[key] = value.copy(root)
+        return obj
+
     def read(self, f):
         ctx = self.root.ictx
         ctx.read_assert_tag(f, 0x02)
@@ -117,7 +132,7 @@ class Attributes(AVBPropertyData):
 @utils.register_class
 class ParameterList(AVBRefList):
     class_id = b'PRLS'
-    __slots__ = ()
+    __slots__ = ('instance_id',)
     def read(self, f):
         ctx = self.root.ictx
         ctx.read_assert_tag(f, 0x02)
@@ -144,7 +159,7 @@ class ParameterList(AVBRefList):
 @utils.register_class
 class TimeCrumbList(AVBRefList):
     class_id = b'TMCS'
-    __slots__ = ()
+    __slots__ = ('instance_id',)
 
     def read(self, f):
         ctx = self.root.ictx

@@ -217,7 +217,7 @@ class MultiDescriptor(MediaFileDescriptor):
         ctx.read_assert_tag(f, 0x01)
 
         count = ctx.read_s32(f)
-        self.descriptors = AVBRefList.__new__(AVBRefList, root=self.root)
+        self.descriptors = AVBRefList.__new__(AVBRefList, root=self.root, parent=self)
         for i in range(count):
             ref = ctx.read_object_ref(self.root, f)
             self.descriptors.append(ref)

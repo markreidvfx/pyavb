@@ -991,7 +991,7 @@ class TrackerDataSlot(core.AVBObject):
         ctx.read_assert_tag(f, 0x01)
 
         count = ctx.read_s32(f)
-        self.tracker_data = AVBRefList.__new__(AVBRefList, root=self.root)
+        self.tracker_data = AVBRefList.__new__(AVBRefList, root=self.root, parent=self)
         for i in range(count):
             ref = ctx.read_object_ref(self.root, f)
             self.tracker_data.append(ref)
@@ -1045,7 +1045,7 @@ class TrackerParameterSlot(core.AVBObject):
 
         count = ctx.read_s32(f)
         assert count >= 0
-        self.params = AVBRefList.__new__(AVBRefList, root=self.root)
+        self.params = AVBRefList.__new__(AVBRefList, root=self.root, parent=self)
         for i in range(count):
             ref = ctx.read_object_ref(self.root, f)
             self.params.append(ref)
@@ -1095,7 +1095,7 @@ class TrackerData(core.AVBObject):
         self.clip_version = ctx.read_u32(f)
 
         count = ctx.read_s16(f)
-        self.clips = AVBRefList.__new__(AVBRefList, root=self.root)
+        self.clips = AVBRefList.__new__(AVBRefList, root=self.root, parent=self)
         for i in range(count):
             ref = ctx.read_object_ref(self.root, f)
             self.clips.append(ref)
