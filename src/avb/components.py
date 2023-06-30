@@ -313,6 +313,9 @@ class SourceClip(Clip):
 
     @property
     def mob(self):
+        if not self.root.content.mob_dict:
+            self.root.content.build_mob_dict()
+
         if hasattr(self, 'mob_id'):
             mob_id = self.mob_id
             if mob_id:

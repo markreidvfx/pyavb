@@ -7,11 +7,11 @@ from __future__ import (
 import datetime
 
 from . import core
-from .core import AVBPropertyDef, AVBRefList
-from .components import Component
+from .core import AVBPropertyDef, walk_references
 from . import utils
 from . import mobid
 from . utils import peek_data
+from .components import Component, SourceClip
 
 TRACK_LABEL_FLAG            = 1 << 0
 TRACK_ATTRIBUTES_FLAG       = 1 << 1
@@ -224,6 +224,37 @@ class TrackGroup(Component):
                     ctx.write_s16(f, self.tracks[i].lock_number)
                 else:
                     ctx.write_s16(f, 0)
+
+    def dependant_mobs(self):
+        """
+            Yields all mobs that this mob is dependant on in depth first order.
+        """
+
+        visited = set()
+        stack = [self]
+
+        if not self.root.content.mob_dict:
+            self.root.content.build_mob_dict()
+
+        while stack:
+            mob = stack[-1]
+            children_processed = True
+
+            for obj in walk_references(mob):
+                if isinstance(obj, SourceClip):
+                    ref_mob = obj.mob
+                    if not ref_mob:
+                        continue
+                    if ref_mob.mob_id not in visited:
+                        stack.append(ref_mob)
+                        children_processed = False
+
+            if children_processed:
+                stack.pop(-1)
+                if mob.mob_id not in visited:
+                    visited.add(mob.mob_id)
+                    if mob is not self:
+                        yield mob
 
 
 @utils.register_class

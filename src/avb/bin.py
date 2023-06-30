@@ -232,6 +232,7 @@ class Bin(core.AVBObject):
             self.sifted_settings.append(s)
 
         self.attributes = self.root.create.Attributes()
+        self.mob_dict ={}
 
     def read(self, f):
         super(Bin, self).read(f)
@@ -255,6 +256,7 @@ class Bin(core.AVBObject):
             object_count = ctx.read_u32(f)
 
         self.items = []
+        self.mob_dict ={}
 
         for i in range(object_count):
             bin_obj = BinItem.__new__(BinItem, root=self.root)
