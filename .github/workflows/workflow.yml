@@ -98,7 +98,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, windows-latest, macos-latest]
-        python-version: ["2.7", "3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
 
     needs:
     - build-pure-wheel
@@ -129,7 +129,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["2.7", "3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
 
     needs:
     - build-cython-wheels
@@ -154,10 +154,61 @@ jobs:
         python -m pip install --find-links=./dist --no-index --only-binary=:all: pyavb
         python -m unittest discover tests -v
 
+
+  test-cython-wheels-27:
+    runs-on: ubuntu-latest
+
+    container: coatldev/six:latest
+    needs:
+    - build-cython-wheels
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Download cython wheels
+        uses: actions/download-artifact@v3
+        with:
+          name: cython-wheels
+          path: dist/
+
+      - name: Run Unit Tests
+        shell: bash
+        run: |
+          python2 --version
+          python2 -m pip install --find-links=./dist --no-index --only-binary=:all: pyavb
+          python2 -m unittest discover tests -v
+
+  test-pure-wheels-27:
+    runs-on: ubuntu-latest
+
+    container: coatldev/six:latest
+    needs:
+    - build-pure-wheel
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Download cython wheels
+        uses: actions/download-artifact@v3
+        with:
+          name: pure-wheel
+          path: dist/
+
+      - name: Run Unit Tests
+        shell: bash
+        run: |
+          python2 --version
+          python2 -m pip install --find-links=./dist --no-index --only-binary=:all: pyavb
+          python2 -m unittest discover tests -v
+
   latest-release:
     needs:
       - test-cython-wheels
+      - test-cython-wheels-27
       - test-pure-wheel
+      - test-pure-wheels-27
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
