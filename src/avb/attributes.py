@@ -58,7 +58,7 @@ class Attributes(AVBPropertyData):
             elif isinstance(value, unicode):
                 obj[key] = value
             elif isinstance(value, bytearray):
-                obj[key] = value.copy()
+                obj[key] = value[:]
             elif isinstance(value, bytes):
                 raise ValueError("%s: bytes value type too ambiguous, use bytearray or unicode str" % key)
             else:
