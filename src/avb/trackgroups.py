@@ -233,9 +233,6 @@ class TrackGroup(Component):
         visited = set()
         stack = [self]
 
-        if not self.root.content.mob_dict:
-            self.root.content.build_mob_dict()
-
         while stack:
             mob = stack[-1]
             children_processed = True

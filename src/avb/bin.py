@@ -216,7 +216,7 @@ class Bin(core.AVBObject):
         AVBPropertyDef('attributes',       'BinAttr',        'reference'),
         AVBPropertyDef('was_iconic',       'WasIconic',      'bool',      False),
     ]
-    __slots__ = ('mob_dict')
+    __slots__ = ('_mob_dict')
 
     def __init__(self):
         super(Bin, self).__init__(self)
@@ -232,7 +232,7 @@ class Bin(core.AVBObject):
             self.sifted_settings.append(s)
 
         self.attributes = self.root.create.Attributes()
-        self.mob_dict ={}
+        self._mob_dict ={}
 
     def read(self, f):
         super(Bin, self).read(f)
@@ -256,7 +256,7 @@ class Bin(core.AVBObject):
             object_count = ctx.read_u32(f)
 
         self.items = []
-        self.mob_dict ={}
+        self._mob_dict ={}
 
         for i in range(object_count):
             bin_obj = BinItem.__new__(BinItem, root=self.root)
@@ -369,15 +369,24 @@ class Bin(core.AVBObject):
         if self.class_id[:] == b'ABIN':
             ctx.write_u8(f, 0x03)
 
-    def build_mob_dict(self):
-        self.mob_dict = {}
-        for mob in self.mobs:
-            self.mob_dict[mob.mob_id] = mob
+    def find_by_mob_id(self, mob_id):
+
+        # build mob_id dictionary
+        if not self._mob_dict:
+            for mob in self.mobs:
+                self._mob_dict[mob.mob_id] = mob
+
+        return self._mob_dict.get(mob_id, None)
 
     def add_mob(self, mob):
         bin_item = self.root.create.BinItem()
         bin_item.mob = mob
         self.items.append(bin_item)
+
+        if self._mob_dict:
+            self._mob_dict[mob.mob_id] = mob
+
+        return bin_item
 
     @property
     def mobs(self):

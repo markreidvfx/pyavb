@@ -313,13 +313,10 @@ class SourceClip(Clip):
 
     @property
     def mob(self):
-        if not self.root.content.mob_dict:
-            self.root.content.build_mob_dict()
-
         if hasattr(self, 'mob_id'):
             mob_id = self.mob_id
             if mob_id:
-                return self.root.content.mob_dict.get(self.mob_id, None)
+                return self.root.content.find_by_mob_id(self.mob_id)
 
     @property
     def track(self):

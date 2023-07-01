@@ -31,9 +31,9 @@ class TestWrite(unittest.TestCase):
 
         with avb.open(test_file_01) as a:
             with avb.open(result_file) as b:
-                b.content.build_mob_dict()
+
                 for mob_a in a.content.mobs:
-                    mob_b = b.content.mob_dict.get(mob_a.mob_id, None)
+                    mob_b = b.content.find_by_mob_id(mob_a.mob_id)
                     assert mob_b
                     compare(mob_a, mob_b)
 
@@ -59,11 +59,9 @@ class TestWrite(unittest.TestCase):
 
         with avb.open(test_file_01) as a:
             with avb.open(result_file) as b:
-                b.content.build_mob_dict()
-                a.content.build_mob_dict()
                 for mob_id in mob_ids:
-                    mob_a = a.content.mob_dict.get(mob_id, None)
-                    mob_b = b.content.mob_dict.get(mob_id, None)
+                    mob_a = a.content.find_by_mob_id(mob_id)
+                    mob_b = b.content.find_by_mob_id(mob_id)
                     compare(mob_a, mob_b)
 
     def test_copy_compositionmobs(self):
@@ -89,11 +87,9 @@ class TestWrite(unittest.TestCase):
 
         with avb.open(test_file_01) as a:
             with avb.open(result_file) as b:
-                b.content.build_mob_dict()
-                a.content.build_mob_dict()
                 for mob_id in mob_ids:
-                    mob_a = a.content.mob_dict.get(mob_id, None)
-                    mob_b = b.content.mob_dict.get(mob_id, None)
+                    mob_a = a.content.find_by_mob_id(mob_id)
+                    mob_b = b.content.find_by_mob_id(mob_id)
                     compare(mob_a, mob_b)
 
 if __name__ == "__main__":

@@ -284,7 +284,7 @@ def check_source_clip(f, avb_source_clip):
     mob_id = MobID(bytes_le=avb_source_clip.mob_id.bytes_le)
     if zero_mob_id(mob_id):
         return 0
-    avb_mob = avb_source_clip.root.content.mob_dict[avb_source_clip.mob_id]
+    avb_mob = avb_source_clip.root.content.find_by_mob_id(avb_source_clip.mob_id)
     if mob_id in f.content.mobs:
         mob = f.content.mobs[mob_id]
     else:
@@ -797,7 +797,6 @@ def avb2aaf_main(path):
     with avb.open(path) as avb_file:
         with aaf2.open(path + ".aaf", 'w') as aaf_file:
             register_definitions(aaf_file)
-            avb_file.content.build_mob_dict()
             avb2aaf(aaf_file, avb_file)
 
     # with aaf2.open(path + ".aaf", 'r') as aaf_file:
