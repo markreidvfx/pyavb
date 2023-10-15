@@ -5,7 +5,7 @@ from __future__ import (
     division,
     )
 import sys
-from PySide2 import QtCore
+from PySide6 import QtCore
 
 import avb
 
@@ -191,7 +191,7 @@ class AVBModel(QtCore.QAbstractItemModel):
 
 if __name__ == "__main__":
 
-    from PySide2 import QtWidgets
+    from PySide6 import QtWidgets
     from optparse import OptionParser
 
     parser = OptionParser()
