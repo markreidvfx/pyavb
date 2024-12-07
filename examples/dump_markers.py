@@ -96,12 +96,19 @@ def get_component_markers(c):
 
     return markers
 
-def find_track_markers(track, start=0):
-    components = []
+def get_components_from_track(track):
     if isinstance(track.component, avb.components.Sequence):
-        components = track.component.components
+        return track.component.components
+    elif isinstance(track.component, avb.trackgroups.TrackGroup):
+        expanded_components = []
+        for t in iter_tracks(track.component):
+            expanded_components.extend(get_components_from_track(t))
+        return expanded_components
     else:
-        components = [track.component]
+        return [track.component]
+
+def find_track_markers(track, start=0):
+    components = get_components_from_track(track)
 
     pos = start
     marker_list = []
