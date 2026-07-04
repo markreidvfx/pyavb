@@ -343,6 +343,7 @@ class PCMADescriptor(MediaFileDescriptor):
         AVBPropertyDef('peak_envelope_timestamp',     'OMFI:PCMA:PeakEnvelopeTimestamp',     'int32'),
         AVBPropertyDef('ebu_timestamp',               'OMFI:PCMA:SmpteEbuTimestamp',         'int64'),
         AVBPropertyDef('timecode_framerate',          'OMFI:PCMA:TimecodeFrameRate',        'string'),
+        AVBPropertyDef('unknown_ext_0x02',            'OMFI:PCMA:UnknownExt0x02',            'int32'),
     ]
     __slots__ = ()
 
@@ -381,6 +382,11 @@ class PCMADescriptor(MediaFileDescriptor):
             if tag == 0x01:
                 ctx.read_assert_tag(f, 77)
                 self.ebu_timestamp = ctx.read_s64(f)
+            elif tag == 0x02:
+                # Written by newer Media Composer (observed on UME-linked
+                # clips); value has always been -1 in samples so far.
+                ctx.read_assert_tag(f, 71)
+                self.unknown_ext_0x02 = ctx.read_s32(f)
             elif tag == 0x03:
                 ctx.read_assert_tag(f, 76)
                 # yes this is a string!
@@ -432,6 +438,12 @@ class PCMADescriptor(MediaFileDescriptor):
             ctx.write_u8(f, 0x03)
             ctx.write_u8(f, 76)
             ctx.write_string(f, self.timecode_framerate)
+
+        if hasattr(self, 'unknown_ext_0x02'):
+            ctx.write_u8(f, 0x01)
+            ctx.write_u8(f, 0x02)
+            ctx.write_u8(f, 71)
+            ctx.write_s32(f, self.unknown_ext_0x02)
 
         ctx.write_u8(f, 0x03)
 
