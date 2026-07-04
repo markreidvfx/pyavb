@@ -192,32 +192,6 @@ class AVBFile(object):
     def update_save_time(self):
         self.last_save = datetime.datetime.now()
 
-    def clone_mob(self, mob):
-        """
-        Deep-copy a mob (and all its internal references) into this file.
-
-        Preserves mob_id and all property values. Creates new pyavb objects
-        owned by this AVBFile (correct root, instance_id, octx).
-
-        Use for cross-bin mob sharing: clone a MasterMob + its SourceMobs
-        from one bin's AVBFile into another.
-        """
-        import copy
-        # memo maps the source AVBFile to this file, so all cloned objects
-        # get root=self instead of root=source_file
-        memo = {id(mob.root): self}
-        cloned = copy.deepcopy(mob, memo)
-
-        # Reassign instance_ids and register in this file's caches
-        for obj in walk_references(cloned):
-            if hasattr(obj, 'instance_id'):
-                self.next_object_id += 1
-                obj.instance_id = self.next_object_id
-                self.modified_objects[obj.instance_id] = obj
-                self.object_cache[obj.instance_id] = obj
-
-        return cloned
-
     def add_modified(self, obj):
         self.modified_objects[obj.instance_id] = obj
 
