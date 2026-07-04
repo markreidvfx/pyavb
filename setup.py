@@ -27,7 +27,11 @@ sourcefiles = [
 extensions =[]
 try:
     from Cython.Build import cythonize
-    if int(os.environ.get("PYAVB_BUILD_EXT", '1')):
+    # Default off: the pre-generated _ext.cpp predates Python 3.12 and fails
+    # to compile; the pure-python implementation is what shipped in the PyPI
+    # wheel anyway. Opt in with PYAVB_BUILD_EXT=1 after regenerating with a
+    # modern Cython.
+    if int(os.environ.get("PYAVB_BUILD_EXT", '0')):
         extensions = cythonize([Extension("avb._ext",
                                 sourcefiles,
                                 language="c++")])
